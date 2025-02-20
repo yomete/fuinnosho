@@ -8,6 +8,7 @@ export type Film = {
   type: string;
   expiration_date: string;
   created_at: string;
+  price?: number; // Optional price field
 };
 
 export const mockFilms: Film[] = [
@@ -21,6 +22,7 @@ export const mockFilms: Film[] = [
     type: "Color Negative",
     expiration_date: "2025-12-31",
     created_at: "2024-01-15T08:00:00Z",
+    price: 14.99,
   },
   {
     id: "2b3c4d5e",
@@ -32,6 +34,7 @@ export const mockFilms: Film[] = [
     type: "Black & White",
     expiration_date: "2026-06-30",
     created_at: "2024-01-20T09:15:00Z",
+    price: 8.99,
   },
   {
     id: "3c4d5e6f",
@@ -43,6 +46,7 @@ export const mockFilms: Film[] = [
     type: "Color Slide",
     expiration_date: "2024-09-15",
     created_at: "2024-02-01T14:30:00Z",
+    price: 45.99,
   },
   {
     id: "4d5e6f7g",
@@ -54,5 +58,13 @@ export const mockFilms: Film[] = [
     type: "Color Negative",
     expiration_date: "2025-03-20",
     created_at: "2024-02-10T11:45:00Z",
+    price: 12.99,
   },
 ];
+
+// Add format dimensions for storage calculations
+export const formatDimensions = {
+  "35mm": { width: 35, height: 24, unit: "mm", rollLength: 36 },
+  "120": { width: 60, height: 60, unit: "mm", rollLength: 12 },
+  "4x5": { width: 102, height: 127, unit: "mm", sheetsPerBox: 10 },
+};
