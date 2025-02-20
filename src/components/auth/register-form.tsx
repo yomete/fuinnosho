@@ -58,7 +58,7 @@ export function RegisterForm() {
         email: values.email,
         password: values.password,
         options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
+          emailRedirectTo: `${location.origin}/auth/confirm`,
         },
       });
       if (error) throw error;
