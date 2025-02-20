@@ -14,6 +14,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z
   .object({
@@ -33,6 +37,9 @@ const formSchema = z
   });
 
 export function RegisterForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const supabase = createClient();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,8 +49,25 @@ export function RegisterForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          emailRedirectTo: `${location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      toast.success("Check your email to confirm your account!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -127,8 +151,12 @@ export function RegisterForm() {
               />
             </div>
           </div>
-          <Button type="submit" className="w-full h-12">
-            Create account
+          <Button type="submit" className="w-full h-12" disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Create account"
+            )}
           </Button>
         </form>
       </Form>
