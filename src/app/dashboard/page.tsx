@@ -1,6 +1,3 @@
-import Dashboard from "@/components/dashboard";
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
