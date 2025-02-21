@@ -1,18 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Form,
@@ -28,8 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { UseFormReturn } from "react-hook-form";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 
-const formSchema = z.object({
+export const filmFormSchema = z.object({
   barcode: z.string().min(1, "Barcode is required"),
   name: z.string().min(1, "Name is required"),
   brand: z.string().min(1, "Brand is required"),
@@ -37,41 +29,34 @@ const formSchema = z.object({
   format: z.string().min(1, "Format is required"),
   type: z.string().min(1, "Type is required"),
   expiration_date: z.string().min(1, "Expiration date is required"),
+  count: z.number().min(1, "Count is required").optional(),
+  price: z.number().min(0, "Price is required").optional(),
+  notes: z.string().optional(),
 });
 
-export function NewFilm() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      barcode: "",
-      name: "",
-      brand: "",
-      iso: undefined,
-      format: "",
-      type: "",
-      expiration_date: "",
-    },
-  });
+export type FilmFormSchema = z.infer<typeof filmFormSchema>;
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // TODO: Implement submission logic
-    console.log(values);
-  }
+interface FilmFormFieldsProps {
+  form: UseFormReturn<FilmFormSchema>;
+  onSubmit: (values: FilmFormSchema) => Promise<void>;
+  isSubmitting: boolean;
+  submitText: string;
+  loadingText: string;
+}
 
+export function FilmFormFields({
+  form,
+  onSubmit,
+  isSubmitting,
+  submitText,
+  loadingText,
+}: FilmFormFieldsProps) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline">Add Film</Button>
-      </DialogTrigger>
-
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add Film</DialogTitle>
-          <DialogDescription>Add a new film to the database.</DialogDescription>
-        </DialogHeader>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Left Column */}
+          <div className="flex-1 space-y-4">
             <FormField
               control={form.control}
               name="barcode"
@@ -91,7 +76,7 @@ export function NewFilm() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input placeholder="Film Name" {...field} />
+                    <Input placeholder="Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -117,12 +102,7 @@ export function NewFilm() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="ISO"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
+                    <Input placeholder="ISO" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,38 +124,9 @@ export function NewFilm() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="35mm">35mm</SelectItem>
+                      <SelectItem value="35">35</SelectItem>
                       <SelectItem value="120">120</SelectItem>
                       <SelectItem value="4x5">4x5</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="Color Negative">
-                        Color Negative
-                      </SelectItem>
-                      <SelectItem value="Black & White">
-                        Black & White
-                      </SelectItem>
-                      <SelectItem value="Color Slide">Color Slide</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -189,9 +140,51 @@ export function NewFilm() {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      type="date"
-                      placeholder="Expiration Date"
+                    <Input placeholder="Expiration Date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Right Column */}
+          <div className="flex-1 space-y-4">
+            <FormField
+              control={form.control}
+              name="count"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Count" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Price" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Notes"
+                      className="min-h-[120px]"
                       {...field}
                     />
                   </FormControl>
@@ -199,13 +192,22 @@ export function NewFilm() {
                 </FormItem>
               )}
             />
+          </div>
+        </div>
 
-            <DialogFooter>
-              <Button type="submit">Add Film</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        <DialogFooter>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="mr-2">{loadingText}</span>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              </>
+            ) : (
+              submitText
+            )}
+          </Button>
+        </DialogFooter>
+      </form>
+    </Form>
   );
 }

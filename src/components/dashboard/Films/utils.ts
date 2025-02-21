@@ -8,7 +8,9 @@ export type Film = {
   type: string;
   expiration_date: string;
   created_at: string;
-  price?: number; // Optional price field
+  price?: number;
+  count?: number;
+  notes?: string;
 };
 
 export const mockFilms: Film[] = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { Film } from "./utils";
+import { Film } from "../utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";

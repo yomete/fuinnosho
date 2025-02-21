@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Film } from "../utils";
-import { Button } from "@/components/ui/button";
+import { EditFilm } from "../FilmForm/EditFilm";
 
 export const columns: ColumnDef<Film>[] = [
   {
@@ -41,7 +41,7 @@ export const columns: ColumnDef<Film>[] = [
     header: "Actions",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
-        <Button variant="outline">Edit</Button>
+        <EditFilm film={row.original} />
       </div>
     ),
   },

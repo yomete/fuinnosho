@@ -1,6 +1,6 @@
 "use client";
 
-import { type Film, formatDimensions } from "./utils";
+import { type Film, formatDimensions } from "../utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Box, Archive } from "lucide-react";

@@ -12,7 +12,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("🚀 ~ middleware ~ user:", user);
 
   // Protected routes
   const protectedRoutes = [
