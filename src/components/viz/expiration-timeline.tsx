@@ -1,6 +1,6 @@
 "use client";
 
-import { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,6 +10,12 @@ import { format, addDays, differenceInDays } from "date-fns";
 interface ExpirationTimelineProps {
   films: Film[];
 }
+
+const getPulseIntensity = (daysUntilExpiration: number) => {
+  if (daysUntilExpiration <= 30) return "animate-pulse-fast";
+  if (daysUntilExpiration <= 90) return "animate-pulse-medium";
+  return "animate-pulse-slow";
+};
 
 export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
   const sortedFilms = [...films].sort(
@@ -62,7 +68,7 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
                             : daysUntilExpiration <= 90
                             ? "bg-warning"
                             : "bg-primary"
-                        }`}
+                        } ${getPulseIntensity(daysUntilExpiration)}`}
                       />
                     </div>
                     <div className="flex items-center justify-between">

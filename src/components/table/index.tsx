@@ -6,7 +6,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { columns } from "./columns";
-import { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 
 import {
   Table,

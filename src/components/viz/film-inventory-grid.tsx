@@ -1,6 +1,6 @@
 "use client";
 
-import { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Camera, Clock, Package } from "lucide-react";

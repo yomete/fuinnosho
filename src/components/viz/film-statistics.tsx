@@ -1,6 +1,6 @@
 "use client";
 
-import { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Doughnut } from "react-chartjs-2";
 import {

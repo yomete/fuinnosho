@@ -19,7 +19,6 @@ import { FilmSchema, filmSchema } from "@/lib/utils";
 
 export function NewFilm() {
   const [isOpen, setIsOpen] = useState(false);
-  console.log("🚀 ~ NewFilm ~ isOpen:", isOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FilmSchema>({
@@ -38,11 +37,9 @@ export function NewFilm() {
   });
 
   async function onSubmit(values: FilmSchema) {
-    console.log("NewFilm onSubmit called with values:", values);
     try {
       setIsSubmitting(true);
 
-      console.log("🚀 ~ onSubmit ~ values:", values);
       const result = await createFilm(values);
 
       if (!result.success) {
@@ -53,7 +50,6 @@ export function NewFilm() {
       form.reset();
       setIsOpen(false);
     } catch (error) {
-      console.log("🚀 ~ onSubmit ~ error:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to add film"
       );

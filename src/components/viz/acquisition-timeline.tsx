@@ -1,6 +1,6 @@
 "use client";
 
-import type { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LineChart,

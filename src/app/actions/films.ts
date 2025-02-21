@@ -40,8 +40,6 @@ export async function editFilm(
       .eq("id", id)
       .eq("user_id", user.id); // Ensure user can only update their own records
 
-    console.log("🚀 ~ error:", error);
-
     if (error) throw error;
 
     return { success: true };
@@ -66,13 +64,9 @@ export async function createFilm(
       error: userError,
     } = await supabase.auth.getUser();
 
-    console.log("🚀 ~ userError:", userError);
-    console.log("🚀 ~ user:", user);
-
     if (userError || !user) throw new Error("Unauthorized");
 
     const validatedData = filmSchema.parse(data);
-    console.log("🚀 ~ validatedData:", validatedData);
 
     const { error } = await supabase.from("films").insert([
       {
@@ -81,8 +75,6 @@ export async function createFilm(
         created_at: new Date().toISOString(),
       },
     ]);
-
-    console.log("🚀 ~ error:", error);
 
     if (error) throw error;
 

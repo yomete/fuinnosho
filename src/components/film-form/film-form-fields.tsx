@@ -37,12 +37,7 @@ export function FilmFormFields({
   submitText,
   loadingText,
 }: FilmFormFieldsProps) {
-  // Add debugging for form state
-  console.log("Form errors:", form.formState.errors);
-  console.log("Form is valid:", form.formState.isValid);
-
   const handleSubmit = async (values: FilmSchema) => {
-    console.log("FilmFormFields handleSubmit called with values:", values);
     await onSubmit(values);
   };
 
@@ -51,8 +46,7 @@ export function FilmFormFields({
       <Form {...form}>
         <form
           onSubmit={(e) => {
-            e.preventDefault(); // Explicitly prevent default
-            console.log("Form submit event triggered");
+            e.preventDefault();
             form.handleSubmit(handleSubmit)(e);
           }}
           className="space-y-4"

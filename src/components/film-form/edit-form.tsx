@@ -14,7 +14,7 @@ import {
 import { editFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Film } from "../utils";
+import { type Film } from "@/lib/utils";
 import { FilmFormFields } from "./film-form-fields";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 
