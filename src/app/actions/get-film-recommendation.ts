@@ -8,7 +8,7 @@ import {
 } from "@/types/recommendation";
 import { getFilms } from "@/app/actions/films";
 import { getFilmById } from "@/app/actions/films";
-import { Film } from "@/components/dashboard/Films/utils";
+import { Film } from "@/components/dashboard/films/utils";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });

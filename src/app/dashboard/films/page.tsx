@@ -1,4 +1,4 @@
-import Films from "@/components/dashboard/Films";
+import Films from "@/components/dashboard/films";
 
 export default function FilmsPage() {
   return <Films />;

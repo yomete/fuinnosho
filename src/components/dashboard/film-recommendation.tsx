@@ -98,7 +98,7 @@ export function FilmRecommendationWidget() {
 
               <Select
                 value={weather.lightLevel}
-                onValueChange={(value: any) =>
+                onValueChange={(value: "bright" | "moderate" | "dim") =>
                   setWeather((prev) => ({ ...prev, lightLevel: value }))
                 }
               >
@@ -121,7 +121,7 @@ export function FilmRecommendationWidget() {
             <div className="grid gap-4">
               <Select
                 value={scenario.type}
-                onValueChange={(value: any) =>
+                onValueChange={(value: "portrait" | "landscape") =>
                   setScenario((prev) => ({ ...prev, type: value }))
                 }
               >

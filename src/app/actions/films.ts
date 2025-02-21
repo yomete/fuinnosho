@@ -1,6 +1,6 @@
 "use server";
 
-import { Film } from "@/components/dashboard/Films/utils";
+import { Film } from "@/components/dashboard/films/utils";
 import { createClient } from "@/lib/supabase/server";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 

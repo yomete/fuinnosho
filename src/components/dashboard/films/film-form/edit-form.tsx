@@ -11,51 +11,60 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { createFilm } from "@/app/actions/films";
+import { editFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
-import { FilmFormFields } from "./FilmFormFields";
+import { Film } from "../utils";
+import { FilmFormFields } from "./film-form-fields";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 
-export function NewFilm() {
+interface EditFilmProps {
+  film: Film;
+}
+
+export function EditFilm({ film }: EditFilmProps) {
   const [isOpen, setIsOpen] = useState(false);
-  console.log("🚀 ~ NewFilm ~ isOpen:", isOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FilmSchema>({
     resolver: zodResolver(filmSchema),
     defaultValues: {
-      name: "",
-      brand: "",
-      iso: 0,
-      format: "",
-      type: "",
-      expiration_date: "",
-      count: 1,
-      price: 0,
-      notes: "",
+      name: film.name,
+      brand: film.brand,
+      iso: film.iso,
+      format: film.format,
+      type: film.type,
+      expiration_date: film.expiration_date,
+      count: Number(film.count) || 1,
+      price: Number(film.price) || 0,
+      notes: film.notes || "",
     },
   });
 
   async function onSubmit(values: FilmSchema) {
-    console.log("NewFilm onSubmit called with values:", values);
+    const count = Number(values.count) || 1;
+    const price = Number(values.price) || 0;
+    const notes = values.notes || "";
+
     try {
       setIsSubmitting(true);
-
-      console.log("🚀 ~ onSubmit ~ values:", values);
-      const result = await createFilm(values);
+      const result = await editFilm(film.id, {
+        ...values,
+        count,
+        price,
+        notes,
+      });
 
       if (!result.success) {
-        throw new Error(result.error || "Failed to create film");
+        throw new Error(result.error || "Failed to edit film");
       }
 
-      toast.success("Film has been added to your inventory");
+      toast.success("Film has been edited");
       form.reset();
       setIsOpen(false);
     } catch (error) {
-      console.log("🚀 ~ onSubmit ~ error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add film"
+        error instanceof Error ? error.message : "Failed to edit film"
       );
     } finally {
       setIsSubmitting(false);
@@ -65,21 +74,21 @@ export function NewFilm() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Add Film</Button>
+        <Button variant="outline">Edit</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[680px]">
         <DialogHeader>
-          <DialogTitle>Add Film</DialogTitle>
-          <DialogDescription>Add a new film to the database.</DialogDescription>
+          <DialogTitle>Edit Film</DialogTitle>
+          <DialogDescription>Edit the film details.</DialogDescription>
         </DialogHeader>
 
         <FilmFormFields
           form={form}
           onSubmit={onSubmit}
           isSubmitting={isSubmitting}
-          submitText="Add Film"
-          loadingText="Adding..."
+          submitText="Edit Film"
+          loadingText="Editing..."
         />
       </DialogContent>
     </Dialog>
