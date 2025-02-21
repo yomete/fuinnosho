@@ -15,11 +15,8 @@ import { editFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Film } from "../utils";
-import {
-  FilmFormFields,
-  FilmFormSchema,
-  filmFormSchema,
-} from "./FilmFormFields";
+import { FilmFormFields } from "./FilmFormFields";
+import { FilmSchema, filmSchema } from "@/lib/utils";
 
 interface EditFilmProps {
   film: Film;
@@ -29,25 +26,24 @@ export function EditFilm({ film }: EditFilmProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<FilmFormSchema>({
-    resolver: zodResolver(filmFormSchema),
+  const form = useForm<FilmSchema>({
+    resolver: zodResolver(filmSchema),
     defaultValues: {
-      barcode: film.barcode,
       name: film.name,
       brand: film.brand,
       iso: film.iso,
       format: film.format,
       type: film.type,
       expiration_date: film.expiration_date,
-      count: film.count || 1,
-      price: film.price || 0,
+      count: Number(film.count) || 1,
+      price: Number(film.price) || 0,
       notes: film.notes || "",
     },
   });
 
-  async function onSubmit(values: FilmFormSchema) {
-    const count = values.count || 1;
-    const price = values.price || 0;
+  async function onSubmit(values: FilmSchema) {
+    const count = Number(values.count) || 1;
+    const price = Number(values.price) || 0;
     const notes = values.notes || "";
 
     try {

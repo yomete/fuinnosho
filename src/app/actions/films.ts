@@ -2,22 +2,7 @@
 
 import { Film } from "@/components/dashboard/Films/utils";
 import { createClient } from "@/lib/supabase/server";
-import { z } from "zod";
-
-const filmSchema = z.object({
-  barcode: z.string().min(1),
-  name: z.string().min(1),
-  brand: z.string().min(1),
-  iso: z.number().min(1),
-  format: z.string().min(1),
-  type: z.string().min(1),
-  expiration_date: z.string().min(1),
-  price: z.number().min(1).optional(),
-  count: z.number().min(1).optional(),
-  notes: z.string().optional(),
-});
-
-export type FilmSchema = z.infer<typeof filmSchema>;
+import { FilmSchema, filmSchema } from "@/lib/utils";
 
 interface CreateFilmResponse {
   success: boolean;
@@ -31,13 +16,30 @@ export async function editFilm(
   try {
     const supabase = await createClient();
 
-    const { data: updatedFilm, error } = await supabase
-      .from("films")
-      .update(data)
-      .eq("id", id)
-      .select();
+    // Check user authorization
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error("Unauthorized");
 
-    console.log("🚀 ~ updatedFilm:", updatedFilm);
+    // Validate the data
+    const validatedData = filmSchema.parse(data);
+
+    // Convert number fields from string to number if needed
+    const processedData = {
+      ...validatedData,
+      iso: Number(validatedData.iso),
+      price: validatedData.price ? Number(validatedData.price) : null,
+      count: validatedData.count ? Number(validatedData.count) : null,
+    };
+
+    const { error } = await supabase
+      .from("films")
+      .update(processedData)
+      .eq("id", id)
+      .eq("user_id", user.id); // Ensure user can only update their own records
+
     console.log("🚀 ~ error:", error);
 
     if (error) throw error;
@@ -63,9 +65,14 @@ export async function createFilm(
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
+
+    console.log("🚀 ~ userError:", userError);
+    console.log("🚀 ~ user:", user);
+
     if (userError || !user) throw new Error("Unauthorized");
 
     const validatedData = filmSchema.parse(data);
+    console.log("🚀 ~ validatedData:", validatedData);
 
     const { error } = await supabase.from("films").insert([
       {
@@ -74,6 +81,8 @@ export async function createFilm(
         created_at: new Date().toISOString(),
       },
     ]);
+
+    console.log("🚀 ~ error:", error);
 
     if (error) throw error;
 
@@ -87,7 +96,10 @@ export async function createFilm(
   }
 }
 
-export async function getFilms(): Promise<{ data: Film[] | null; error: any }> {
+export async function getFilms(): Promise<{
+  data: Film[] | null;
+  error: Error | null;
+}> {
   const supabase = await createClient();
 
   const {

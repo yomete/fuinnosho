@@ -18,9 +18,15 @@ interface IsoDistributionProps {
 export default function IsoDistribution({ films }: IsoDistributionProps) {
   // Group films by ISO and count
   const isoDistribution = films.reduce((acc, film) => {
-    acc[film.iso] = (acc[film.iso] || 0) + 1;
+    acc[film.iso] = (acc[film.iso] || 0) + (film.count || 1);
     return acc;
   }, {} as Record<number, number>);
+
+  // Calculate average ISO (weighted by count)
+  const totalCount = films.reduce((sum, film) => sum + (film.count || 1), 0);
+  const averageIso =
+    films.reduce((sum, film) => sum + film.iso * (film.count || 1), 0) /
+    totalCount;
 
   // Convert to array and sort by ISO
   const data = Object.entries(isoDistribution)
@@ -29,10 +35,6 @@ export default function IsoDistribution({ films }: IsoDistributionProps) {
       count,
     }))
     .sort((a, b) => a.iso - b.iso);
-
-  // Calculate average ISO
-  const averageIso =
-    films.reduce((sum, film) => sum + film.iso, 0) / films.length;
 
   return (
     <Card className="w-full">

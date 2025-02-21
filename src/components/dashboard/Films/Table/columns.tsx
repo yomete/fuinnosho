@@ -6,10 +6,6 @@ import { EditFilm } from "../FilmForm/EditFilm";
 
 export const columns: ColumnDef<Film>[] = [
   {
-    header: "Barcode",
-    cell: ({ row }) => row.original.barcode,
-  },
-  {
     header: "Name",
     cell: ({ row }) => row.original.name,
   },

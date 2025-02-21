@@ -14,35 +14,35 @@ import {
 import { createFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
-import {
-  FilmFormFields,
-  FilmFormSchema,
-  filmFormSchema,
-} from "./FilmFormFields";
+import { FilmFormFields } from "./FilmFormFields";
+import { FilmSchema, filmSchema } from "@/lib/utils";
 
 export function NewFilm() {
   const [isOpen, setIsOpen] = useState(false);
+  console.log("🚀 ~ NewFilm ~ isOpen:", isOpen);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<FilmFormSchema>({
-    resolver: zodResolver(filmFormSchema),
+  const form = useForm<FilmSchema>({
+    resolver: zodResolver(filmSchema),
     defaultValues: {
-      barcode: "",
       name: "",
       brand: "",
-      iso: undefined,
+      iso: 0,
       format: "",
       type: "",
       expiration_date: "",
-      count: undefined,
-      price: undefined,
+      count: 1,
+      price: 0,
       notes: "",
     },
   });
 
-  async function onSubmit(values: FilmFormSchema) {
+  async function onSubmit(values: FilmSchema) {
+    console.log("NewFilm onSubmit called with values:", values);
     try {
       setIsSubmitting(true);
+
+      console.log("🚀 ~ onSubmit ~ values:", values);
       const result = await createFilm(values);
 
       if (!result.success) {
@@ -53,6 +53,7 @@ export function NewFilm() {
       form.reset();
       setIsOpen(false);
     } catch (error) {
+      console.log("🚀 ~ onSubmit ~ error:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to add film"
       );

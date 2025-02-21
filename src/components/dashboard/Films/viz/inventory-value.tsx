@@ -35,9 +35,11 @@ export default function InventoryValue({ films }: InventoryValueProps) {
   const valueMetrics = films.reduce(
     (acc, film) => {
       if (film.price) {
-        acc.totalValue += film.price;
-        acc.byType[film.type] = (acc.byType[film.type] || 0) + film.price;
-        acc.byBrand[film.brand] = (acc.byBrand[film.brand] || 0) + film.price;
+        const quantity = film.count || 1;
+        const totalPrice = film.price * quantity;
+        acc.totalValue += totalPrice;
+        acc.byType[film.type] = (acc.byType[film.type] || 0) + totalPrice;
+        acc.byBrand[film.brand] = (acc.byBrand[film.brand] || 0) + totalPrice;
       }
       return acc;
     },

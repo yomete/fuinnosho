@@ -20,12 +20,12 @@ interface FilmStatisticsProps {
 
 export default function FilmStatistics({ films }: FilmStatisticsProps) {
   const typeCount = films.reduce((acc, film) => {
-    acc[film.type] = (acc[film.type] || 0) + 1;
+    acc[film.type] = (acc[film.type] || 0) + (film.count || 1);
     return acc;
   }, {} as Record<string, number>);
 
   const brandCount = films.reduce((acc, film) => {
-    acc[film.brand] = (acc[film.brand] || 0) + 1;
+    acc[film.brand] = (acc[film.brand] || 0) + (film.count || 1);
     return acc;
   }, {} as Record<string, number>);
 
@@ -82,7 +82,9 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
             </div>
             <div>
               <h4 className="text-sm font-medium mb-2">Total Films</h4>
-              <p className="text-2xl font-bold">{films.length}</p>
+              <p className="text-2xl font-bold">
+                {films.reduce((sum, film) => sum + (film.count || 1), 0)}
+              </p>
             </div>
           </div>
         </CardContent>

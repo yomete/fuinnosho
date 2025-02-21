@@ -4,6 +4,7 @@ import { Film } from "../utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Camera, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 interface FilmInventoryGridProps {
   films: Film[];
@@ -36,13 +37,14 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
-                  Expires: {new Date(film.expiration_date).toLocaleDateString()}
+                  Expires:{" "}
+                  {format(new Date(film.expiration_date), "MMM d, yyyy")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
-                  Added: {new Date(film.created_at).toLocaleDateString()}
+                  Added: {format(new Date(film.created_at), "MMM d, yyyy")}
                 </span>
               </div>
             </div>

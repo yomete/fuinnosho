@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { format, addDays, differenceInDays } from "date-fns";
 
 interface ExpirationTimelineProps {
   films: Film[];
@@ -18,13 +19,12 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
   );
 
   const now = new Date();
-  const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const thirtyDaysFromNow = addDays(now, 30);
 
-  const expiringFilms = sortedFilms.filter(
-    (film) =>
-      new Date(film.expiration_date) <= thirtyDaysFromNow &&
-      new Date(film.expiration_date) >= now
-  );
+  const expiringFilms = sortedFilms.filter((film) => {
+    const expirationDate = new Date(film.expiration_date);
+    return expirationDate <= thirtyDaysFromNow && expirationDate >= now;
+  });
 
   return (
     <div className="p-4 space-y-4">
@@ -47,9 +47,9 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
             <div className="space-y-6">
               {sortedFilms.map((film) => {
                 const expirationDate = new Date(film.expiration_date);
-                const daysUntilExpiration = Math.ceil(
-                  (expirationDate.getTime() - now.getTime()) /
-                    (1000 * 60 * 60 * 24)
+                const daysUntilExpiration = differenceInDays(
+                  expirationDate,
+                  now
                 );
 
                 return (
@@ -74,7 +74,7 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
                           </span>
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Expires: {expirationDate.toLocaleDateString()}
+                          Expires: {format(expirationDate, "MMM d, yyyy")}
                         </p>
                       </div>
                       <Badge

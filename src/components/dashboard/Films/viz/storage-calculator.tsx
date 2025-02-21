@@ -15,6 +15,7 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
     (acc, film) => {
       const format =
         formatDimensions[film.format as keyof typeof formatDimensions];
+      const quantity = film.count || 1;
 
       if (format) {
         // Calculate approximate volume in cubic mm
@@ -27,9 +28,9 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
           volume *= format.sheetsPerBox * 0.3; // 0.3mm per sheet thickness
         }
 
-        acc.totalVolume += volume;
+        acc.totalVolume += volume * quantity;
         acc.formatCounts[film.format] =
-          (acc.formatCounts[film.format] || 0) + 1;
+          (acc.formatCounts[film.format] || 0) + quantity;
       }
 
       return acc;
@@ -38,6 +39,12 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
       totalVolume: 0,
       formatCounts: {} as Record<string, number>,
     }
+  );
+
+  // Get total count of all films
+  const totalFilmCount = films.reduce(
+    (sum, film) => sum + (film.count || 1),
+    0
   );
 
   // Convert volume to more readable units (cubic cm)
@@ -67,7 +74,7 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
                       <span>{count} items</span>
                     </div>
                     <Progress
-                      value={(count / films.length) * 100}
+                      value={(count / totalFilmCount) * 100}
                       className="h-2"
                     />
                   </div>
