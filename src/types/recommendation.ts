@@ -1,5 +1,3 @@
-import { Film } from "@/components/dashboard/Films/utils";
-
 export interface WeatherConditions {
   temperature: number;
   isOvercast: boolean;
@@ -13,9 +11,30 @@ export interface ShootingScenario {
   movement: "static" | "dynamic";
 }
 
+export interface FilmPreferences {
+  format: "35mm" | "120" | "large-format";
+  colorPreference: "color" | "black-and-white" | "either";
+  grainPreference: "fine" | "medium" | "chunky";
+  specialEffects: boolean;
+}
+
 export interface FilmRecommendation {
-  recommendedFilm: Film;
-  alternativeFilm?: Film;
+  recommendedFilm: {
+    name: string;
+    iso: number;
+    format: string;
+    type: "color" | "black-and-white";
+    grainCharacteristic: string;
+    specialEffectsCompatible?: boolean;
+  };
+  alternativeFilm?: {
+    name: string;
+    iso: number;
+    format: string;
+    type: "color" | "black-and-white";
+    grainCharacteristic: string;
+    specialEffectsCompatible?: boolean;
+  };
   reasoning: string;
   confidenceScore: number;
 }

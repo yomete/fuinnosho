@@ -17,6 +17,15 @@ import {
   WeatherConditions,
   ShootingScenario,
 } from "@/types/recommendation";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+
+interface FilmPreferences {
+  format: "35mm" | "120" | "large-format";
+  colorPreference: "color" | "black-and-white" | "either";
+  grainPreference: "fine" | "medium" | "chunky";
+  specialEffects: boolean;
+}
 
 const LoadingSpinner = () => {
   return (
@@ -40,6 +49,13 @@ export function FilmRecommendationWidget() {
     type: "portrait",
     environment: "outdoor",
     movement: "static",
+  });
+
+  const [preferences, setPreferences] = useState<FilmPreferences>({
+    format: "35mm",
+    colorPreference: "either",
+    grainPreference: "medium",
+    specialEffects: false,
   });
 
   async function handleGetRecommendation() {
@@ -119,6 +135,83 @@ export function FilmRecommendationWidget() {
               </Select>
 
               {/* Add other scenario inputs similarly */}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Film Preferences</h3>
+            <div className="grid gap-4">
+              <Select
+                value={preferences.format}
+                onValueChange={(value: "35mm" | "120" | "large-format") =>
+                  setPreferences((prev) => ({ ...prev, format: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Film Format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="35mm">35mm</SelectItem>
+                  <SelectItem value="120">Medium Format (120)</SelectItem>
+                  <SelectItem value="large-format">Large Format</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={preferences.colorPreference}
+                onValueChange={(
+                  value: "color" | "black-and-white" | "either"
+                ) =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    colorPreference: value,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Color Preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="color">Color Film</SelectItem>
+                  <SelectItem value="black-and-white">Black & White</SelectItem>
+                  <SelectItem value="either">No Preference</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={preferences.grainPreference}
+                onValueChange={(value: "fine" | "medium" | "chunky") =>
+                  setPreferences((prev) => ({
+                    ...prev,
+                    grainPreference: value,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Grain Preference" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fine">Fine Grain</SelectItem>
+                  <SelectItem value="medium">Medium Grain</SelectItem>
+                  <SelectItem value="chunky">Chunky Grain</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="special-effects"
+                  checked={preferences.specialEffects}
+                  onCheckedChange={(checked) =>
+                    setPreferences((prev) => ({
+                      ...prev,
+                      specialEffects: checked,
+                    }))
+                  }
+                />
+                <Label htmlFor="special-effects">
+                  Suitable for Special Effects/Cross-Processing
+                </Label>
+              </div>
             </div>
           </div>
 
