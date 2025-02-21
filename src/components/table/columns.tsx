@@ -1,8 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Film } from "@/components/dashboard/films/utils";
-import { EditFilm } from "@/components/dashboard/films/film-form/edit-form";
+import { Film } from "@/lib/utils";
+import { EditFilm } from "@/components/film-form/edit-form";
 
 export const columns: ColumnDef<Film>[] = [
   {
