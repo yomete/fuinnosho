@@ -122,3 +122,16 @@ export async function getFilms(): Promise<{
 
   return { data, error: null };
 }
+
+export async function getFilmById(id: string): Promise<Film | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.from("films").select("*").eq("id", id);
+
+  if (error) {
+    console.error("Error fetching film by ID:", error);
+    return null;
+  }
+
+  return data[0] || null;
+}

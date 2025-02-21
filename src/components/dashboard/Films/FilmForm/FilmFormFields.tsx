@@ -48,7 +48,6 @@ export function FilmFormFields({
 
   return (
     <>
-      <p>ssinsinsdsd</p>
       <Form {...form}>
         <form
           onSubmit={(e) => {

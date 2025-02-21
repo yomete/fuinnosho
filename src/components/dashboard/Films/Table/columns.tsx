@@ -34,6 +34,10 @@ export const columns: ColumnDef<Film>[] = [
     cell: ({ row }) => row.original.created_at,
   },
   {
+    header: "Count",
+    cell: ({ row }) => row.original.count,
+  },
+  {
     header: "Actions",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">

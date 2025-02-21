@@ -9,7 +9,7 @@ import InventoryValue from "./viz/inventory-value";
 import ISODistribution from "./viz/iso-distribution";
 import { getFilms } from "@/app/actions/films";
 import { FilmsClientWrapper } from "./FilmsClientWrapper";
-
+import { FilmRecommendationWidget } from "@/components/dashboard/film-recommendation";
 async function FilmsContent() {
   const { data: films, error } = await getFilms();
 
@@ -29,6 +29,7 @@ async function FilmsContent() {
       <StorageCalculator films={films} />
       <InventoryValue films={films} />
       <ISODistribution films={films} />
+      <FilmRecommendationWidget />
     </div>
   );
 }

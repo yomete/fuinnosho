@@ -3,7 +3,7 @@
 import { Film } from "../utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Camera, Clock } from "lucide-react";
+import { Calendar, Camera, Clock, Package } from "lucide-react";
 import { format } from "date-fns";
 
 interface FilmInventoryGridProps {
@@ -46,6 +46,10 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
                 <span className="text-sm">
                   Added: {format(new Date(film.created_at), "MMM d, yyyy")}
                 </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm">Count: {film.count}</span>
               </div>
             </div>
           </CardContent>
