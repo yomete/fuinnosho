@@ -194,6 +194,7 @@ export function FilmFormFields({
                         placeholder="Enter quantity"
                         type="number"
                         {...field}
+                        value={field.value ?? ""}
                         onChange={(e) => {
                           const value = e.target.value
                             ? parseInt(e.target.value, 10)
@@ -219,6 +220,7 @@ export function FilmFormFields({
                         type="number"
                         step="0.01"
                         {...field}
+                        value={field.value ?? ""}
                         onChange={(e) => {
                           const value = e.target.value
                             ? parseFloat(e.target.value)
@@ -253,18 +255,7 @@ export function FilmFormFields({
           </div>
 
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              onClick={(e) => {
-                console.log("Button clicked, current form state:", {
-                  isDirty: form.formState.isDirty,
-                  isValid: form.formState.isValid,
-                  errors: form.formState.errors,
-                  formValues: form.getValues(),
-                });
-              }}
-            >
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <span className="mr-2">{loadingText}</span>

@@ -22,10 +22,14 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
         let volume = format.width * format.height;
         if (film.format === "35mm" || film.format === "120") {
           // Add thickness for roll film (approximate)
-          volume *= format.rollLength * 0.2; // 0.2mm per frame thickness
+          if ("rollLength" in format) {
+            volume *= format.rollLength * 0.2; // 0.2mm per frame thickness
+          }
         } else {
           // Sheet film
-          volume *= format.sheetsPerBox * 0.3; // 0.3mm per sheet thickness
+          if ("sheetsPerBox" in format) {
+            volume *= format.sheetsPerBox * 0.3; // 0.3mm per sheet thickness
+          }
         }
 
         acc.totalVolume += volume * quantity;
