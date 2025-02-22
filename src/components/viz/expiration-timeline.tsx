@@ -27,6 +27,11 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
   const now = new Date();
   const thirtyDaysFromNow = addDays(now, 30);
 
+  const expiredFilms = sortedFilms.filter((film) => {
+    const expirationDate = new Date(film.expiration_date);
+    return expirationDate < now;
+  });
+
   const expiringFilms = sortedFilms.filter((film) => {
     const expirationDate = new Date(film.expiration_date);
     return expirationDate <= thirtyDaysFromNow && expirationDate >= now;
@@ -34,13 +39,30 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
 
   return (
     <div className="p-4 space-y-4">
-      {expiringFilms.length > 0 && (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            You have {expiringFilms.length} film(s) expiring in the next 30 days
-          </AlertDescription>
-        </Alert>
+      {(expiredFilms.length > 0 || expiringFilms.length > 0) && (
+        <div className="space-y-3">
+          {expiredFilms.length > 0 && (
+            <Alert variant="destructive" className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 mt-[1px]" />
+                <AlertDescription className="mt-0 flex-1">
+                  You have {expiredFilms.length} expired film(s)
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
+          {expiringFilms.length > 0 && (
+            <Alert className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 mt-[1px]" />
+                <AlertDescription className="mt-0 flex-1">
+                  You have {expiringFilms.length} film(s) expiring in the next
+                  30 days
+                </AlertDescription>
+              </div>
+            </Alert>
+          )}
+        </div>
       )}
 
       <Card>
