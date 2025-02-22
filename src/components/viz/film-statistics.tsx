@@ -44,7 +44,7 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
   };
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 p-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card className="col-span-full md:col-span-1">
         <CardHeader>
           <CardTitle>Film Types Distribution</CardTitle>

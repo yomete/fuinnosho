@@ -38,7 +38,7 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
   });
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="space-y-4">
       {(expiredFilms.length > 0 || expiringFilms.length > 0) && (
         <div className="space-y-3">
           {expiredFilms.length > 0 && (
