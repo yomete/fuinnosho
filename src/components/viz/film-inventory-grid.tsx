@@ -14,7 +14,10 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {films.map((film) => (
-        <Card key={film.id} className="hover:shadow-lg transition-shadow">
+        <Card
+          key={film.id}
+          className="hover:shadow-lg transition-all duration-300 animate-in fade-in-50 slide-in-from-bottom-5"
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex flex-col">
               <h3 className="font-bold text-lg">{film.name}</h3>

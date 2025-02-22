@@ -34,10 +34,33 @@ const TableOrGrid = ({ films }: { films: Film[] }) => {
         </div>
       </div>
 
-      {view === "table" ? (
-        <DataTable films={films} />
-      ) : (
-        <FilmInventoryGrid films={films} />
+      {view === "grid" && (
+        <div
+          className={`
+        transition-all duration-300 ease-in-out
+        ${
+          view === "grid"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
+        }
+      `}
+        >
+          <FilmInventoryGrid films={films} />
+        </div>
+      )}
+      {view === "table" && (
+        <div
+          className={`
+        transition-all duration-300 ease-in-out
+        ${
+          view === "table"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
+        }
+      `}
+        >
+          <DataTable films={films} />
+        </div>
       )}
     </div>
   );

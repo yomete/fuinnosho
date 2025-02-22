@@ -12,21 +12,20 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-
   // Protected routes
-  const protectedRoutes = [
-    "/dashboard",
-    "/inventory",
-    "/recommendations",
-    "/profile",
-  ];
+  const protectedRoutes = ["/films", "/profile"];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
 
   // Auth routes (login/register)
-  const authRoutes = ["/login", "/register"];
+  const authRoutes = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/update-password",
+  ];
   const isAuthRoute = authRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   );
@@ -38,7 +37,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect if accessing auth routes with session
   if (isAuthRoute && user) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/films", request.url));
   }
 
   return res;
@@ -46,11 +45,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/inventory/:path*",
-    "/recommendations/:path*",
+    "/films/:path*",
     "/profile/:path*",
     "/login",
     "/register",
+    "/forgot-password",
+    "/update-password",
   ],
 };

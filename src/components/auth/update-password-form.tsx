@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -16,42 +15,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const formSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters long.",
-  }),
-});
+const formSchema = z
+  .object({
+    password: z.string().min(8, {
+      message: "Password must be at least 8 characters long.",
+    }),
+    passwordConfirmation: z.string().min(8, {
+      message: "Password must be at least 8 characters long.",
+    }),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: "Passwords don't match",
+    path: ["passwordConfirmation"],
+  });
 
-export function LoginForm() {
+export function UpdatePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = new URLSearchParams(window.location.search);
+  const code = searchParams.get("code");
+  const email = searchParams.get("email");
+
+  // Redirect if no code is present
+  useEffect(() => {
+    if (!code) {
+      router.push("/login");
+      toast.error("Invalid password reset link");
+    }
+  }, [code, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
       password: "",
+      passwordConfirmation: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
+      // First verify the OTP
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        type: "recovery",
+        token: code!,
+        email: email!,
+      });
+
+      if (verifyError) throw verifyError;
+
+      // Then update the password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: values.password,
       });
-      if (error) throw error;
-      toast.success("Logged in successfully!");
-      router.refresh();
+
+      if (updateError) throw updateError;
+
+      toast.success("Password updated successfully!");
+      router.push("/login");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -62,41 +88,20 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Update Password
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/register"
-            className="text-primary underline underline-offset-4 hover:text-primary/90"
-          >
-            Register
-          </Link>
+          Enter your new password below.
         </p>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-4">
             <div>
-              <Label className="text-xs text-muted-foreground">Email</Label>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="john@doe.com"
-                        className="h-12 bg-muted/50 border-0"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Password</Label>
+              <Label className="text-xs text-muted-foreground">
+                New Password
+              </Label>
               <FormField
                 control={form.control}
                 name="password"
@@ -115,21 +120,38 @@ export function LoginForm() {
                 )}
               />
             </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Confirm Password
+              </Label>
+              <FormField
+                control={form.control}
+                name="passwordConfirmation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 bg-muted/50 border-0"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
           <Button type="submit" className="w-full h-12" disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Update Password"
+            )}
           </Button>
         </form>
       </Form>
-      <div className="text-sm text-muted-foreground">
-        Forgot your password?{" "}
-        <Link
-          href="/forgot-password"
-          className="text-primary underline underline-offset-4 hover:text-primary/90"
-        >
-          Get a new one here.
-        </Link>
-      </div>
     </div>
   );
 }

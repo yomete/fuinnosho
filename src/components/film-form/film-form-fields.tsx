@@ -28,6 +28,7 @@ interface FilmFormFieldsProps {
   isSubmitting: boolean;
   submitText: string;
   loadingText: string;
+  deleteButton?: React.ReactNode;
 }
 
 export function FilmFormFields({
@@ -36,6 +37,7 @@ export function FilmFormFields({
   isSubmitting,
   submitText,
   loadingText,
+  deleteButton,
 }: FilmFormFieldsProps) {
   const handleSubmit = async (values: FilmSchema) => {
     await onSubmit(values);
@@ -248,7 +250,8 @@ export function FilmFormFields({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex justify-between">
+            {deleteButton}
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>

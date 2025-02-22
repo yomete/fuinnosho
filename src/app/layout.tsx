@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "sonner";
+import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
       >
         <ThemeProvider
           attribute="class"
@@ -37,10 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="fixed top-4 right-4 z-50">
+          <div className="fixed flex items-center gap-2 top-4 right-4 z-50">
+            <NavUserIconWrapper />
             <ThemeToggle />
           </div>
-          {children}
+          <main className="pb-16">{children}</main>
+          {/* <Footer /> */}
           <Toaster />
         </ThemeProvider>
       </body>

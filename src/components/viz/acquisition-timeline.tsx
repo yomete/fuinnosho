@@ -81,6 +81,8 @@ export default function AcquisitionTimeline({
                   stroke={brandColors[brand as keyof typeof brandColors]}
                   strokeWidth={2}
                   dot={{ r: 4 }}
+                  animationDuration={2000}
+                  animationEasing="ease-in-out"
                 />
               ))}
             </LineChart>

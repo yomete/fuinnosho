@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { editFilm } from "@/app/actions/films";
+import { deleteFilm, editFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
 import { type Film } from "@/lib/utils";
@@ -71,6 +71,29 @@ export function EditFilm({ film }: EditFilmProps) {
     }
   }
 
+  async function handleDelete(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log("Deleting film", film.id);
+    const result = await deleteFilm(film.id);
+    if (result.success) {
+      toast.success(result.message || "Film deleted successfully");
+    }
+  }
+
+  const DeleteFilmButton = () => {
+    return (
+      <Button 
+        type="button"
+        variant="destructive" 
+        onClick={handleDelete}
+      >
+        Delete
+      </Button>
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -89,6 +112,7 @@ export function EditFilm({ film }: EditFilmProps) {
           isSubmitting={isSubmitting}
           submitText="Edit Film"
           loadingText="Editing..."
+          deleteButton={<DeleteFilmButton />}
         />
       </DialogContent>
     </Dialog>

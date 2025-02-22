@@ -1,6 +1,6 @@
 "use server";
 
-import { Film } from "@/components/dashboard/films/utils";
+import { Film } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 
@@ -126,4 +126,41 @@ export async function getFilmById(id: string): Promise<Film | null> {
   }
 
   return data[0] || null;
+}
+
+export async function deleteFilm(id: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: Error;
+}> {
+  const supabase = await createClient();
+
+  // Check user authorization
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) throw new Error("Unauthorized");
+
+  console.log("🚀 ~ deleteFilm ~ user:", user);
+  console.log("🚀 ~ deleteFilm ~ userError:", userError);
+
+  console.log("🚀 ~ deleteFilm ~ id:", id);
+
+  const { error } = await supabase.from("films").delete().eq("id", id);
+
+  console.log("🚀 ~ deleteFilm ~ error:", error);
+
+  if (error) {
+    console.error("Error deleting film:", error);
+    return { success: false, error };
+  }
+
+  return { success: true, message: "Film deleted successfully" };
+}
+
+export async function logout() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
 }

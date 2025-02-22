@@ -79,7 +79,7 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
                     </div>
                     <Progress
                       value={(count / totalFilmCount) * 100}
-                      className="h-2"
+                      className="h-2 transition-all duration-700 ease-in-out"
                     />
                   </div>
                 )
@@ -92,7 +92,7 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
               Estimated Storage Volume
             </h4>
             <div className="grid gap-2">
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold animate-in fade-in-50 slide-in-from-bottom-5">
                 {totalVolumeCm3.toFixed(1)} cm³
               </div>
               <p className="text-sm text-muted-foreground">

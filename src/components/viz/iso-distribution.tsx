@@ -48,20 +48,36 @@ export default function IsoDistribution({ films }: IsoDistributionProps) {
               <XAxis
                 dataKey="iso"
                 label={{ value: "ISO Speed", position: "bottom" }}
+                stroke="hsl(var(--foreground))"
+                tick={{ fill: "hsl(var(--foreground))" }}
               />
               <YAxis
                 label={{
                   value: "Number of Films",
                   angle: -90,
                   position: "left",
+                  style: { fill: "hsl(var(--foreground))" },
+                }}
+                stroke="hsl(var(--foreground))"
+                tick={{ fill: "hsl(var(--foreground))" }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--background))",
+                  border: "1px solid hsl(var(--border))",
+                  color: "hsl(var(--foreground))",
                 }}
               />
-              <Tooltip />
-              <Bar dataKey="count" fill="hsl(var(--primary))" />
+              <Bar
+                dataKey="count"
+                fill="hsl(var(--primary))"
+                animationDuration={2000}
+                animationEasing="ease-in-out"
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="mt-4 text-sm text-muted-foreground">
+        <div className="mt-4 text-sm text-muted-foreground animate-in fade-in-50">
           Average ISO: {averageIso.toFixed(0)}
         </div>
       </CardContent>

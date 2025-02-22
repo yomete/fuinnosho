@@ -12,9 +12,11 @@ interface ExpirationTimelineProps {
 }
 
 const getPulseIntensity = (daysUntilExpiration: number) => {
-  if (daysUntilExpiration <= 30) return "animate-pulse-fast";
-  if (daysUntilExpiration <= 90) return "animate-pulse-medium";
-  return "animate-pulse-slow";
+  if (daysUntilExpiration <= 30)
+    return "animate-[pulse_1s_ease-in-out_infinite]";
+  if (daysUntilExpiration <= 90)
+    return "animate-[pulse_2s_ease-in-out_infinite]";
+  return "animate-[pulse_3s_ease-in-out_infinite]";
 };
 
 export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
@@ -73,7 +75,7 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
           <div className="relative">
             <div className="absolute left-3 h-full w-px bg-border" />
             <div className="space-y-6">
-              {sortedFilms.map((film) => {
+              {sortedFilms.map((film, index) => {
                 const expirationDate = new Date(film.expiration_date);
                 const daysUntilExpiration = differenceInDays(
                   expirationDate,
@@ -81,7 +83,14 @@ export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
                 );
 
                 return (
-                  <div key={film.id} className="relative pl-8">
+                  <div
+                    key={film.id}
+                    className="relative pl-8 animate-in slide-in-from-left-5"
+                    style={{
+                      animationDelay: `${index * 100}ms`,
+                      animationFillMode: "forwards",
+                    }}
+                  >
                     <div className="absolute left-0 w-6 h-6 rounded-full bg-background border flex items-center justify-center">
                       <div
                         className={`w-3 h-3 rounded-full ${

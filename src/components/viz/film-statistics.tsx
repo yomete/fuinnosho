@@ -2,17 +2,15 @@
 
 import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Doughnut } from "react-chartjs-2";
+import { Badge } from "@/components/ui/badge";
 import {
-  Chart as ChartJS,
-  ArcElement,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
   Tooltip,
   Legend,
-  CategoryScale,
-  LinearScale,
-} from "chart.js";
-import { Badge } from "@/components/ui/badge";
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale);
+} from "recharts";
 
 interface FilmStatisticsProps {
   films: Film[];
@@ -29,19 +27,17 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
     return acc;
   }, {} as Record<string, number>);
 
-  const chartData = {
-    labels: Object.keys(typeCount),
-    datasets: [
-      {
-        data: Object.values(typeCount),
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.8)",
-          "rgba(54, 162, 235, 0.8)",
-          "rgba(255, 206, 86, 0.8)",
-        ],
-      },
-    ],
-  };
+  // Convert typeCount to Recharts format
+  const typeData = Object.entries(typeCount).map(([name, value]) => ({
+    name,
+    value,
+  }));
+
+  const COLORS = [
+    "hsl(var(--primary))",
+    "hsl(var(--secondary))",
+    "hsl(var(--accent))",
+  ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -50,11 +46,31 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
           <CardTitle>Film Types Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px] flex items-center justify-center">
-            <Doughnut
-              data={chartData}
-              options={{ maintainAspectRatio: false }}
-            />
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={typeData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label
+                  animationDuration={2000}
+                  animationEasing="ease-in-out"
+                >
+                  {typeData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>

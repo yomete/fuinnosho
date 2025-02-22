@@ -4,15 +4,13 @@ import { ErrorBoundary } from "react-error-boundary";
 import { Suspense } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-
+import { Loader2 } from "lucide-react";
 // Loading component for Suspense fallback
-function LoadingState() {
+
+function FullScreenSpinner() {
   return (
-    <div className="space-y-8">
-      <Skeleton className="h-[400px] w-full" />
-      <Skeleton className="h-[300px] w-full" />
-      <Skeleton className="h-[200px] w-full" />
+    <div className="flex justify-center items-center h-screen">
+      <Loader2 className="h-4 w-4 animate-spin" />
     </div>
   );
 }
@@ -37,7 +35,7 @@ export function FilmsClientWrapper({
 }) {
   return (
     <ErrorBoundary FallbackComponent={ErrorState}>
-      <Suspense fallback={<LoadingState />}>{children}</Suspense>
+      <Suspense fallback={<FullScreenSpinner />}>{children}</Suspense>
     </ErrorBoundary>
   );
 }

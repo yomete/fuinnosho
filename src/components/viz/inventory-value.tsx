@@ -84,6 +84,8 @@ export default function InventoryValue({ films }: InventoryValueProps) {
                     cy="50%"
                     outerRadius={80}
                     label
+                    animationDuration={2000}
+                    animationEasing="ease-in-out"
                   >
                     {typeData.map((entry, index) => (
                       <Cell
@@ -106,7 +108,7 @@ export default function InventoryValue({ films }: InventoryValueProps) {
               <h4 className="text-sm font-medium mb-2">
                 Total Inventory Value
               </h4>
-              <div className="text-3xl font-bold">
+              <div className="text-3xl font-bold animate-in fade-in-50 slide-in-from-bottom-5">
                 ${valueMetrics.totalValue.toFixed(2)}
               </div>
             </div>

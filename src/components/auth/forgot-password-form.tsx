@@ -24,12 +24,9 @@ const formSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters long.",
-  }),
 });
 
-export function LoginForm() {
+export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
   const router = useRouter();
@@ -38,19 +35,20 @@ export function LoginForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        values.email,
+        {
+          redirectTo: `${window.location.origin}/update-password?email=${values.email}`,
+        }
+      );
       if (error) throw error;
-      toast.success("Logged in successfully!");
+      toast.success("Password reset email sent!");
       router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "An error occurred");
@@ -62,16 +60,9 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-sm space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
-        <p className="text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/register"
-            className="text-primary underline underline-offset-4 hover:text-primary/90"
-          >
-            Register
-          </Link>
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Forgot Password
+        </h1>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -95,39 +86,22 @@ export function LoginForm() {
                 )}
               />
             </div>
-            <div>
-              <Label className="text-xs text-muted-foreground">Password</Label>
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        className="h-12 bg-muted/50 border-0"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
           </div>
           <Button type="submit" className="w-full h-12" disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
+            {isLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              "Get Reset Link"
+            )}
           </Button>
         </form>
       </Form>
       <div className="text-sm text-muted-foreground">
-        Forgot your password?{" "}
         <Link
-          href="/forgot-password"
+          href="/login"
           className="text-primary underline underline-offset-4 hover:text-primary/90"
         >
-          Get a new one here.
+          Go back to login.
         </Link>
       </div>
     </div>
