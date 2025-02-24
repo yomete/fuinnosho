@@ -5,7 +5,7 @@ const NavUserIconWrapper = async () => {
   const { user } = await getUser();
   console.log("🚀 ~ NavUserIconWrapper ~ user:", user);
 
-  return <NavUserIcon user={user} />;
+  return user?.user ? <NavUserIcon user={user.user} /> : null;
 };
 
 export default NavUserIconWrapper;

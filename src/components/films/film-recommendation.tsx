@@ -62,7 +62,7 @@ export function FilmRecommendationWidget() {
     try {
       setIsLoading(true);
       const result = await getFilmRecommendation(weather, scenario);
-      setRecommendation(result);
+      setRecommendation(result as unknown as FilmRecommendation);
     } catch (error) {
       console.error(error);
       // You might want to add toast notification here

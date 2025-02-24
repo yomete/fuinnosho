@@ -13,11 +13,9 @@ import { useState } from "react";
 
 interface NavUserIconProps {
   user: {
-    user: {
-      email: string;
-      id: string;
-    } | null;
-  };
+    email?: string;
+    id: string;
+  } | null;
 }
 
 const COLORS = [
@@ -47,9 +45,9 @@ const NavUserIcon = ({ user }: NavUserIconProps) => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  if (!user?.user) return null;
+  if (!user) return null;
 
-  const backgroundColor = getColorFromString(user.user.id);
+  const backgroundColor = getColorFromString(user.id);
 
   const handleLogout = async () => {
     try {

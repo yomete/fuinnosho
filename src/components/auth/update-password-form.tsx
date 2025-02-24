@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -37,7 +37,7 @@ export function UpdatePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
   const router = useRouter();
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const email = searchParams.get("email");
 
