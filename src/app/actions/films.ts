@@ -143,14 +143,7 @@ export async function deleteFilm(id: string): Promise<{
 
   if (userError || !user) throw new Error("Unauthorized");
 
-  console.log("🚀 ~ deleteFilm ~ user:", user);
-  console.log("🚀 ~ deleteFilm ~ userError:", userError);
-
-  console.log("🚀 ~ deleteFilm ~ id:", id);
-
   const { error } = await supabase.from("films").delete().eq("id", id);
-
-  console.log("🚀 ~ deleteFilm ~ error:", error);
 
   if (error) {
     console.error("Error deleting film:", error);
