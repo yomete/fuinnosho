@@ -3,10 +3,12 @@
 import { Film } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { FilmSchema, filmSchema } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 interface CreateFilmResponse {
   success: boolean;
   error?: string;
+  film?: Film;
 }
 
 export async function editFilm(
@@ -14,15 +16,6 @@ export async function editFilm(
   data: FilmSchema
 ): Promise<CreateFilmResponse> {
   try {
-    const supabase = await createClient();
-
-    // Check user authorization
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-    if (userError || !user) throw new Error("Unauthorized");
-
     // Validate the data
     const validatedData = filmSchema.parse(data);
 
@@ -30,19 +23,31 @@ export async function editFilm(
     const processedData = {
       ...validatedData,
       iso: Number(validatedData.iso),
-      price: validatedData.price ? Number(validatedData.price) : null,
-      count: validatedData.count ? Number(validatedData.count) : null,
+      price: validatedData.price ? Number(validatedData.price) : undefined,
+      count: validatedData.count ? Number(validatedData.count) : undefined,
     };
 
+    // Create the updated film
+    const updatedFilm: Film = {
+      id,
+      barcode: `FUIN-${id.substring(0, 8)}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...processedData,
+    };
+
+    // Update in Supabase
+    const supabase = await createClient();
     const { error } = await supabase
       .from("films")
-      .update(processedData)
-      .eq("id", id)
-      .eq("user_id", user.id); // Ensure user can only update their own records
+      .update(updatedFilm)
+      .eq("id", id);
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-    return { success: true };
+    return { success: true, film: updatedFilm };
   } catch (error) {
     console.error("Error editing film:", error);
     return {
@@ -56,29 +61,32 @@ export async function createFilm(
   data: FilmSchema
 ): Promise<CreateFilmResponse> {
   try {
-    const supabase = await createClient();
-
-    // Get the current user's ID
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) throw new Error("Unauthorized");
-
     const validatedData = filmSchema.parse(data);
 
-    const { error } = await supabase.from("films").insert([
-      {
-        ...validatedData,
-        user_id: user.id,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    // Generate a unique ID for the film
+    const filmId = uuidv4();
 
-    if (error) throw error;
+    // Create film with ID and timestamp
+    const newFilm: Film = {
+      ...validatedData,
+      id: filmId,
+      barcode: `FUIN-${filmId.substring(0, 8)}`, // Generate a simple barcode
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      iso: Number(validatedData.iso),
+      price: validatedData.price ? Number(validatedData.price) : undefined,
+      count: validatedData.count ? Number(validatedData.count) : undefined,
+    };
 
-    return { success: true };
+    // Save to Supabase
+    const supabase = await createClient();
+    const { error } = await supabase.from("films").insert([newFilm]);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, film: newFilm };
   } catch (error) {
     console.error("Error creating film:", error);
     return {
@@ -92,40 +100,46 @@ export async function getFilms(): Promise<{
   data: Film[] | null;
   error: Error | null;
 }> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("films")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+    if (error) {
+      throw error;
+    }
 
-  if (userError || !user) throw new Error("Unauthorized");
-
-  const { data, error } = await supabase
-    .from("films")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
+    return { data, error: null };
+  } catch (error) {
     console.error("Error fetching films:", error);
-    return { data: null, error };
+    return {
+      data: null,
+      error:
+        error instanceof Error ? error : new Error("Failed to fetch films"),
+    };
   }
-
-  return { data, error: null };
 }
 
 export async function getFilmById(id: string): Promise<Film | null> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("films")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  const { data, error } = await supabase.from("films").select("*").eq("id", id);
+    if (error) {
+      throw error;
+    }
 
-  if (error) {
+    return data;
+  } catch (error) {
     console.error("Error fetching film by ID:", error);
     return null;
   }
-
-  return data[0] || null;
 }
 
 export async function deleteFilm(id: string): Promise<{
@@ -133,27 +147,53 @@ export async function deleteFilm(id: string): Promise<{
   message?: string;
   error?: Error;
 }> {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.from("films").delete().eq("id", id);
 
-  // Check user authorization
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+    if (error) {
+      throw error;
+    }
 
-  if (userError || !user) throw new Error("Unauthorized");
-
-  const { error } = await supabase.from("films").delete().eq("id", id);
-
-  if (error) {
+    return { success: true, message: "Film deleted successfully" };
+  } catch (error) {
     console.error("Error deleting film:", error);
-    return { success: false, error };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error : new Error("Failed to delete film"),
+    };
   }
-
-  return { success: true, message: "Film deleted successfully" };
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+}
+
+export async function syncFilms() {
+  try {
+    const supabase = await createClient();
+
+    // Get all films from Supabase
+    const { data: cloudFilms, error: fetchError } = await supabase
+      .from("films")
+      .select("*");
+
+    if (fetchError) {
+      throw new Error("Failed to fetch films from cloud");
+    }
+
+    // Return the cloud films to be handled by the client
+    return {
+      success: true,
+      films: cloudFilms || [],
+    };
+  } catch (error) {
+    console.error("Error syncing films:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to sync films",
+    };
+  }
 }

@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "sonner";
 import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
 import { Analytics } from "@vercel/analytics/react";
+import { SyncButton } from "@/components/sync-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="fixed flex items-center gap-2 top-4 right-4 z-50">
+            <SyncButton />
             <NavUserIconWrapper />
             <ThemeToggle />
           </div>

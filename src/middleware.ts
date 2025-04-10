@@ -12,8 +12,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes
-  const protectedRoutes = ["/films", "/profile"];
+  // Protected routes that require authentication
+  const protectedRoutes = ["/profile", "/sync"];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
@@ -47,6 +47,7 @@ export const config = {
   matcher: [
     "/films/:path*",
     "/profile/:path*",
+    "/sync/:path*",
     "/login",
     "/register",
     "/forgot-password",

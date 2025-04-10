@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export type Film = {
+export interface Film {
   id: string;
   barcode: string;
   name: string;
@@ -16,10 +16,11 @@ export type Film = {
   type: string;
   expiration_date: string;
   created_at: string;
+  updated_at: string;
   price?: number;
   count?: number;
   notes?: string;
-};
+}
 
 // Add format dimensions for storage calculations
 export const formatDimensions = {
