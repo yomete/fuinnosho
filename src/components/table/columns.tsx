@@ -13,26 +13,34 @@ export const columns: ColumnDef<Film>[] = [
   {
     accessorKey: "brand",
     header: "Brand",
-    filterFn: "arrIncludesSome",
-    filterVariant: "select",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
   },
   {
     accessorKey: "iso",
     header: "ISO",
-    filterFn: "equals",
-    filterVariant: "select",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
   },
   {
     accessorKey: "format",
     header: "Format",
-    filterFn: "arrIncludesSome",
-    filterVariant: "select",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
   },
   {
     accessorKey: "type",
     header: "Type",
-    filterFn: "arrIncludesSome",
-    filterVariant: "select",
+    filterFn: (row, columnId, filterValue) => {
+      if (!filterValue || filterValue.length === 0) return true;
+      return filterValue.includes(row.getValue(columnId));
+    },
   },
   {
     accessorKey: "expiration_date",
