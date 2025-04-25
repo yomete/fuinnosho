@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function middleware(request: NextRequest) {
   const res = await updateSession(request);
 
+  // only if there's a property shuold we check for the supabase user
+  // if not, redirect to the films page.
+
   const supabase = await createClient();
 
   const {
@@ -31,9 +34,10 @@ export async function middleware(request: NextRequest) {
   );
 
   // Redirect if accessing protected route without session
-  if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  // temp commenting out
+  // if (isProtectedRoute && !user) {
+  //   return NextResponse.redirect(new URL("/login", request.url));
+  // }
 
   // Redirect if accessing auth routes with session
   if (isAuthRoute && user) {

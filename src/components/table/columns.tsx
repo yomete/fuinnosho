@@ -6,38 +6,63 @@ import { EditFilm } from "@/components/film-form/edit-form";
 
 export const columns: ColumnDef<Film>[] = [
   {
+    accessorKey: "name",
     header: "Name",
-    cell: ({ row }) => row.original.name,
+    filterFn: "includesString",
   },
   {
+    accessorKey: "brand",
     header: "Brand",
-    cell: ({ row }) => row.original.brand,
+    filterFn: "arrIncludesSome",
+    filterVariant: "select",
   },
   {
+    accessorKey: "iso",
     header: "ISO",
-    cell: ({ row }) => row.original.iso,
+    filterFn: "equals",
+    filterVariant: "select",
   },
   {
+    accessorKey: "format",
     header: "Format",
-    cell: ({ row }) => row.original.format,
+    filterFn: "arrIncludesSome",
+    filterVariant: "select",
   },
   {
+    accessorKey: "type",
     header: "Type",
-    cell: ({ row }) => row.original.type,
+    filterFn: "arrIncludesSome",
+    filterVariant: "select",
   },
   {
+    accessorKey: "expiration_date",
     header: "Expiration Date",
-    cell: ({ row }) => row.original.expiration_date,
+    cell: ({ row }) =>
+      new Date(row.original.expiration_date).toLocaleDateString(),
+    sortingFn: (rowA, rowB) => {
+      return (
+        new Date(rowA.original.expiration_date).getTime() -
+        new Date(rowB.original.expiration_date).getTime()
+      );
+    },
   },
   {
+    accessorKey: "created_at",
     header: "Created At",
-    cell: ({ row }) => row.original.created_at,
+    cell: ({ row }) => new Date(row.original.created_at).toLocaleDateString(),
+    sortingFn: (rowA, rowB) => {
+      return (
+        new Date(rowA.original.created_at).getTime() -
+        new Date(rowB.original.created_at).getTime()
+      );
+    },
   },
   {
+    accessorKey: "count",
     header: "Count",
-    cell: ({ row }) => row.original.count,
   },
   {
+    id: "actions",
     header: "Actions",
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
