@@ -22,6 +22,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
+  console.log("isProtectedRoute", isProtectedRoute);
+
   // Auth routes (login/register)
   const authRoutes = [
     "/login",

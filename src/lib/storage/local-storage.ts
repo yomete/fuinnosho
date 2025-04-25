@@ -58,7 +58,7 @@ class LocalStorageService {
 
     const films = await this.db.getAll("films");
     return films.map(
-      ({ localUpdatedAt: _localUpdatedAt, synced: _synced, ...film }) => film
+      ({ localUpdatedAt: _localUpdatedAt, synced: _synced, ...film }) => film // eslint-disable-line @typescript-eslint/no-unused-vars
     );
   }
 
@@ -70,8 +70,8 @@ class LocalStorageService {
     if (!film) return null;
 
     const {
-      localUpdatedAt: _localUpdatedAt,
-      synced: _synced,
+      localUpdatedAt: _localUpdatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      synced: _synced, // eslint-disable-line @typescript-eslint/no-unused-vars
       ...filmData
     } = film;
     return filmData;
@@ -89,8 +89,8 @@ class LocalStorageService {
 
     await this.db.add("films", filmWithMetadata);
     const {
-      localUpdatedAt: _localUpdatedAt,
-      synced: _synced,
+      localUpdatedAt: _localUpdatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      synced: _synced, // eslint-disable-line @typescript-eslint/no-unused-vars
       ...filmData
     } = filmWithMetadata;
     return filmData;
@@ -108,8 +108,8 @@ class LocalStorageService {
 
     await this.db.put("films", filmWithMetadata);
     const {
-      localUpdatedAt: _localUpdatedAt,
-      synced: _synced,
+      localUpdatedAt: _localUpdatedAt, // eslint-disable-line @typescript-eslint/no-unused-vars
+      synced: _synced, // eslint-disable-line @typescript-eslint/no-unused-vars
       ...filmData
     } = filmWithMetadata;
     return filmData;
@@ -130,7 +130,7 @@ class LocalStorageService {
     return films
       .filter((film) => !film.synced)
       .map(
-        ({ localUpdatedAt: _localUpdatedAt, synced: _synced, ...film }) => film
+        ({ localUpdatedAt: _localUpdatedAt, synced: _synced, ...film }) => film // eslint-disable-line @typescript-eslint/no-unused-vars
       );
   }
 

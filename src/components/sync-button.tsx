@@ -46,13 +46,14 @@ export function SyncButton() {
       }
 
       // Merge films
-      const mergedFilms = mergeFilms(localFilms, result.films);
+      const mergedFilms = mergeFilms(localFilms, result.films ?? []);
 
       // Update local storage
       await saveFilms(mergedFilms);
 
       toast.success("Films synced successfully");
     } catch (error) {
+      console.error(error);
       toast.error("Failed to sync films");
     } finally {
       setIsLoading(false);

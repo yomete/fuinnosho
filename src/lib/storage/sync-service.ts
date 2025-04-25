@@ -1,5 +1,4 @@
 import { storageFactory } from "./storage-factory";
-import { Film } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
 class SyncService {
