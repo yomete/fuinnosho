@@ -18,6 +18,29 @@ interface FilmDB extends DBSchema {
   };
 }
 
+// No-op implementation for server-side
+const noopStorage = {
+  async initialize() {},
+  async getAllFilms(): Promise<Film[]> {
+    return [];
+  },
+  async getFilmById(): Promise<Film | null> {
+    return null;
+  },
+  async createFilm(film: Film): Promise<Film> {
+    return film;
+  },
+  async updateFilm(id: string, film: Film): Promise<Film> {
+    return film;
+  },
+  async deleteFilm(): Promise<void> {},
+  async getUnsyncedFilms(): Promise<Film[]> {
+    return [];
+  },
+  async markFilmAsSynced(): Promise<void> {},
+  async setAllFilms(): Promise<void> {},
+};
+
 class LocalStorageService {
   private db: IDBPDatabase<FilmDB> | null = null;
   private static instance: LocalStorageService;
@@ -30,6 +53,10 @@ class LocalStorageService {
 
   static getInstance(): LocalStorageService {
     if (!LocalStorageService.instance) {
+      if (typeof window === "undefined") {
+        // Return a no-op implementation for server-side
+        return noopStorage as unknown as LocalStorageService;
+      }
       LocalStorageService.instance = new LocalStorageService();
     }
     return LocalStorageService.instance;
