@@ -8,7 +8,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export interface Film {
   id: string;
-  barcode: string;
   name: string;
   brand: string;
   iso: number;
@@ -16,10 +15,18 @@ export interface Film {
   type: string;
   expiration_date: string;
   created_at: string;
-  updated_at: string;
+  user_id?: string;
   price?: number;
   count?: number;
   notes?: string;
+}
+
+export interface FilmUsage {
+  id: string;
+  film_id: string;
+  quantity: number;
+  usage_note: string;
+  created_at: string;
 }
 
 // Add format dimensions for storage calculations

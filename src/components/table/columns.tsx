@@ -3,6 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Film } from "@/lib/utils";
 import { EditFilm } from "@/components/film-form/edit-form";
+import { ReduceCountDialog } from "@/components/films/reduce-count-dialog";
+import { UsageHistoryDialog } from "@/components/films/usage-history-dialog";
 
 export const columns: ColumnDef<Film>[] = [
   {
@@ -75,6 +77,18 @@ export const columns: ColumnDef<Film>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <EditFilm film={row.original} />
+        {row.original.count !== undefined && row.original.count > 0 && (
+          <ReduceCountDialog
+            filmId={row.original.id}
+            filmName={row.original.name}
+            currentCount={row.original.count}
+          />
+        )}
+        <UsageHistoryDialog
+          filmId={row.original.id}
+          filmName={row.original.name}
+          currentCount={row.original.count}
+        />
       </div>
     ),
   },

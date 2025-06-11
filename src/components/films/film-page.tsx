@@ -3,6 +3,7 @@ import ExpirationTimeline from "@/components/viz/expiration-timeline";
 import StorageCalculator from "@/components/viz/storage-calculator";
 import InventoryValue from "@/components/viz/inventory-value";
 import ISODistribution from "@/components/viz/iso-distribution";
+import { FilmUsageStats } from "@/components/viz/film-usage-stats";
 import { getFilms } from "@/app/actions/films";
 import { FilmsClientWrapper } from "@/components/films/films-client-wrapper";
 import { FilmRecommendationWidget } from "@/components/films/film-recommendation";
@@ -25,8 +26,9 @@ async function FilmsContent() {
       <TableOrGrid films={films} />
 
       <Tabs defaultValue="overview" className="w-full p-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="usage">Usage</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="storage">Storage</TabsTrigger>
           <TabsTrigger value="analysis">Analysis</TabsTrigger>
@@ -34,6 +36,10 @@ async function FilmsContent() {
 
         <TabsContent value="overview">
           <FilmStatistics films={films} />
+        </TabsContent>
+
+        <TabsContent value="usage">
+          <FilmUsageStats films={films} />
         </TabsContent>
 
         <TabsContent value="timeline">

@@ -55,6 +55,8 @@ export function EditFilm({ film }: EditFilmProps) {
         notes,
       });
 
+      console.log("🚀 ~ onSubmit ~ result:", result);
+
       if (!result.success) {
         throw new Error(result.error || "Failed to edit film");
       }
@@ -74,7 +76,7 @@ export function EditFilm({ film }: EditFilmProps) {
   async function handleDelete(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     console.log("Deleting film", film.id);
     const result = await deleteFilm(film.id);
     if (result.success) {
@@ -84,11 +86,7 @@ export function EditFilm({ film }: EditFilmProps) {
 
   const DeleteFilmButton = () => {
     return (
-      <Button 
-        type="button"
-        variant="destructive" 
-        onClick={handleDelete}
-      >
+      <Button type="button" variant="destructive" onClick={handleDelete}>
         Delete
       </Button>
     );
