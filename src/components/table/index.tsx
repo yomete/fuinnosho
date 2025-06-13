@@ -11,7 +11,8 @@ import {
 } from "@tanstack/react-table";
 import { columns } from "./columns";
 import { type Film } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   Table,
@@ -34,8 +35,47 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 const DataTable = ({ films }: { films: Film[] }) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Initialize filters from URL only once
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+    const filters: ColumnFiltersState = [];
+    
+    // Name filter
+    const name = searchParams.get("name");
+    if (name) {
+      filters.push({ id: "name", value: name });
+    }
+    
+    // Brand filters
+    const brands = searchParams.get("brands");
+    if (brands) {
+      filters.push({ id: "brand", value: brands.split(",") });
+    }
+    
+    // Type filters
+    const types = searchParams.get("types");
+    if (types) {
+      filters.push({ id: "type", value: types.split(",") });
+    }
+    
+    // Format filters
+    const formats = searchParams.get("formats");
+    if (formats) {
+      filters.push({ id: "format", value: formats.split(",") });
+    }
+    
+    // ISO filters
+    const isos = searchParams.get("isos");
+    if (isos) {
+      filters.push({ id: "iso", value: isos.split(",").map(Number) });
+    }
+    
+    return filters;
+  });
 
   // Get unique values for filter options
   const uniqueBrands = Array.from(new Set(films.map((film) => film.brand)));
@@ -44,6 +84,33 @@ const DataTable = ({ films }: { films: Film[] }) => {
   const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort(
     (a, b) => a - b
   );
+
+  // Debounced URL update to prevent performance issues
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams();
+      
+      columnFilters.forEach((filter) => {
+        if (filter.id === "name" && filter.value) {
+          params.set("name", filter.value as string);
+        } else if (filter.id === "brand" && Array.isArray(filter.value) && filter.value.length > 0) {
+          params.set("brands", filter.value.join(","));
+        } else if (filter.id === "type" && Array.isArray(filter.value) && filter.value.length > 0) {
+          params.set("types", filter.value.join(","));
+        } else if (filter.id === "format" && Array.isArray(filter.value) && filter.value.length > 0) {
+          params.set("formats", filter.value.join(","));
+        } else if (filter.id === "iso" && Array.isArray(filter.value) && filter.value.length > 0) {
+          params.set("isos", filter.value.join(","));
+        }
+      });
+      
+      const search = params.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${pathname}${query}`, { scroll: false });
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [columnFilters, pathname, router]);
 
   const table = useReactTable({
     data: films,

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Providers } from "@/components/providers";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "sonner";
 import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
@@ -34,12 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <Providers>
           <div className="fixed flex items-center gap-2 top-4 right-4 z-50">
             <SyncButton />
             <NavUserIconWrapper />
@@ -49,7 +44,7 @@ export default function RootLayout({
           {/* <Footer /> */}
           <Toaster />
           <Analytics />
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

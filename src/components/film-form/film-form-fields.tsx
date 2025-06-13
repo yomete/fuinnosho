@@ -21,6 +21,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { FilmSchema } from "@/lib/utils";
+import { BrandAutocomplete } from "@/components/ui/brand-autocomplete";
 
 interface FilmFormFieldsProps {
   form: UseFormReturn<FilmSchema>;
@@ -77,7 +78,11 @@ export function FilmFormFields({
                   <FormItem>
                     <FormLabel>Brand</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter brand name" {...field} />
+                      <BrandAutocomplete
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="Enter brand name"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
