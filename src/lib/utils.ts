@@ -15,6 +15,7 @@ export interface Film {
   type: string;
   expiration_date: string;
   created_at: string;
+  updated_at: string;
   user_id?: string;
   price?: number;
   count?: number;

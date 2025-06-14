@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Film, FilmUsage } from "@/lib/utils";
+import { Film } from "@/lib/utils";
 import { getFilmUsageHistory } from "@/app/actions/films";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { TrendingDown, Package, Calendar, Activity } from "lucide-react";
@@ -39,12 +45,14 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
       if (data) {
         const totalUsed = data.reduce((sum, usage) => sum + usage.quantity, 0);
         const lastUsage = data.length > 0 ? new Date(data[0].created_at) : null;
-        
+
         // Calculate usage rate (rolls per month)
         let usageRate = 0;
         if (data.length > 0 && lastUsage) {
           const firstUsage = new Date(data[data.length - 1].created_at);
-          const monthsDiff = (lastUsage.getTime() - firstUsage.getTime()) / (1000 * 60 * 60 * 24 * 30);
+          const monthsDiff =
+            (lastUsage.getTime() - firstUsage.getTime()) /
+            (1000 * 60 * 60 * 24 * 30);
           usageRate = monthsDiff > 0 ? totalUsed / monthsDiff : totalUsed;
         }
 
@@ -67,7 +75,10 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
   };
 
   const mostUsedFilms = usageStats.slice(0, 5);
-  const totalUsageAcrossAllFilms = usageStats.reduce((sum, stat) => sum + stat.totalUsed, 0);
+  const totalUsageAcrossAllFilms = usageStats.reduce(
+    (sum, stat) => sum + stat.totalUsed,
+    0
+  );
 
   if (isLoading) {
     return (
@@ -110,7 +121,7 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
             <div className="space-y-2">
               <p className="text-sm font-medium">Active Films</p>
               <p className="text-2xl font-bold">
-                {usageStats.filter(s => s.totalUsed > 0).length}
+                {usageStats.filter((s) => s.totalUsed > 0).length}
               </p>
               <p className="text-xs text-muted-foreground">
                 Films with recorded usage
@@ -119,7 +130,11 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
             <div className="space-y-2">
               <p className="text-sm font-medium">Low Stock</p>
               <p className="text-2xl font-bold">
-                {usageStats.filter(s => s.currentStock <= 2 && s.currentStock > 0).length}
+                {
+                  usageStats.filter(
+                    (s) => s.currentStock <= 2 && s.currentStock > 0
+                  ).length
+                }
               </p>
               <p className="text-xs text-muted-foreground">
                 Films with 2 or fewer rolls
@@ -128,7 +143,7 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
             <div className="space-y-2">
               <p className="text-sm font-medium">Out of Stock</p>
               <p className="text-2xl font-bold">
-                {usageStats.filter(s => s.currentStock === 0).length}
+                {usageStats.filter((s) => s.currentStock === 0).length}
               </p>
               <p className="text-xs text-muted-foreground">
                 Films with no remaining stock
@@ -144,9 +159,7 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
             <TrendingDown className="h-5 w-5" />
             Most Used Films
           </CardTitle>
-          <CardDescription>
-            Top 5 films by total usage
-          </CardDescription>
+          <CardDescription>Top 5 films by total usage</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {mostUsedFilms.map((stat, index) => (
@@ -170,9 +183,8 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
                   {stat.totalUsed} rolls used
                 </span>
               </div>
-              <Progress 
-                value={(stat.totalUsed / totalUsageAcrossAllFilms) * 100} 
-                className="h-2"
+              <Progress
+                value={(stat.totalUsed / totalUsageAcrossAllFilms) * 100}
               />
               {stat.lastUsed && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">

@@ -78,6 +78,7 @@ export async function createFilm(
       ...validatedData,
       id: filmId,
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       user_id: user.id,
       iso: Number(validatedData.iso),
       price: validatedData.price ? Number(validatedData.price) : undefined,
