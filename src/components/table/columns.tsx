@@ -69,7 +69,27 @@ export const columns: ColumnDef<Film>[] = [
   },
   {
     accessorKey: "count",
-    header: "Count",
+    header: "Total Count",
+  },
+  {
+    accessorKey: "reserved_quantity",
+    header: "Reserved",
+    cell: ({ row }) => row.original.reserved_quantity || 0,
+  },
+  {
+    accessorKey: "available_count",
+    header: "Available for Shooting",
+    cell: ({ row }) => {
+      const available = row.original.available_count ?? 0;
+      const isLow = available <= 2 && available > 0;
+      const isEmpty = available === 0;
+      
+      return (
+        <span className={`font-medium ${isEmpty ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-600'}`}>
+          {available}
+        </span>
+      );
+    },
   },
   {
     id: "actions",

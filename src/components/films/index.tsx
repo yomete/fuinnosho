@@ -3,7 +3,7 @@ import ExpirationTimeline from "@/components/viz/expiration-timeline";
 import StorageCalculator from "@/components/viz/storage-calculator";
 import InventoryValue from "@/components/viz/inventory-value";
 import ISODistribution from "@/components/viz/iso-distribution";
-import { getFilms } from "@/app/actions/films";
+import { getFilmsWithAvailability } from "@/app/actions/trips";
 import { FilmsClientWrapper } from "@/components/films/films-client-wrapper";
 import { FilmRecommendationWidget } from "@/components/films/film-recommendation";
 import TableOrGrid from "@/components/viz/table-or-grid";
@@ -11,7 +11,7 @@ import { NewFilm } from "@/components/film-form/new-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 async function FilmsContent() {
-  const { data: films, error } = await getFilms();
+  const { data: films, error } = await getFilmsWithAvailability();
 
   if (error) throw error;
   if (!films) return null;

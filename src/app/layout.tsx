@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
 import { Analytics } from "@vercel/analytics/react";
 import { SyncButton } from "@/components/sync-button";
+import { Navigation } from "@/components/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
       >
         <Providers>
+          <Navigation />
           <div className="fixed flex items-center gap-2 top-4 right-4 z-50">
             <SyncButton />
             <NavUserIconWrapper />

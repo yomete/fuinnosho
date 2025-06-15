@@ -20,6 +20,10 @@ export interface Film {
   price?: number;
   count?: number;
   notes?: string;
+  // Optional availability fields for when using films_with_availability view
+  total_count?: number;
+  reserved_quantity?: number;
+  available_count?: number;
 }
 
 export interface FilmUsage {
@@ -27,6 +31,24 @@ export interface FilmUsage {
   film_id: string;
   quantity: number;
   usage_note: string;
+  created_at: string;
+}
+
+export interface Trip {
+  id: string;
+  title: string;
+  description: string;
+  trip_date: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+}
+
+export interface TripFilm {
+  id: string;
+  trip_id: string;
+  film_id: string;
+  quantity: number;
   created_at: string;
 }
 
@@ -50,3 +72,11 @@ export const filmSchema = z.object({
 });
 
 export type FilmSchema = z.infer<typeof filmSchema>;
+
+export const tripSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  trip_date: z.string().min(1),
+});
+
+export type TripSchema = z.infer<typeof tripSchema>;
