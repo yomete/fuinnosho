@@ -70,6 +70,22 @@ export const columns: ColumnDef<Film>[] = [
   {
     accessorKey: "count",
     header: "Total Count",
+    cell: ({ row }) => {
+      const film = row.original;
+      if (film.is_bulk_film) {
+        return (
+          <div className="space-y-1">
+            <div className="font-medium text-blue-600">
+              {film.bulk_quantity}× {film.bulk_length_meters}m bulk
+            </div>
+            <div className="text-sm text-muted-foreground">
+              ≈ {film.calculated_rolls} total rolls
+            </div>
+          </div>
+        );
+      }
+      return film.count || 0;
+    },
   },
   {
     accessorKey: "reserved_quantity",
@@ -80,9 +96,23 @@ export const columns: ColumnDef<Film>[] = [
     accessorKey: "available_count",
     header: "Available for Shooting",
     cell: ({ row }) => {
-      const available = row.original.available_count ?? 0;
+      const film = row.original;
+      const available = film.available_count ?? 0;
       const isLow = available <= 2 && available > 0;
       const isEmpty = available === 0;
+      
+      if (film.is_bulk_film) {
+        return (
+          <div className="space-y-1">
+            <span className={`font-medium ${isEmpty ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-600'}`}>
+              {available} rolls
+            </span>
+            <div className="text-xs text-muted-foreground">
+              from bulk
+            </div>
+          </div>
+        );
+      }
       
       return (
         <span className={`font-medium ${isEmpty ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-600'}`}>

@@ -26,6 +26,9 @@ export async function editFilm(
       iso: Number(validatedData.iso),
       price: validatedData.price ? Number(validatedData.price) : undefined,
       count: validatedData.count ? Number(validatedData.count) : undefined,
+      bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
+      bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
+      calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
     };
 
     // Update in Supabase (don't include id, created_at, or user_id in update)
@@ -83,6 +86,9 @@ export async function createFilm(
       iso: Number(validatedData.iso),
       price: validatedData.price ? Number(validatedData.price) : undefined,
       count: validatedData.count ? Number(validatedData.count) : undefined,
+      bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
+      bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
+      calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
     };
 
     // Save to Supabase

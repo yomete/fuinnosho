@@ -20,6 +20,11 @@ export interface Film {
   price?: number;
   count?: number;
   notes?: string;
+  // Bulk film fields
+  is_bulk_film?: boolean;
+  bulk_length_meters?: number;
+  bulk_quantity?: number;
+  calculated_rolls?: number;
   // Optional availability fields for when using films_with_availability view
   total_count?: number;
   reserved_quantity?: number;
@@ -54,9 +59,9 @@ export interface TripFilm {
 
 // Add format dimensions for storage calculations
 export const formatDimensions = {
-  "35mm": { width: 35, height: 24, unit: "mm", rollLength: 36 },
-  "120": { width: 60, height: 60, unit: "mm", rollLength: 12 },
-  "4x5": { width: 102, height: 127, unit: "mm", sheetsPerBox: 10 },
+  "35mm": { width: 35, height: 24, unit: "mm", rollLength: 36, bulkLengthPerRoll: 1.65 },
+  "120": { width: 60, height: 60, unit: "mm", rollLength: 12, bulkLengthPerRoll: 0.8 },
+  "4x5": { width: 102, height: 127, unit: "mm", sheetsPerBox: 10, bulkLengthPerRoll: 0 },
 };
 
 export const filmSchema = z.object({
@@ -69,6 +74,10 @@ export const filmSchema = z.object({
   price: z.number().nullable().optional(),
   count: z.number().nullable().optional(),
   notes: z.string().optional(),
+  is_bulk_film: z.boolean().optional(),
+  bulk_length_meters: z.number().positive().optional(),
+  bulk_quantity: z.number().positive().optional(),
+  calculated_rolls: z.number().optional(),
 });
 
 export type FilmSchema = z.infer<typeof filmSchema>;
@@ -80,3 +89,32 @@ export const tripSchema = z.object({
 });
 
 export type TripSchema = z.infer<typeof tripSchema>;
+
+// Bulk film calculation utilities
+export function calculateRollsFromBulkFilm(
+  bulkLengthMeters: number, 
+  format: string,
+  bulkQuantity: number = 1
+): number {
+  const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
+  
+  if (!formatInfo || formatInfo.bulkLengthPerRoll === 0) {
+    return 0;
+  }
+  
+  // Add 10% waste factor and round down to whole rolls
+  const wasteFactor = 0.9;
+  const rollsPerBulk = (bulkLengthMeters * wasteFactor) / formatInfo.bulkLengthPerRoll;
+  const totalRolls = Math.floor(rollsPerBulk) * bulkQuantity;
+  
+  return totalRolls;
+}
+
+export function getBulkFilmInfo(format: string) {
+  const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
+  return formatInfo ? {
+    supportsBulk: formatInfo.bulkLengthPerRoll > 0,
+    lengthPerRoll: formatInfo.bulkLengthPerRoll,
+    format: format
+  } : null;
+}

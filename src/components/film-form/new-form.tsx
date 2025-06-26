@@ -33,6 +33,10 @@ export function NewFilm() {
       count: 1,
       price: 0,
       notes: "",
+      is_bulk_film: false,
+      bulk_length_meters: undefined,
+      bulk_quantity: undefined,
+      calculated_rolls: undefined,
     },
   });
 
