@@ -1,0 +1,26 @@
+{
+  "name": "fuinnosho-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Fuinnosho film inventory management",
+  "type": "module",
+  "main": "dist/mcp-server.js",
+  "bin": {
+    "fuinnosho-mcp": "dist/mcp-server.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.mcp.json",
+    "dev": "tsx mcp-server.ts",
+    "start": "node dist/mcp-server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.48.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["mcp", "film", "inventory", "photography", "supabase"],
+  "license": "MIT"
+}

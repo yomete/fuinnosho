@@ -26,7 +26,6 @@ import {
   Search,
   Eraser
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface EnhancedFiltersProps {
   films: Film[];

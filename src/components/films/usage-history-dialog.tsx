@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getFilmUsageHistory } from "@/app/actions/films";
 import { FilmUsage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,20 +30,20 @@ export function UsageHistoryDialog({
   const [usageHistory, setUsageHistory] = useState<FilmUsage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      loadUsageHistory();
-    }
-  }, [open, filmId]);
-
-  const loadUsageHistory = async () => {
+  const loadUsageHistory = useCallback(async () => {
     setIsLoading(true);
     const result = await getFilmUsageHistory(filmId);
     if (result.data) {
       setUsageHistory(result.data);
     }
     setIsLoading(false);
-  };
+  }, [filmId]);
+
+  useEffect(() => {
+    if (open) {
+      loadUsageHistory();
+    }
+  }, [open, loadUsageHistory]);
 
   const totalUsed = usageHistory.reduce((sum, usage) => sum + usage.quantity, 0);
 

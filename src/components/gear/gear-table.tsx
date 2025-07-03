@@ -135,7 +135,7 @@ export function GearTable({ gear }: GearTableProps) {
 
         {filteredGear.length === 0 && searchTerm && (
           <div className="text-center py-8 text-muted-foreground">
-            No gear found matching "{searchTerm}"
+            No gear found matching &quot;{searchTerm}&quot;
           </div>
         )}
       </div>

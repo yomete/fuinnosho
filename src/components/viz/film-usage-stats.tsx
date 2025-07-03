@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Film } from "@/lib/utils";
 import { getFilmUsageHistory } from "@/app/actions/films";
 import {
@@ -32,11 +32,7 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
   const [usageStats, setUsageStats] = useState<UsageStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadAllUsageStats();
-  }, [films]);
-
-  const loadAllUsageStats = async () => {
+  const loadAllUsageStats = useCallback(async () => {
     setIsLoading(true);
     const stats: UsageStats[] = [];
 
@@ -72,7 +68,11 @@ export function FilmUsageStats({ films }: FilmUsageStatsProps) {
     stats.sort((a, b) => b.totalUsed - a.totalUsed);
     setUsageStats(stats);
     setIsLoading(false);
-  };
+  }, [films]);
+
+  useEffect(() => {
+    loadAllUsageStats();
+  }, [loadAllUsageStats]);
 
   const mostUsedFilms = usageStats.slice(0, 5);
   const totalUsageAcrossAllFilms = usageStats.reduce(

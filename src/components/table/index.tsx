@@ -22,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
 import { ArrowUpDown, Film as FilmIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/empty-state";
