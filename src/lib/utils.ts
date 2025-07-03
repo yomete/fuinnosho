@@ -57,6 +57,30 @@ export interface TripFilm {
   created_at: string;
 }
 
+export interface Gear {
+  id: string;
+  name: string;
+  brand: string;
+  type: 'camera' | 'lens' | 'flash' | 'accessory' | 'tripod' | 'filter' | 'bag';
+  model?: string;
+  serial_number?: string;
+  purchase_date?: string;
+  purchase_price?: number;
+  condition: 'excellent' | 'good' | 'fair' | 'poor';
+  notes?: string;
+  camera_id?: string;
+  created_at: string;
+  updated_at: string;
+  user_id?: string;
+}
+
+export interface TripGear {
+  id: string;
+  trip_id: string;
+  gear_id: string;
+  created_at: string;
+}
+
 // Add format dimensions for storage calculations
 export const formatDimensions = {
   "35mm": { width: 35, height: 24, unit: "mm", rollLength: 36, bulkLengthPerRoll: 1.65 },
@@ -89,6 +113,80 @@ export const tripSchema = z.object({
 });
 
 export type TripSchema = z.infer<typeof tripSchema>;
+
+export const gearSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  brand: z.string().min(1, "Brand is required"),
+  type: z.enum(['camera', 'lens', 'flash', 'accessory', 'tripod', 'filter', 'bag'], {
+    required_error: "Type is required",
+  }),
+  model: z.string().transform(val => val === '' ? undefined : val).optional(),
+  serial_number: z.string().transform(val => val === '' ? undefined : val).optional(),
+  purchase_date: z.string().transform(val => val === '' ? undefined : val).optional(),
+  purchase_price: z.number().positive().optional(),
+  condition: z.enum(['excellent', 'good', 'fair', 'poor'], {
+    required_error: "Condition is required",
+  }),
+  notes: z.string().transform(val => val === '' ? undefined : val).optional(),
+  camera_id: z.string().transform(val => val === '' || val === 'none' ? undefined : val).optional(),
+});
+
+export type GearSchema = z.infer<typeof gearSchema>;
+
+// Gear type options for forms and filters
+export const gearTypes = [
+  { value: 'camera', label: 'Camera' },
+  { value: 'lens', label: 'Lens' },
+  { value: 'flash', label: 'Flash' },
+  { value: 'accessory', label: 'Accessory' },
+  { value: 'tripod', label: 'Tripod' },
+  { value: 'filter', label: 'Filter' },
+  { value: 'bag', label: 'Bag' },
+] as const;
+
+export const gearConditions = [
+  { value: 'excellent', label: 'Excellent' },
+  { value: 'good', label: 'Good' },
+  { value: 'fair', label: 'Fair' },
+  { value: 'poor', label: 'Poor' },
+] as const;
+
+// Gear utility functions
+export function getConditionColor(condition: string): string {
+  switch (condition) {
+    case 'excellent':
+      return 'text-green-600 bg-green-50';
+    case 'good':
+      return 'text-blue-600 bg-blue-50';
+    case 'fair':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'poor':
+      return 'text-red-600 bg-red-50';
+    default:
+      return 'text-gray-600 bg-gray-50';
+  }
+}
+
+export function getGearTypeIcon(type: string): string {
+  switch (type) {
+    case 'camera':
+      return '📷';
+    case 'lens':
+      return '🔍';
+    case 'flash':
+      return '⚡';
+    case 'accessory':
+      return '🔧';
+    case 'tripod':
+      return '📐';
+    case 'filter':
+      return '🌟';
+    case 'bag':
+      return '👜';
+    default:
+      return '📦';
+  }
+}
 
 // Bulk film calculation utilities
 export function calculateRollsFromBulkFilm(

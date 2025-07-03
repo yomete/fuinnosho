@@ -23,16 +23,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Filter, X } from "lucide-react";
+import { ArrowUpDown, Film as FilmIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/empty-state";
+import { EnhancedFilters } from "./enhanced-filters";
 
 const DataTable = ({ films }: { films: Film[] }) => {
   const pathname = usePathname();
@@ -77,13 +71,6 @@ const DataTable = ({ films }: { films: Film[] }) => {
     return filters;
   });
 
-  // Get unique values for filter options
-  const uniqueBrands = Array.from(new Set(films.map((film) => film.brand)));
-  const uniqueTypes = Array.from(new Set(films.map((film) => film.type)));
-  const uniqueFormats = Array.from(new Set(films.map((film) => film.format)));
-  const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort(
-    (a, b) => a - b
-  );
 
   // Debounced URL update to prevent performance issues
   useEffect(() => {
@@ -157,188 +144,34 @@ const DataTable = ({ films }: { films: Film[] }) => {
     }
   };
 
+  const handleFiltersChange = (filters: {
+    name: string;
+    brands: string[];
+    types: string[];
+    formats: string[];
+    isos: number[];
+    isoRange: [number, number];
+  }) => {
+    table.getColumn("name")?.setFilterValue(filters.name);
+    table.getColumn("brand")?.setFilterValue(filters.brands.length > 0 ? filters.brands : undefined);
+    table.getColumn("type")?.setFilterValue(filters.types.length > 0 ? filters.types : undefined);
+    table.getColumn("format")?.setFilterValue(filters.formats.length > 0 ? filters.formats : undefined);
+    table.getColumn("iso")?.setFilterValue(filters.isos.length > 0 ? filters.isos : undefined);
+  };
+
+  const clearAllFilters = () => {
+    table.resetColumnFilters();
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1">
-                <Filter className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Filters
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuItem className="font-semibold">
-                Filter by Brand
-              </DropdownMenuItem>
-              {uniqueBrands.map((brand) => (
-                <DropdownMenuItem
-                  key={brand}
-                  onClick={() => {
-                    const currentFilters =
-                      (table
-                        .getColumn("brand")
-                        ?.getFilterValue() as string[]) ?? [];
-                    const newFilters = currentFilters.includes(brand)
-                      ? currentFilters.filter((b) => b !== brand)
-                      : [...currentFilters, brand];
-                    table.getColumn("brand")?.setFilterValue(newFilters);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        (
-                          (table
-                            .getColumn("brand")
-                            ?.getFilterValue() as string[]) ?? []
-                        ).includes(brand)
-                          ? "bg-primary"
-                          : "bg-muted"
-                      )}
-                    />
-                    {brand}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem className="font-semibold">
-                Filter by Type
-              </DropdownMenuItem>
-              {uniqueTypes.map((type) => (
-                <DropdownMenuItem
-                  key={type}
-                  onClick={() => {
-                    const currentFilters =
-                      (table.getColumn("type")?.getFilterValue() as string[]) ??
-                      [];
-                    const newFilters = currentFilters.includes(type)
-                      ? currentFilters.filter((t) => t !== type)
-                      : [...currentFilters, type];
-                    table.getColumn("type")?.setFilterValue(newFilters);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        (
-                          (table
-                            .getColumn("type")
-                            ?.getFilterValue() as string[]) ?? []
-                        ).includes(type)
-                          ? "bg-primary"
-                          : "bg-muted"
-                      )}
-                    />
-                    {type}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem className="font-semibold">
-                Filter by Format
-              </DropdownMenuItem>
-              {uniqueFormats.map((format) => (
-                <DropdownMenuItem
-                  key={format}
-                  onClick={() => {
-                    const currentFilters =
-                      (table
-                        .getColumn("format")
-                        ?.getFilterValue() as string[]) ?? [];
-                    const newFilters = currentFilters.includes(format)
-                      ? currentFilters.filter((f) => f !== format)
-                      : [...currentFilters, format];
-                    table.getColumn("format")?.setFilterValue(newFilters);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        (
-                          (table
-                            .getColumn("format")
-                            ?.getFilterValue() as string[]) ?? []
-                        ).includes(format)
-                          ? "bg-primary"
-                          : "bg-muted"
-                      )}
-                    />
-                    {format}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem className="font-semibold">
-                Filter by ISO
-              </DropdownMenuItem>
-              {uniqueIsos.map((iso) => (
-                <DropdownMenuItem
-                  key={iso}
-                  onClick={() => {
-                    const currentFilters =
-                      (table.getColumn("iso")?.getFilterValue() as number[]) ??
-                      [];
-                    const newFilters = currentFilters.includes(iso)
-                      ? currentFilters.filter((i) => i !== iso)
-                      : [...currentFilters, iso];
-                    table.getColumn("iso")?.setFilterValue(newFilters);
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        (
-                          (table
-                            .getColumn("iso")
-                            ?.getFilterValue() as number[]) ?? []
-                        ).includes(iso)
-                          ? "bg-primary"
-                          : "bg-muted"
-                      )}
-                    />
-                    {iso}
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        {activeFilters.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {activeFilters.map((filter, index) => (
-              <Badge
-                key={`${filter.column}-${filter.value}-${index}`}
-                variant="outline"
-                className="flex items-center gap-1"
-              >
-                <span className="font-medium">{filter.column}:</span>
-                <span>{filter.value}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4 hover:bg-transparent"
-                  onClick={() => removeFilter(filter.column, filter.value)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
+      <EnhancedFilters
+        films={films}
+        onFiltersChange={handleFiltersChange}
+        activeFilters={activeFilters}
+        onRemoveFilter={removeFilter}
+        onClearAllFilters={clearAllFilters}
+      />
       <div className="rounded-md border p-2">
         <Table>
           <TableHeader>
@@ -390,11 +223,12 @@ const DataTable = ({ films }: { films: Film[] }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
+                <TableCell colSpan={columns.length} className="p-0">
+                  <EmptyState
+                    icon={FilmIcon}
+                    title="No films found"
+                    description="Add films to your inventory or adjust your filters to see results."
+                  />
                 </TableCell>
               </TableRow>
             )}

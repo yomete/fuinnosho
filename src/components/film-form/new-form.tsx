@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -65,7 +66,10 @@ export function NewFilm() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Add Film</Button>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Film
+        </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[680px]">

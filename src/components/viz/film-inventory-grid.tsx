@@ -3,14 +3,25 @@
 import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Camera, Clock, Package } from "lucide-react";
+import { Calendar, Camera, Clock, Package, Film as FilmIcon } from "lucide-react";
 import { format } from "date-fns";
+import { EmptyState } from "@/components/empty-state";
 
 interface FilmInventoryGridProps {
   films: Film[];
 }
 
 export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
+  if (!films.length) {
+    return (
+      <EmptyState
+        icon={FilmIcon}
+        title="No films found"
+        description="Add films to your inventory or adjust your filters to see results."
+      />
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {films.map((film) => (

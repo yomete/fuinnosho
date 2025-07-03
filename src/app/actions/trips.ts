@@ -1,6 +1,6 @@
 "use server";
 
-import { Trip, TripFilm, TripSchema, tripSchema } from "@/lib/utils";
+import { Trip, TripFilm, TripGear, Gear, TripSchema, tripSchema } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
@@ -367,6 +367,180 @@ export async function getFilmsWithAvailability(): Promise<{
       data: null,
       error:
         error instanceof Error ? error : new Error("Failed to fetch films with availability"),
+    };
+  }
+}
+
+// Gear-related functions for trips
+
+export async function addGearToTrip(
+  tripId: string,
+  gearId: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    
+    // Check if this gear is already in the trip
+    const { data: existingTripGear } = await supabase
+      .from("trip_gear")
+      .select("*")
+      .eq("trip_id", tripId)
+      .eq("gear_id", gearId)
+      .single();
+
+    if (existingTripGear) {
+      return {
+        success: false,
+        error: "This gear is already reserved for this trip",
+      };
+    }
+
+    const tripGear: Omit<TripGear, "id" | "created_at"> = {
+      trip_id: tripId,
+      gear_id: gearId,
+    };
+
+    const { error } = await supabase.from("trip_gear").insert([tripGear]);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/trips");
+    revalidatePath("/gear");
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding gear to trip:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add gear to trip",
+    };
+  }
+}
+
+export async function removeGearFromTrip(
+  tripId: string,
+  gearId: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("trip_gear")
+      .delete()
+      .eq("trip_id", tripId)
+      .eq("gear_id", gearId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/trips");
+    revalidatePath("/gear");
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing gear from trip:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to remove gear from trip",
+    };
+  }
+}
+
+interface GearForTrip {
+  id: string;
+  name: string;
+  brand: string;
+  type: string;
+  model?: string;
+}
+
+export async function getTripWithGear(tripId: string): Promise<{
+  trip: Trip | null;
+  gear: GearForTrip[] | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
+    
+    // Get trip details
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("*")
+      .eq("id", tripId)
+      .single();
+
+    if (tripError) {
+      throw tripError;
+    }
+
+    // Get gear associated with this trip
+    const { data: tripGear, error: gearError } = await supabase
+      .from("trip_gear")
+      .select(`
+        gear (
+          id,
+          name,
+          brand,
+          type,
+          model
+        )
+      `)
+      .eq("trip_id", tripId);
+
+    if (gearError) {
+      throw gearError;
+    }
+
+    const gearForTrip: GearForTrip[] = tripGear?.map(tg => {
+      const gearData = tg.gear as unknown as GearForTrip;
+      return gearData;
+    }) || [];
+
+    return { 
+      trip, 
+      gear: gearForTrip, 
+      error: null 
+    };
+  } catch (error) {
+    console.error("Error fetching trip with gear:", error);
+    return {
+      trip: null,
+      gear: null,
+      error: error instanceof Error ? error.message : "Failed to fetch trip gear details",
+    };
+  }
+}
+
+export async function getAvailableGear(): Promise<{
+  data: Gear[] | null;
+  error: Error | null;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("gear")
+      .select("*")
+      .order("type", { ascending: true })
+      .order("brand", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error("Error fetching available gear:", error);
+    return {
+      data: null,
+      error:
+        error instanceof Error ? error : new Error("Failed to fetch available gear"),
     };
   }
 }

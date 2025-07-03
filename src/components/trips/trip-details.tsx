@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Trip } from "@/lib/utils";
-import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, deleteTrip, getFilmsWithAvailability } from "@/app/actions/trips";
+import { Trip, Gear, getGearTypeIcon } from "@/lib/utils";
+import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, deleteTrip, getFilmsWithAvailability, getTripWithGear, addGearToTrip, removeGearFromTrip, getAvailableGear } from "@/app/actions/trips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -45,20 +45,41 @@ interface FilmWithAvailability {
   available_count: number;
 }
 
+interface GearForTrip {
+  id: string;
+  name: string;
+  brand: string;
+  type: string;
+  model?: string;
+}
+
 export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const router = useRouter();
   const [tripFilms, setTripFilms] = useState<FilmWithReservedQuantity[]>([]);
   const [availableFilms, setAvailableFilms] = useState<FilmWithAvailability[]>([]);
+  const [tripGear, setTripGear] = useState<GearForTrip[]>([]);
+  const [availableGear, setAvailableGear] = useState<Gear[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilmId, setSelectedFilmId] = useState<string>("");
+  const [selectedGearId, setSelectedGearId] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
   const [isAddingFilm, setIsAddingFilm] = useState(false);
+  const [isAddingGear, setIsAddingGear] = useState(false);
 
   const loadTripData = useCallback(async () => {
-    const result = await getTripWithFilms(trip.id);
-    if (result.films) {
-      setTripFilms(result.films);
+    const [filmsResult, gearResult] = await Promise.all([
+      getTripWithFilms(trip.id),
+      getTripWithGear(trip.id)
+    ]);
+    
+    if (filmsResult.films) {
+      setTripFilms(filmsResult.films);
     }
+    
+    if (gearResult.gear) {
+      setTripGear(gearResult.gear);
+    }
+    
     setIsLoading(false);
   }, [trip.id]);
 
@@ -69,10 +90,25 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     }
   }, []);
 
+  const loadAvailableGear = useCallback(async () => {
+    const result = await getAvailableGear();
+    if (result.data) {
+      // Filter out gear that's already reserved for this trip
+      const filteredGear = result.data.filter(gear => 
+        !tripGear.some(reserved => reserved.id === gear.id)
+      );
+      setAvailableGear(filteredGear);
+    }
+  }, [tripGear]);
+
   useEffect(() => {
     loadTripData();
     loadAvailableFilms();
   }, [loadTripData, loadAvailableFilms]);
+
+  useEffect(() => {
+    loadAvailableGear();
+  }, [loadAvailableGear]);
 
   const handleAddFilm = async () => {
     if (!selectedFilmId || quantity < 1) return;
@@ -102,6 +138,29 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     if (result.success) {
       loadTripData();
       loadAvailableFilms();
+      router.refresh();
+    }
+  };
+
+  const handleAddGear = async () => {
+    if (!selectedGearId) return;
+    
+    setIsAddingGear(true);
+    const result = await addGearToTrip(trip.id, selectedGearId);
+    
+    if (result.success) {
+      setSelectedGearId("");
+      loadTripData();
+      router.refresh();
+    }
+    setIsAddingGear(false);
+  };
+
+  const handleRemoveGear = async (gearId: string) => {
+    const result = await removeGearFromTrip(trip.id, gearId);
+    
+    if (result.success) {
+      loadTripData();
       router.refresh();
     }
   };
@@ -245,6 +304,80 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemoveFilm(film.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Reserved Gear</CardTitle>
+                  <CardDescription>
+                    Photography gear you&apos;ve reserved for this trip
+                  </CardDescription>
+                </div>
+                {isUpcoming(trip.trip_date) && (
+                  <div className="flex items-center gap-2">
+                    <Select value={selectedGearId} onValueChange={setSelectedGearId}>
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select gear" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableGear.map((gear) => (
+                          <SelectItem key={gear.id} value={gear.id}>
+                            {getGearTypeIcon(gear.type)} {gear.brand} {gear.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleAddGear} 
+                      disabled={!selectedGearId || isAddingGear}
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Gear
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {tripGear.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No gear reserved for this trip yet</p>
+                  {isUpcoming(trip.trip_date) && (
+                    <p className="text-sm mt-2">Add gear using the selector above</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tripGear.map((gear) => (
+                    <div key={gear.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{getGearTypeIcon(gear.type)}</span>
+                        <div>
+                          <p className="font-medium">{gear.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {gear.brand} • {gear.type}{gear.model ? ` • ${gear.model}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {isUpcoming(trip.trip_date) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveGear(gear.id)}
                         >
                           <X className="h-4 w-4" />
                         </Button>

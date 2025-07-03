@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Film, MapPin } from "lucide-react";
+import { Film, MapPin, Camera } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -14,6 +14,12 @@ export function Navigation() {
       label: "Films",
       icon: Film,
       active: pathname.startsWith("/films"),
+    },
+    {
+      href: "/gear",
+      label: "Gear",
+      icon: Camera,
+      active: pathname.startsWith("/gear"),
     },
     {
       href: "/trips",

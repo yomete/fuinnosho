@@ -18,12 +18,17 @@ async function FilmsContent() {
   if (!films) return null;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex justify-end p-4">
+    <div className="container mx-auto py-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold">Films</h1>
+          <p className="text-muted-foreground">Manage your film inventory and track usage</p>
+        </div>
         <NewFilm />
       </div>
 
-      <TableOrGrid films={films} />
+      <div className="max-w-7xl mx-auto space-y-8">
+        <TableOrGrid films={films} />
 
       <Tabs defaultValue="overview" className="w-full p-4">
         <TabsList className="grid w-full grid-cols-5">
@@ -60,6 +65,7 @@ async function FilmsContent() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
