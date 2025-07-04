@@ -25,12 +25,21 @@ class FilmInventoryMCPServer {
         this.setupToolHandlers();
     }
     async authenticateSession() {
+        console.error("Starting authentication process...");
         try {
             // Option 1: Use service role key if available (bypasses RLS)
             const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
             if (serviceRoleKey) {
                 console.error("Using service role authentication");
-                this.supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey);
+                // Create service role client without making any network calls yet
+                this.supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, serviceRoleKey, {
+                    auth: {
+                        autoRefreshToken: false,
+                        persistSession: false,
+                        detectSessionInUrl: false
+                    }
+                });
+                console.error("Service role client created successfully");
                 return;
             }
             // Option 2: Use user credentials if available
@@ -38,15 +47,24 @@ class FilmInventoryMCPServer {
             const userPassword = process.env.MCP_USER_PASSWORD;
             if (userEmail && userPassword) {
                 console.error("Authenticating with user credentials");
-                const { error } = await this.supabase.auth.signInWithPassword({
-                    email: userEmail,
-                    password: userPassword
-                });
-                if (error) {
-                    console.error("Authentication failed:", error.message);
-                    return;
-                }
-                console.error("Successfully authenticated user session");
+                // Only try to authenticate if we absolutely need to
+                setTimeout(async () => {
+                    try {
+                        const { error } = await this.supabase.auth.signInWithPassword({
+                            email: userEmail,
+                            password: userPassword
+                        });
+                        if (error) {
+                            console.error("Authentication failed:", error.message);
+                        }
+                        else {
+                            console.error("Successfully authenticated user session");
+                        }
+                    }
+                    catch (authError) {
+                        console.error("Authentication error during deferred login:", authError);
+                    }
+                }, 1000); // Defer authentication by 1 second
                 return;
             }
             console.error("No authentication credentials provided - using anonymous access");
@@ -54,6 +72,7 @@ class FilmInventoryMCPServer {
         catch (error) {
             console.error("Authentication error:", error);
         }
+        console.error("Authentication process completed");
     }
     setupToolHandlers() {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -1879,11 +1898,17 @@ class FilmInventoryMCPServer {
         };
     }
     async run() {
-        // Authenticate before starting the server
-        await this.authenticateSession();
+        console.error("Starting MCP server...");
         const transport = new StdioServerTransport();
+        console.error("Transport created, connecting...");
         await this.server.connect(transport);
         console.error("Film Inventory MCP server running on stdio");
+        console.error("Server connected successfully, starting authentication...");
+        // Authenticate after the server starts with better error handling
+        this.authenticateSession().catch(error => {
+            console.error("Authentication failed during startup:", error);
+        });
+        console.error("Server ready to accept requests");
     }
 }
 const server = new FilmInventoryMCPServer();
