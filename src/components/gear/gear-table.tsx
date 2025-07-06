@@ -37,9 +37,9 @@ export function GearTable({ gear }: GearTableProps) {
 
   const formatPrice = (price?: number) => {
     if (!price) return "-";
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-EU", {
       style: "currency",
-      currency: "USD",
+      currency: "EUR",
     }).format(price);
   };
 

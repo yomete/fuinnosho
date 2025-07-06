@@ -95,7 +95,7 @@ export default function InventoryValue({ films }: InventoryValueProps) {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => `$${Number(value).toFixed(2)}`}
+                    formatter={(value) => `€${Number(value).toFixed(2)}`}
                   />
                   <Legend />
                 </PieChart>
@@ -109,7 +109,7 @@ export default function InventoryValue({ films }: InventoryValueProps) {
                 Total Inventory Value
               </h4>
               <div className="text-3xl font-bold animate-in fade-in-50 slide-in-from-bottom-5">
-                ${valueMetrics.totalValue.toFixed(2)}
+                €{valueMetrics.totalValue.toFixed(2)}
               </div>
             </div>
 
@@ -124,7 +124,7 @@ export default function InventoryValue({ films }: InventoryValueProps) {
                       className="flex justify-between items-center"
                     >
                       <span className="text-sm">{brand}</span>
-                      <Badge variant="secondary">${value.toFixed(2)}</Badge>
+                      <Badge variant="secondary">€{value.toFixed(2)}</Badge>
                     </div>
                   ))}
               </div>

@@ -57,7 +57,7 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${totalValue.toFixed(2)}
+              €{totalValue.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground">
               estimated value
@@ -71,7 +71,7 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${totalGear > 0 ? (totalValue / totalGear).toFixed(2) : '0.00'}
+              €{totalGear > 0 ? (totalValue / totalGear).toFixed(2) : '0.00'}
             </div>
             <p className="text-xs text-muted-foreground">
               per item

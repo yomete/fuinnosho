@@ -87,7 +87,7 @@ export function GearGrid({ gear }: GearGridProps) {
               {item.purchase_price && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Value</span>
-                  <span className="font-medium">${item.purchase_price.toFixed(2)}</span>
+                  <span className="font-medium">€{item.purchase_price.toFixed(2)}</span>
                 </div>
               )}
 
