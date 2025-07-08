@@ -113,31 +113,43 @@ const DataTable = ({ films }: { films: Film[] }) => {
   });
 
   const activeFilters = columnFilters.reduce((acc, filter) => {
-    if (Array.isArray(filter.value)) {
+    if (filter.value && typeof filter.value === 'object' && filter.value.not) {
+      filter.value.not.forEach((value: any) => {
+        acc.push({
+          column: filter.id,
+          value: value.toString(),
+          isNot: true,
+        });
+      });
+    } else if (Array.isArray(filter.value)) {
       filter.value.forEach((value) => {
         acc.push({
           column: filter.id,
           value: value.toString(),
+          isNot: false,
         });
       });
     } else if (filter.value) {
       acc.push({
         column: filter.id,
         value: filter.value.toString(),
+        isNot: false,
       });
     }
     return acc;
-  }, [] as { column: string; value: string }[]);
+  }, [] as { column: string; value: string; isNot: boolean }[]);
 
   const removeFilter = (column: string, value: string) => {
     const columnFilter = table.getColumn(column);
     if (!columnFilter) return;
 
     const currentFilters = columnFilter.getFilterValue();
-    if (Array.isArray(currentFilters)) {
-      columnFilter.setFilterValue(
-        currentFilters.filter((v) => v.toString() !== value)
-      );
+    if (currentFilters && typeof currentFilters === 'object' && currentFilters.not) {
+      const newNotFilters = currentFilters.not.filter((v: any) => v.toString() !== value);
+      columnFilter.setFilterValue(newNotFilters.length > 0 ? { not: newNotFilters } : undefined);
+    } else if (Array.isArray(currentFilters)) {
+      const newFilters = currentFilters.filter((v) => v.toString() !== value);
+      columnFilter.setFilterValue(newFilters.length > 0 ? newFilters : undefined);
     } else {
       columnFilter.setFilterValue("");
     }
@@ -150,12 +162,27 @@ const DataTable = ({ films }: { films: Film[] }) => {
     formats: string[];
     isos: number[];
     isoRange: [number, number];
+    notBrands: string[];
+    notTypes: string[];
+    notFormats: string[];
+    notIsos: number[];
   }) => {
     table.getColumn("name")?.setFilterValue(filters.name);
-    table.getColumn("brand")?.setFilterValue(filters.brands.length > 0 ? filters.brands : undefined);
-    table.getColumn("type")?.setFilterValue(filters.types.length > 0 ? filters.types : undefined);
-    table.getColumn("format")?.setFilterValue(filters.formats.length > 0 ? filters.formats : undefined);
-    table.getColumn("iso")?.setFilterValue(filters.isos.length > 0 ? filters.isos : undefined);
+    
+    // Handle regular and NOT filters
+    const brandFilter = filters.brands.length > 0 ? filters.brands : 
+                       filters.notBrands.length > 0 ? { not: filters.notBrands } : undefined;
+    const typeFilter = filters.types.length > 0 ? filters.types : 
+                      filters.notTypes.length > 0 ? { not: filters.notTypes } : undefined;
+    const formatFilter = filters.formats.length > 0 ? filters.formats : 
+                        filters.notFormats.length > 0 ? { not: filters.notFormats } : undefined;
+    const isoFilter = filters.isos.length > 0 ? filters.isos : 
+                     filters.notIsos.length > 0 ? { not: filters.notIsos } : undefined;
+    
+    table.getColumn("brand")?.setFilterValue(brandFilter);
+    table.getColumn("type")?.setFilterValue(typeFilter);
+    table.getColumn("format")?.setFilterValue(formatFilter);
+    table.getColumn("iso")?.setFilterValue(isoFilter);
   };
 
   const clearAllFilters = () => {

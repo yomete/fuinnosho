@@ -16,32 +16,48 @@ export const columns: ColumnDef<Film>[] = [
     accessorKey: "brand",
     header: "Brand",
     filterFn: (row, columnId, filterValue) => {
-      if (!filterValue || filterValue.length === 0) return true;
-      return filterValue.includes(row.getValue(columnId));
+      if (!filterValue) return true;
+      if (filterValue.not) {
+        return !filterValue.not.includes(row.getValue(columnId));
+      }
+      if (Array.isArray(filterValue) && filterValue.length === 0) return true;
+      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
     },
   },
   {
     accessorKey: "iso",
     header: "ISO",
     filterFn: (row, columnId, filterValue) => {
-      if (!filterValue || filterValue.length === 0) return true;
-      return filterValue.includes(row.getValue(columnId));
+      if (!filterValue) return true;
+      if (filterValue.not) {
+        return !filterValue.not.includes(row.getValue(columnId));
+      }
+      if (Array.isArray(filterValue) && filterValue.length === 0) return true;
+      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
     },
   },
   {
     accessorKey: "format",
     header: "Format",
     filterFn: (row, columnId, filterValue) => {
-      if (!filterValue || filterValue.length === 0) return true;
-      return filterValue.includes(row.getValue(columnId));
+      if (!filterValue) return true;
+      if (filterValue.not) {
+        return !filterValue.not.includes(row.getValue(columnId));
+      }
+      if (Array.isArray(filterValue) && filterValue.length === 0) return true;
+      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
     },
   },
   {
     accessorKey: "type",
     header: "Type",
     filterFn: (row, columnId, filterValue) => {
-      if (!filterValue || filterValue.length === 0) return true;
-      return filterValue.includes(row.getValue(columnId));
+      if (!filterValue) return true;
+      if (filterValue.not) {
+        return !filterValue.not.includes(row.getValue(columnId));
+      }
+      if (Array.isArray(filterValue) && filterValue.length === 0) return true;
+      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
     },
   },
   {
