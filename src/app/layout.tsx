@@ -42,7 +42,7 @@ export default function RootLayout({
             <NavUserIconWrapper />
             <ThemeToggle />
           </div>
-          <main className="pb-16">{children}</main>
+          <main className="pb-16 px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">{children}</main>
           {/* <Footer /> */}
           <Toaster />
           <Analytics />

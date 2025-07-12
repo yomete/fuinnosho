@@ -323,8 +323,8 @@ export function EnhancedFilters({
   return (
     <div className="flex flex-col gap-4">
       {/* Search and Filter Controls */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
+        <div className="relative flex-1 max-w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search films..."
@@ -336,9 +336,10 @@ export function EnhancedFilters({
         
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1">
+            <Button variant="outline" size="sm" className="h-9 gap-1 whitespace-nowrap">
               <Filter className="h-3.5 w-3.5" />
-              Advanced Filters
+              <span className="hidden sm:inline">Advanced Filters</span>
+              <span className="sm:hidden">Filters</span>
               {activeFilters.length > 0 && (
                 <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
                   {activeFilters.length}
@@ -346,7 +347,7 @@ export function EnhancedFilters({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="end">
+          <PopoverContent className="w-80 p-0" align="end" side="bottom" sideOffset={5}>
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Filter Options</h4>

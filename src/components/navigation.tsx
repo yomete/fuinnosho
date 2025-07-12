@@ -39,14 +39,14 @@ export function Navigation() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "flex items-center space-x-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors",
                 link.active
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted"
               )}
             >
               <Icon className="h-4 w-4" />
-              <span>{link.label}</span>
+              <span className="hidden sm:inline">{link.label}</span>
             </Link>
           );
         })}

@@ -40,13 +40,13 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Card className="col-span-full md:col-span-1">
+    <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+      <Card className="col-span-full sm:col-span-1">
         <CardHeader>
           <CardTitle>Film Types Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
+          <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

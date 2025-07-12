@@ -77,7 +77,7 @@ export function FilmFormFields({
           }}
           className="space-y-4"
         >
-          <div className="flex flex-col md:flex-row gap-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
             {/* Left Column */}
             <div className="flex-1 space-y-4">
               <FormField

@@ -17,19 +17,19 @@ async function FilmsContent() {
   if (!films) return null;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex justify-end p-4">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
+      <div className="flex justify-end p-2 sm:p-4">
         <NewFilm />
       </div>
 
       <TableOrGrid films={films} />
 
-      <Tabs defaultValue="overview" className="w-full p-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="storage">Storage</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+      <Tabs defaultValue="overview" className="w-full p-2 sm:p-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+          <TabsTrigger value="timeline" className="text-xs sm:text-sm">Timeline</TabsTrigger>
+          <TabsTrigger value="storage" className="text-xs sm:text-sm">Storage</TabsTrigger>
+          <TabsTrigger value="analysis" className="text-xs sm:text-sm">Analysis</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">

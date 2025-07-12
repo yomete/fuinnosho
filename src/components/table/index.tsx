@@ -190,7 +190,7 @@ const DataTable = ({ films }: { films: Film[] }) => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-4 p-2 sm:p-4">
       <EnhancedFilters
         films={films}
         onFiltersChange={handleFiltersChange}
@@ -198,8 +198,9 @@ const DataTable = ({ films }: { films: Film[] }) => {
         onRemoveFilter={removeFilter}
         onClearAllFilters={clearAllFilters}
       />
-      <div className="rounded-md border p-2">
-        <Table>
+      <div className="rounded-md border">
+        <div className="overflow-x-auto">
+          <Table className="min-w-[800px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -259,7 +260,8 @@ const DataTable = ({ films }: { films: Film[] }) => {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
     </div>
   );

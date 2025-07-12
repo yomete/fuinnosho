@@ -72,7 +72,7 @@ export function NewFilm() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[680px]">
+      <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Film</DialogTitle>
           <DialogDescription>Add a new film to the database.</DialogDescription>

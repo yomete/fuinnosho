@@ -36,8 +36,8 @@ export function TripsPage({ trips }: TripsPageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex justify-end p-4">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
+      <div className="flex justify-end p-2 sm:p-4">
         <Button onClick={() => setShowNewForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
           New Trip
