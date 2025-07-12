@@ -15,6 +15,96 @@ import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Edit, Minus, History } from "lucide-react";
 import { useState } from "react";
 
+const ActionsCell = ({ row }: { row: { original: Film } }) => {
+  const film = row.original;
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  return (
+    <div className="flex items-center">
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem 
+            onSelect={(event) => {
+              event.preventDefault();
+              setDropdownOpen(false);
+              // Small delay to ensure dropdown closes before dialog opens
+              setTimeout(() => {
+                const editButton = document.querySelector(`[data-edit-film="${film.id}"] button`);
+                if (editButton) {
+                  (editButton as HTMLElement).click();
+                }
+              }, 100);
+            }}
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          {film.count !== undefined && film.count > 0 && (
+            <DropdownMenuItem 
+              onSelect={(event) => {
+                event.preventDefault();
+                setDropdownOpen(false);
+                setTimeout(() => {
+                  const reduceButton = document.querySelector(`[data-reduce-film="${film.id}"] button`);
+                  if (reduceButton) {
+                    (reduceButton as HTMLElement).click();
+                  }
+                }, 100);
+              }}
+            >
+              <Minus className="mr-2 h-4 w-4" />
+              Use Film
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem 
+            onSelect={(event) => {
+              event.preventDefault();
+              setDropdownOpen(false);
+              setTimeout(() => {
+                const historyButton = document.querySelector(`[data-history-film="${film.id}"] button`);
+                if (historyButton) {
+                  (historyButton as HTMLElement).click();
+                }
+              }, 100);
+            }}
+          >
+            <History className="mr-2 h-4 w-4" />
+            History
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {/* Hidden dialog triggers with data attributes */}
+      <div style={{ position: 'absolute', left: '-9999px', opacity: 0 }}>
+        <div data-edit-film={film.id}>
+          <EditFilm film={film} />
+        </div>
+        {film.count !== undefined && film.count > 0 && (
+          <div data-reduce-film={film.id}>
+            <ReduceCountDialog
+              filmId={film.id}
+              filmName={film.name}
+              currentCount={film.count}
+            />
+          </div>
+        )}
+        <div data-history-film={film.id}>
+          <UsageHistoryDialog
+            filmId={film.id}
+            filmName={film.name}
+            currentCount={film.count}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const columns: ColumnDef<Film>[] = [
   {
     accessorKey: "name",
@@ -138,95 +228,6 @@ export const columns: ColumnDef<Film>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const film = row.original;
-      const [dropdownOpen, setDropdownOpen] = useState(false);
-
-      return (
-        <div className="flex items-center">
-          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem 
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setDropdownOpen(false);
-                  // Small delay to ensure dropdown closes before dialog opens
-                  setTimeout(() => {
-                    const editButton = document.querySelector(`[data-edit-film="${film.id}"] button`);
-                    if (editButton) {
-                      (editButton as HTMLElement).click();
-                    }
-                  }, 100);
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              {film.count !== undefined && film.count > 0 && (
-                <DropdownMenuItem 
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    setDropdownOpen(false);
-                    setTimeout(() => {
-                      const reduceButton = document.querySelector(`[data-reduce-film="${film.id}"] button`);
-                      if (reduceButton) {
-                        (reduceButton as HTMLElement).click();
-                      }
-                    }, 100);
-                  }}
-                >
-                  <Minus className="mr-2 h-4 w-4" />
-                  Use Film
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem 
-                onSelect={(event) => {
-                  event.preventDefault();
-                  setDropdownOpen(false);
-                  setTimeout(() => {
-                    const historyButton = document.querySelector(`[data-history-film="${film.id}"] button`);
-                    if (historyButton) {
-                      (historyButton as HTMLElement).click();
-                    }
-                  }, 100);
-                }}
-              >
-                <History className="mr-2 h-4 w-4" />
-                History
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Hidden dialog triggers with data attributes */}
-          <div style={{ position: 'absolute', left: '-9999px', opacity: 0 }}>
-            <div data-edit-film={film.id}>
-              <EditFilm film={film} />
-            </div>
-            {film.count !== undefined && film.count > 0 && (
-              <div data-reduce-film={film.id}>
-                <ReduceCountDialog
-                  filmId={film.id}
-                  filmName={film.name}
-                  currentCount={film.count}
-                />
-              </div>
-            )}
-            <div data-history-film={film.id}>
-              <UsageHistoryDialog
-                filmId={film.id}
-                filmName={film.name}
-                currentCount={film.count}
-              />
-            </div>
-          </div>
-        </div>
-      );
-    },
+    cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];

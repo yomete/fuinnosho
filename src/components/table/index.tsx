@@ -113,8 +113,8 @@ const DataTable = ({ films }: { films: Film[] }) => {
   });
 
   const activeFilters = columnFilters.reduce((acc, filter) => {
-    if (filter.value && typeof filter.value === 'object' && filter.value.not) {
-      filter.value.not.forEach((value: any) => {
+    if (filter.value && typeof filter.value === 'object' && 'not' in filter.value && filter.value.not) {
+      (filter.value.not as (string | number)[]).forEach((value: string | number) => {
         acc.push({
           column: filter.id,
           value: value.toString(),
@@ -144,8 +144,8 @@ const DataTable = ({ films }: { films: Film[] }) => {
     if (!columnFilter) return;
 
     const currentFilters = columnFilter.getFilterValue();
-    if (currentFilters && typeof currentFilters === 'object' && currentFilters.not) {
-      const newNotFilters = currentFilters.not.filter((v: any) => v.toString() !== value);
+    if (currentFilters && typeof currentFilters === 'object' && 'not' in currentFilters && currentFilters.not) {
+      const newNotFilters = (currentFilters.not as (string | number)[]).filter((v: string | number) => v.toString() !== value);
       columnFilter.setFilterValue(newNotFilters.length > 0 ? { not: newNotFilters } : undefined);
     } else if (Array.isArray(currentFilters)) {
       const newFilters = currentFilters.filter((v) => v.toString() !== value);
