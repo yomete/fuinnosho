@@ -20,6 +20,7 @@ export interface Film {
   price?: number;
   count?: number;
   notes?: string;
+  editing_notes?: string;
   // Bulk film fields
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
@@ -98,6 +99,7 @@ export const filmSchema = z.object({
   price: z.number().nullable().optional(),
   count: z.number().nullable().optional(),
   notes: z.string().optional(),
+  editing_notes: z.string().optional(),
   is_bulk_film: z.boolean().optional(),
   bulk_length_meters: z.number().positive().optional(),
   bulk_quantity: z.number().positive().optional(),

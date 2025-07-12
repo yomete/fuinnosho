@@ -386,6 +386,24 @@ export function FilmFormFields({
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="editing_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Editing Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Add editing tips for this film stock"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 

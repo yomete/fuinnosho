@@ -22,6 +22,7 @@ interface Film {
   price?: number;
   count?: number;
   notes?: string;
+  editing_notes?: string;
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
   bulk_quantity?: number;
@@ -335,6 +336,11 @@ class FilmInventoryMCPServer {
                 description: "Additional notes",
                 default: "",
               },
+              editing_notes: {
+                type: "string",
+                description: "Editing tips and notes for this film stock",
+                default: "",
+              },
               is_bulk_film: {
                 type: "boolean",
                 description: "Whether this is bulk film",
@@ -393,6 +399,10 @@ class FilmInventoryMCPServer {
               notes: {
                 type: "string",
                 description: "Additional notes",
+              },
+              editing_notes: {
+                type: "string",
+                description: "Editing tips and notes for this film stock",
               },
               is_bulk_film: {
                 type: "boolean",
@@ -1175,6 +1185,7 @@ class FilmInventoryMCPServer {
       count = 1,
       price,
       notes = "",
+      editing_notes = "",
       is_bulk_film = false,
       bulk_length_meters,
     } = args;
@@ -1192,6 +1203,7 @@ class FilmInventoryMCPServer {
       expiration_date,
       count,
       notes,
+      editing_notes,
       is_bulk_film,
     };
 

@@ -27,6 +27,7 @@ interface Film {
   price?: number;
   count?: number;
   notes?: string;
+  editing_notes?: string;
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
   bulk_quantity?: number;
