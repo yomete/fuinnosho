@@ -110,6 +110,7 @@ export async function getTrips(): Promise<{
       const reserved_film_count = tripFilms?.reduce((total, tf) => total + tf.quantity, 0) || 0;
       
       // Remove trip_films from the final object and add reserved_film_count
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { trip_films, ...tripData } = trip;
       return {
         ...tripData,

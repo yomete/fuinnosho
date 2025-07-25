@@ -115,8 +115,18 @@ const DataTable = ({ films }: { films: Film[] }) => {
     return () => clearTimeout(timeoutId);
   }, [columnFilters, pathname, router]);
 
+  // Filter films to hide zero quantity if enabled
+  const filteredFilms = hideZeroQuantity
+    ? films.filter(
+        (film) =>
+          (typeof film.available_count === "number"
+            ? film.available_count
+            : film.count || 0) > 0
+      )
+    : films;
+
   const table = useReactTable({
-    data: films,
+    data: filteredFilms,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -241,16 +251,6 @@ const DataTable = ({ films }: { films: Film[] }) => {
   const clearAllFilters = () => {
     table.resetColumnFilters();
   };
-
-  // Filter films to hide zero quantity if enabled
-  const filteredFilms = hideZeroQuantity
-    ? films.filter(
-        (film) =>
-          (typeof film.available_count === "number"
-            ? film.available_count
-            : film.count || 0) > 0
-      )
-    : films;
 
   return (
     <div className="flex flex-col gap-4 p-2 sm:p-4">

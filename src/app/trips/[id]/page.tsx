@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
 interface TripPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: TripPageProps): Promise<Metadata> {
+  const resolvedParams = await params;
   const { data: trips, error } = await getTrips();
   
   if (error || !trips) {
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: TripPageProps): Promise<Metad
     };
   }
 
-  const trip = trips.find(t => t.id === params.id);
+  const trip = trips.find(t => t.id === resolvedParams.id);
   
   if (!trip) {
     return {
@@ -32,13 +33,14 @@ export async function generateMetadata({ params }: TripPageProps): Promise<Metad
 }
 
 export default async function TripPage({ params }: TripPageProps) {
+  const resolvedParams = await params;
   const { data: trips, error } = await getTrips();
 
   if (error) {
     return <div>Error loading trips: {error.message}</div>;
   }
 
-  const trip = trips?.find(t => t.id === params.id);
+  const trip = trips?.find(t => t.id === resolvedParams.id);
 
   if (!trip) {
     notFound();
