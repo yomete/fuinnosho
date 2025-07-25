@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Film } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { 
-  Filter, 
-  X, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Filter,
+  X,
+  ChevronDown,
+  ChevronUp,
   Search,
   Eraser,
-  Minus
+  Minus,
 } from "lucide-react";
 
 interface EnhancedFiltersProps {
@@ -41,6 +41,7 @@ interface EnhancedFiltersProps {
     notTypes: string[];
     notFormats: string[];
     notIsos: number[];
+    hideZeroQuantity: boolean;
   }) => void;
   activeFilters: { column: string; value: string; isNot: boolean }[];
   onRemoveFilter: (column: string, value: string) => void;
@@ -64,14 +65,21 @@ export function EnhancedFilters({
   const [notFormats, setNotFormats] = useState<string[]>([]);
   const [notIsos, setNotIsos] = useState<number[]>([]);
   const [isoRange, setIsoRange] = useState<[number, number]>([50, 3200]);
-  
+  const [hideZeroQuantity, setHideZeroQuantity] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("hideZeroQuantityFilms");
+      return saved === "true";
+    }
+    return false;
+  });
+
   const [expandedSections, setExpandedSections] = useState({
     brands: false,
     types: false,
     formats: false,
     isos: false,
   });
-  
+
   const [notModes, setNotModes] = useState({
     brands: false,
     types: false,
@@ -79,19 +87,37 @@ export function EnhancedFilters({
     isos: false,
   });
 
-  // Get unique values for filter options
-  const uniqueBrands = Array.from(new Set(films.map((film) => film.brand))).sort();
-  const uniqueTypes = Array.from(new Set(films.map((film) => film.type))).sort();
-  const uniqueFormats = Array.from(new Set(films.map((film) => film.format))).sort();
-  const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b);
-  
-  const minIso = Math.min(...uniqueIsos);
-  const maxIso = Math.max(...uniqueIsos);
+  // Get unique values for filter options (memoized)
+  const uniqueBrands = useMemo(() => 
+    Array.from(new Set(films.map((film) => film.brand))).sort(),
+    [films]
+  );
+  const uniqueTypes = useMemo(() => 
+    Array.from(new Set(films.map((film) => film.type))).sort(),
+    [films]
+  );
+  const uniqueFormats = useMemo(() => 
+    Array.from(new Set(films.map((film) => film.format))).sort(),
+    [films]
+  );
+  const uniqueIsos = useMemo(() => 
+    Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
+    [films]
+  );
 
-  const handleNameChange = (value: string) => {
-    setNameFilter(value);
-    onFiltersChange({
-      name: value,
+  const { minIso, maxIso } = useMemo(() => ({
+    minIso: Math.min(...uniqueIsos),
+    maxIso: Math.max(...uniqueIsos)
+  }), [uniqueIsos]);
+
+  // Use ref to avoid including onFiltersChange in dependency array
+  const onFiltersChangeRef = useRef(onFiltersChange);
+  onFiltersChangeRef.current = onFiltersChange;
+
+  // Notify parent when filters change
+  useEffect(() => {
+    onFiltersChangeRef.current({
+      name: nameFilter,
       brands: selectedBrands,
       types: selectedTypes,
       formats: selectedFormats,
@@ -101,181 +127,88 @@ export function EnhancedFilters({
       notTypes,
       notFormats,
       notIsos,
+      hideZeroQuantity,
     });
-  };
+  }, [nameFilter, selectedBrands, selectedTypes, selectedFormats, selectedIsos, isoRange, notBrands, notTypes, notFormats, notIsos, hideZeroQuantity]);
 
-  const handleBrandToggle = (brand: string) => {
+
+  const handleNameChange = useCallback((value: string) => {
+    setNameFilter(value);
+  }, []);
+
+  const handleBrandToggle = useCallback((brand: string) => {
     if (notModes.brands) {
       const newNotBrands = notBrands.includes(brand)
         ? notBrands.filter((b) => b !== brand)
         : [...notBrands, brand];
       setNotBrands(newNotBrands);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands: newNotBrands,
-        notTypes,
-        notFormats,
-        notIsos,
-      });
     } else {
       const newBrands = selectedBrands.includes(brand)
         ? selectedBrands.filter((b) => b !== brand)
         : [...selectedBrands, brand];
       setSelectedBrands(newBrands);
-      onFiltersChange({
-        name: nameFilter,
-        brands: newBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats,
-        notIsos,
-      });
     }
-  };
+  }, [notModes.brands, notBrands, selectedBrands]);
 
-  const handleTypeToggle = (type: string) => {
+  const handleTypeToggle = useCallback((type: string) => {
     if (notModes.types) {
       const newNotTypes = notTypes.includes(type)
         ? notTypes.filter((t) => t !== type)
         : [...notTypes, type];
       setNotTypes(newNotTypes);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes: newNotTypes,
-        notFormats,
-        notIsos,
-      });
     } else {
       const newTypes = selectedTypes.includes(type)
         ? selectedTypes.filter((t) => t !== type)
         : [...selectedTypes, type];
       setSelectedTypes(newTypes);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: newTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats,
-        notIsos,
-      });
     }
-  };
+  }, [notModes.types, notTypes, selectedTypes]);
 
-  const handleFormatToggle = (format: string) => {
+  const handleFormatToggle = useCallback((format: string) => {
     if (notModes.formats) {
       const newNotFormats = notFormats.includes(format)
         ? notFormats.filter((f) => f !== format)
         : [...notFormats, format];
       setNotFormats(newNotFormats);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats: newNotFormats,
-        notIsos,
-      });
     } else {
       const newFormats = selectedFormats.includes(format)
         ? selectedFormats.filter((f) => f !== format)
         : [...selectedFormats, format];
       setSelectedFormats(newFormats);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: newFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats,
-        notIsos,
-      });
     }
-  };
+  }, [notModes.formats, notFormats, selectedFormats]);
 
-  const handleIsoToggle = (iso: number) => {
+  const handleIsoToggle = useCallback((iso: number) => {
     if (notModes.isos) {
       const newNotIsos = notIsos.includes(iso)
         ? notIsos.filter((i) => i !== iso)
         : [...notIsos, iso];
       setNotIsos(newNotIsos);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: selectedIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats,
-        notIsos: newNotIsos,
-      });
     } else {
       const newIsos = selectedIsos.includes(iso)
         ? selectedIsos.filter((i) => i !== iso)
         : [...selectedIsos, iso];
       setSelectedIsos(newIsos);
-      onFiltersChange({
-        name: nameFilter,
-        brands: selectedBrands,
-        types: selectedTypes,
-        formats: selectedFormats,
-        isos: newIsos,
-        isoRange,
-        notBrands,
-        notTypes,
-        notFormats,
-        notIsos,
-      });
     }
-  };
+  }, [notModes.isos, notIsos, selectedIsos]);
 
-  const handleIsoRangeChange = (range: [number, number]) => {
+  const handleIsoRangeChange = useCallback((range: [number, number]) => {
     setIsoRange(range);
-    onFiltersChange({
-      name: nameFilter,
-      brands: selectedBrands,
-      types: selectedTypes,
-      formats: selectedFormats,
-      isos: selectedIsos,
-      isoRange: range,
-      notBrands,
-      notTypes,
-      notFormats,
-      notIsos,
-    });
-  };
+  }, []);
+
+  const handleHideZeroQuantityToggle = useCallback(() => {
+    const newValue = !hideZeroQuantity;
+    setHideZeroQuantity(newValue);
+    // Persist to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("hideZeroQuantityFilms", newValue.toString());
+    }
+  }, [hideZeroQuantity]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -296,25 +229,30 @@ export function EnhancedFilters({
       formats: false,
       isos: false,
     });
+    setHideZeroQuantity(false);
+    // Clear localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("hideZeroQuantityFilms", "false");
+    }
     onClearAllFilters();
   };
-  
+
   const toggleNotMode = (section: keyof typeof notModes) => {
-    setNotModes(prev => ({
+    setNotModes((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
     // Clear selections when toggling mode
-    if (section === 'brands') {
+    if (section === "brands") {
       setSelectedBrands([]);
       setNotBrands([]);
-    } else if (section === 'types') {
+    } else if (section === "types") {
       setSelectedTypes([]);
       setNotTypes([]);
-    } else if (section === 'formats') {
+    } else if (section === "formats") {
       setSelectedFormats([]);
       setNotFormats([]);
-    } else if (section === 'isos') {
+    } else if (section === "isos") {
       setSelectedIsos([]);
       setNotIsos([]);
     }
@@ -333,21 +271,33 @@ export function EnhancedFilters({
             className="pl-10"
           />
         </div>
-        
+
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 gap-1 whitespace-nowrap">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1 whitespace-nowrap"
+            >
               <Filter className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Advanced Filters</span>
               <span className="sm:hidden">Filters</span>
               {activeFilters.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center">
+                <Badge
+                  variant="secondary"
+                  className="ml-1 h-5 w-5 p-0 flex items-center justify-center"
+                >
                   {activeFilters.length}
                 </Badge>
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0" align="end" side="bottom" sideOffset={5}>
+          <PopoverContent
+            className="w-80 p-0"
+            align="end"
+            side="bottom"
+            sideOffset={5}
+          >
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Filter Options</h4>
@@ -363,18 +313,40 @@ export function EnhancedFilters({
                   </Button>
                 )}
               </div>
-
+              {/* Hide Zero Quantity Filter */}
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox
+                  checked={hideZeroQuantity}
+                  onCheckedChange={handleHideZeroQuantityToggle}
+                  id="hide-zero-quantity-checkbox"
+                />
+                <Label
+                  htmlFor="hide-zero-quantity-checkbox"
+                  className="text-sm"
+                >
+                  Hide zero-quantity films
+                </Label>
+              </div>
               {/* Brands Filter */}
-              <Collapsible open={expandedSections.brands} onOpenChange={() => toggleSection('brands')}>
+              <Collapsible
+                open={expandedSections.brands}
+                onOpenChange={() => toggleSection("brands")}
+              >
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
                   <Label className="font-medium">Brands</Label>
                   <div className="flex items-center gap-2">
                     {(selectedBrands.length > 0 || notBrands.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
-                        {notModes.brands ? notBrands.length : selectedBrands.length}
+                        {notModes.brands
+                          ? notBrands.length
+                          : selectedBrands.length}
                       </Badge>
                     )}
-                    {expandedSections.brands ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {expandedSections.brands ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 pt-2">
@@ -382,21 +354,30 @@ export function EnhancedFilters({
                     <Button
                       variant={notModes.brands ? "default" : "outline"}
                       size="sm"
-                      onClick={() => toggleNotMode('brands')}
+                      onClick={() => toggleNotMode("brands")}
                       className="h-7 px-2 gap-1"
                     >
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {notModes.brands ? "Exclude selected brands" : "Include selected brands"}
+                      {notModes.brands
+                        ? "Exclude selected brands"
+                        : "Include selected brands"}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                     {uniqueBrands.map((brand) => (
-                      <label key={brand} className="flex items-center space-x-2 text-sm">
+                      <label
+                        key={brand}
+                        className="flex items-center space-x-2 text-sm"
+                      >
                         <Checkbox
-                          checked={notModes.brands ? notBrands.includes(brand) : selectedBrands.includes(brand)}
+                          checked={
+                            notModes.brands
+                              ? notBrands.includes(brand)
+                              : selectedBrands.includes(brand)
+                          }
                           onCheckedChange={() => handleBrandToggle(brand)}
                         />
                         <span className="truncate">{brand}</span>
@@ -407,16 +388,25 @@ export function EnhancedFilters({
               </Collapsible>
 
               {/* Types Filter */}
-              <Collapsible open={expandedSections.types} onOpenChange={() => toggleSection('types')}>
+              <Collapsible
+                open={expandedSections.types}
+                onOpenChange={() => toggleSection("types")}
+              >
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
                   <Label className="font-medium">Types</Label>
                   <div className="flex items-center gap-2">
                     {(selectedTypes.length > 0 || notTypes.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
-                        {notModes.types ? notTypes.length : selectedTypes.length}
+                        {notModes.types
+                          ? notTypes.length
+                          : selectedTypes.length}
                       </Badge>
                     )}
-                    {expandedSections.types ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {expandedSections.types ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 pt-2">
@@ -424,21 +414,30 @@ export function EnhancedFilters({
                     <Button
                       variant={notModes.types ? "default" : "outline"}
                       size="sm"
-                      onClick={() => toggleNotMode('types')}
+                      onClick={() => toggleNotMode("types")}
                       className="h-7 px-2 gap-1"
                     >
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {notModes.types ? "Exclude selected types" : "Include selected types"}
+                      {notModes.types
+                        ? "Exclude selected types"
+                        : "Include selected types"}
                     </span>
                   </div>
                   <div className="space-y-2">
                     {uniqueTypes.map((type) => (
-                      <label key={type} className="flex items-center space-x-2 text-sm">
+                      <label
+                        key={type}
+                        className="flex items-center space-x-2 text-sm"
+                      >
                         <Checkbox
-                          checked={notModes.types ? notTypes.includes(type) : selectedTypes.includes(type)}
+                          checked={
+                            notModes.types
+                              ? notTypes.includes(type)
+                              : selectedTypes.includes(type)
+                          }
                           onCheckedChange={() => handleTypeToggle(type)}
                         />
                         <span>{type}</span>
@@ -449,16 +448,25 @@ export function EnhancedFilters({
               </Collapsible>
 
               {/* Formats Filter */}
-              <Collapsible open={expandedSections.formats} onOpenChange={() => toggleSection('formats')}>
+              <Collapsible
+                open={expandedSections.formats}
+                onOpenChange={() => toggleSection("formats")}
+              >
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
                   <Label className="font-medium">Formats</Label>
                   <div className="flex items-center gap-2">
                     {(selectedFormats.length > 0 || notFormats.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
-                        {notModes.formats ? notFormats.length : selectedFormats.length}
+                        {notModes.formats
+                          ? notFormats.length
+                          : selectedFormats.length}
                       </Badge>
                     )}
-                    {expandedSections.formats ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {expandedSections.formats ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-2 pt-2">
@@ -466,21 +474,30 @@ export function EnhancedFilters({
                     <Button
                       variant={notModes.formats ? "default" : "outline"}
                       size="sm"
-                      onClick={() => toggleNotMode('formats')}
+                      onClick={() => toggleNotMode("formats")}
                       className="h-7 px-2 gap-1"
                     >
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {notModes.formats ? "Exclude selected formats" : "Include selected formats"}
+                      {notModes.formats
+                        ? "Exclude selected formats"
+                        : "Include selected formats"}
                     </span>
                   </div>
                   <div className="space-y-2">
                     {uniqueFormats.map((format) => (
-                      <label key={format} className="flex items-center space-x-2 text-sm">
+                      <label
+                        key={format}
+                        className="flex items-center space-x-2 text-sm"
+                      >
                         <Checkbox
-                          checked={notModes.formats ? notFormats.includes(format) : selectedFormats.includes(format)}
+                          checked={
+                            notModes.formats
+                              ? notFormats.includes(format)
+                              : selectedFormats.includes(format)
+                          }
                           onCheckedChange={() => handleFormatToggle(format)}
                         />
                         <span>{format}</span>
@@ -491,7 +508,10 @@ export function EnhancedFilters({
               </Collapsible>
 
               {/* ISO Filter */}
-              <Collapsible open={expandedSections.isos} onOpenChange={() => toggleSection('isos')}>
+              <Collapsible
+                open={expandedSections.isos}
+                onOpenChange={() => toggleSection("isos")}
+              >
                 <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
                   <Label className="font-medium">ISO</Label>
                   <div className="flex items-center gap-2">
@@ -500,12 +520,18 @@ export function EnhancedFilters({
                         {notModes.isos ? notIsos.length : selectedIsos.length}
                       </Badge>
                     )}
-                    {expandedSections.isos ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {expandedSections.isos ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">Range: {isoRange[0]} - {isoRange[1]}</Label>
+                    <Label className="text-xs text-muted-foreground">
+                      Range: {isoRange[0]} - {isoRange[1]}
+                    </Label>
                     <Slider
                       value={isoRange}
                       onValueChange={handleIsoRangeChange}
@@ -519,21 +545,30 @@ export function EnhancedFilters({
                     <Button
                       variant={notModes.isos ? "default" : "outline"}
                       size="sm"
-                      onClick={() => toggleNotMode('isos')}
+                      onClick={() => toggleNotMode("isos")}
                       className="h-7 px-2 gap-1"
                     >
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {notModes.isos ? "Exclude selected ISOs" : "Include selected ISOs"}
+                      {notModes.isos
+                        ? "Exclude selected ISOs"
+                        : "Include selected ISOs"}
                     </span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto">
                     {uniqueIsos.map((iso) => (
-                      <label key={iso} className="flex items-center space-x-2 text-sm">
+                      <label
+                        key={iso}
+                        className="flex items-center space-x-2 text-sm"
+                      >
                         <Checkbox
-                          checked={notModes.isos ? notIsos.includes(iso) : selectedIsos.includes(iso)}
+                          checked={
+                            notModes.isos
+                              ? notIsos.includes(iso)
+                              : selectedIsos.includes(iso)
+                          }
                           onCheckedChange={() => handleIsoToggle(iso)}
                         />
                         <span>{iso}</span>

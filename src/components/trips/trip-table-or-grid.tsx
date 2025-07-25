@@ -8,12 +8,11 @@ import { TripGrid } from "./trip-grid";
 
 interface TripTableOrGridProps {
   trips: Trip[];
-  onTripSelect: (trip: Trip) => void;
   onTripEdit: (trip: Trip) => void;
 }
 
-export function TripTableOrGrid({ trips, onTripSelect, onTripEdit }: TripTableOrGridProps) {
-  const [view, setView] = useState<"table" | "grid">("grid");
+export function TripTableOrGrid({ trips, onTripEdit }: TripTableOrGridProps) {
+  const [view, setView] = useState<"table" | "grid">("table");
 
   return (
     <div className="space-y-4">
@@ -51,7 +50,7 @@ export function TripTableOrGrid({ trips, onTripSelect, onTripEdit }: TripTableOr
             }
           `}
         >
-          <TripGrid trips={trips} onTripSelect={onTripSelect} onTripEdit={onTripEdit} />
+          <TripGrid trips={trips} onTripEdit={onTripEdit} />
         </div>
       )}
       {view === "table" && (
@@ -65,7 +64,7 @@ export function TripTableOrGrid({ trips, onTripSelect, onTripEdit }: TripTableOr
             }
           `}
         >
-          <TripTable trips={trips} onTripSelect={onTripSelect} onTripEdit={onTripEdit} />
+          <TripTable trips={trips} onTripEdit={onTripEdit} />
         </div>
       )}
     </div>

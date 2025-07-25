@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Trip, Gear, getGearTypeIcon } from "@/lib/utils";
+import Link from "next/link";
+import { Trip, Gear, getGearTypeIcon, formatDate as formatDateUtil } from "@/lib/utils";
 import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, deleteTrip, getFilmsWithAvailability, getTripWithGear, addGearToTrip, removeGearFromTrip, getAvailableGear } from "@/app/actions/trips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,10 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Calendar, MapPin, Plus, Trash2, X } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface TripDetailsProps {
   trip: Trip;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 interface FilmWithReservedQuantity {
@@ -170,32 +172,47 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       const result = await deleteTrip(trip.id);
       
       if (result.success) {
-        router.refresh();
-        onBack();
+        if (onBack) {
+          router.refresh();
+          onBack();
+        } else {
+          router.push('/trips');
+          router.refresh();
+        }
       }
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   const isUpcoming = (dateString: string) => {
     return new Date(dateString) >= new Date();
   };
 
   if (isLoading) {
-    return <div className="container mx-auto py-8">Loading...</div>;
+    return (
+      <div className="container mx-auto py-8">
+        <LoadingSpinner message="Loading trip details..." />
+      </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
-          <Button variant="ghost" onClick={onBack} className="mb-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Trips
-          </Button>
+          {onBack ? (
+            <Button variant="ghost" onClick={onBack} className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Trips
+            </Button>
+          ) : (
+            <Link href="/trips">
+              <Button variant="ghost" className="mb-4">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Trips
+              </Button>
+            </Link>
+          )}
           
           <div className="flex items-start justify-between">
             <div>
@@ -203,7 +220,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               <div className="flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  {formatDate(trip.trip_date)}
+                  {formatDateUtil(trip.trip_date)}
                 </div>
                 <Badge variant={isUpcoming(trip.trip_date) ? "secondary" : "outline"}>
                   {isUpcoming(trip.trip_date) ? "Upcoming" : "Past"}
@@ -235,6 +252,11 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   <CardTitle>Reserved Films</CardTitle>
                   <CardDescription>
                     Films you&apos;ve reserved for this trip
+                    {tripFilms.length > 0 && (
+                      <span className="ml-2 font-medium text-foreground">
+                        ({tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                      </span>
+                    )}
                   </CardDescription>
                 </div>
                 {isUpcoming(trip.trip_date) && (

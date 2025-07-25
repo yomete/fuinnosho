@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Film } from "@/lib/utils";
+import { Film, formatDate } from "@/lib/utils";
 import { EditFilm } from "@/components/film-form/edit-form";
 import { ReduceCountDialog } from "@/components/films/reduce-count-dialog";
 import { UsageHistoryDialog } from "@/components/films/usage-history-dialog";
@@ -162,8 +162,7 @@ export const columns: ColumnDef<Film>[] = [
   {
     accessorKey: "expiration_date",
     header: "Expiration Date",
-    cell: ({ row }) =>
-      new Date(row.original.expiration_date).toLocaleDateString(),
+    cell: ({ row }) => formatDate(row.original.expiration_date),
     sortingFn: (rowA, rowB) => {
       return (
         new Date(rowA.original.expiration_date).getTime() -

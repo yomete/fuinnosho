@@ -1,6 +1,6 @@
 "use client";
 
-import { type Film } from "@/lib/utils";
+import { type Film, formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LineChart,
@@ -60,7 +60,7 @@ export default function AcquisitionTimeline({
             <LineChart data={data}>
               <XAxis
                 dataKey="date"
-                tickFormatter={(date) => new Date(date).toLocaleDateString()}
+                tickFormatter={(date) => formatDate(date)}
               />
               <YAxis
                 label={{
@@ -70,7 +70,7 @@ export default function AcquisitionTimeline({
                 }}
               />
               <Tooltip
-                labelFormatter={(date) => new Date(date).toLocaleDateString()}
+                labelFormatter={(date) => formatDate(date)}
               />
               <Legend />
               {brands.map((brand) => (

@@ -70,7 +70,6 @@ export function TripsPage({ trips }: TripsPageProps) {
       ) : (
         <TripTableOrGrid
           trips={trips}
-          onTripSelect={setSelectedTrip}
           onTripEdit={setEditingTrip}
         />
       )}

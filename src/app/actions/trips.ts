@@ -83,21 +83,41 @@ export async function editTrip(
 }
 
 export async function getTrips(): Promise<{
-  data: Trip[] | null;
+  data: (Trip & { reserved_film_count?: number })[] | null;
   error: Error | null;
 }> {
   try {
     const supabase = await createClient();
+    
+    // Get trips with total reserved film count
     const { data, error } = await supabase
       .from("trips")
-      .select("*")
+      .select(`
+        *,
+        trip_films (
+          quantity
+        )
+      `)
       .order("trip_date", { ascending: true });
 
     if (error) {
       throw error;
     }
 
-    return { data, error: null };
+    // Calculate total reserved film count for each trip
+    const tripsWithCounts = data?.map(trip => {
+      const tripFilms = trip.trip_films as { quantity: number }[] | null;
+      const reserved_film_count = tripFilms?.reduce((total, tf) => total + tf.quantity, 0) || 0;
+      
+      // Remove trip_films from the final object and add reserved_film_count
+      const { trip_films, ...tripData } = trip;
+      return {
+        ...tripData,
+        reserved_film_count
+      };
+    }) || [];
+
+    return { data: tripsWithCounts, error: null };
   } catch (error) {
     console.error("Error fetching trips:", error);
     return {

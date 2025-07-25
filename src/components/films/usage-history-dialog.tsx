@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getFilmUsageHistory } from "@/app/actions/films";
-import { FilmUsage } from "@/lib/utils";
+import { FilmUsage, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -94,7 +94,7 @@ export function UsageHistoryDialog({
                         </Badge>
                         <span className="text-xs text-muted-foreground flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          {new Date(usage.created_at).toLocaleDateString()} at{" "}
+                          {formatDate(usage.created_at)} at{" "}
                           {new Date(usage.created_at).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",

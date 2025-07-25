@@ -48,6 +48,7 @@ export interface Trip {
   created_at: string;
   updated_at: string;
   user_id: string;
+  reserved_film_count?: number;
 }
 
 export interface TripFilm {
@@ -217,4 +218,13 @@ export function getBulkFilmInfo(format: string) {
     lengthPerRoll: formatInfo.bulkLengthPerRoll,
     format: format
   } : null;
+}
+
+// Date formatting utility
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
 }

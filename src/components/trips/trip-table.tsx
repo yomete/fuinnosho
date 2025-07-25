@@ -1,5 +1,5 @@
 "use client";
-import { Trip } from "@/lib/utils";
+import { Trip, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -10,19 +10,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
+import { Calendar, Film } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import Link from "next/link";
 
 interface TripTableProps {
   trips: Trip[];
-  onTripSelect: (trip: Trip) => void;
   onTripEdit: (trip: Trip) => void;
 }
 
-export function TripTable({ trips, onTripSelect, onTripEdit }: TripTableProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+export function TripTable({ trips, onTripEdit }: TripTableProps) {
 
   const isUpcoming = (dateString: string) => {
     return new Date(dateString) >= new Date();
@@ -46,6 +43,7 @@ export function TripTable({ trips, onTripSelect, onTripEdit }: TripTableProps) {
             <TableHead>Title</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Reserved Films</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -60,14 +58,22 @@ export function TripTable({ trips, onTripSelect, onTripEdit }: TripTableProps) {
                   {isUpcoming(trip.trip_date) ? "Upcoming" : "Past"}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1">
+                  <Film className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">{trip.reserved_film_count || 0}</span>
+                </div>
+              </TableCell>
               <TableCell className="max-w-md truncate">
                 {trip.description}
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => onTripSelect(trip)}>
-                    View Details
-                  </Button>
+                  <Link href={`/trips/${trip.id}`}>
+                    <Button size="sm">
+                      View Details
+                    </Button>
+                  </Link>
                   {isUpcoming(trip.trip_date) && (
                     <Button
                       size="sm"

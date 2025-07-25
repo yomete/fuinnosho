@@ -1,5 +1,5 @@
 "use client";
-import { Trip } from "@/lib/utils";
+import { Trip, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,19 +9,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, Film } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import Link from "next/link";
 
 interface TripGridProps {
   trips: Trip[];
-  onTripSelect: (trip: Trip) => void;
   onTripEdit: (trip: Trip) => void;
 }
 
-export function TripGrid({ trips, onTripSelect, onTripEdit }: TripGridProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
+export function TripGrid({ trips, onTripEdit }: TripGridProps) {
 
   const isUpcoming = (dateString: string) => {
     return new Date(dateString) >= new Date();
@@ -70,10 +67,16 @@ export function TripGrid({ trips, onTripSelect, onTripEdit }: TripGridProps) {
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {trip.description}
                   </p>
+                  <div className="flex items-center gap-1 mt-3 mb-2">
+                    <Film className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{trip.reserved_film_count || 0} films reserved</span>
+                  </div>
                   <div className="flex gap-2 mt-4">
-                    <Button size="sm" onClick={() => onTripSelect(trip)}>
-                      View Details
-                    </Button>
+                    <Link href={`/trips/${trip.id}`}>
+                      <Button size="sm">
+                        View Details
+                      </Button>
+                    </Link>
                     <Button
                       size="sm"
                       variant="outline"
@@ -114,10 +117,16 @@ export function TripGrid({ trips, onTripSelect, onTripEdit }: TripGridProps) {
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {trip.description}
                   </p>
+                  <div className="flex items-center gap-1 mt-3 mb-2">
+                    <Film className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{trip.reserved_film_count || 0} films reserved</span>
+                  </div>
                   <div className="flex gap-2 mt-4">
-                    <Button size="sm" onClick={() => onTripSelect(trip)}>
-                      View Details
-                    </Button>
+                    <Link href={`/trips/${trip.id}`}>
+                      <Button size="sm">
+                        View Details
+                      </Button>
+                    </Link>
                   </div>
                 </CardContent>
               </Card>

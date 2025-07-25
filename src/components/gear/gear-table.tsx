@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Gear, getConditionColor, getGearTypeIcon } from "@/lib/utils";
+import { Gear, getConditionColor, getGearTypeIcon, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -43,9 +43,9 @@ export function GearTable({ gear }: GearTableProps) {
     }).format(price);
   };
 
-  const formatDate = (dateString?: string) => {
+  const formatDateSafe = (dateString?: string) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString();
+    return formatDate(dateString);
   };
 
   if (gear.length === 0) {
@@ -107,7 +107,7 @@ export function GearTable({ gear }: GearTableProps) {
                       {item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDate(item.purchase_date)}</TableCell>
+                  <TableCell>{formatDateSafe(item.purchase_date)}</TableCell>
                   <TableCell>{formatPrice(item.purchase_price)}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
