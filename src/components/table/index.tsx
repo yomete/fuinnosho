@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { columns } from "./columns";
 import { type Film } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -173,7 +173,7 @@ const DataTable = ({ films }: { films: Film[] }) => {
     return acc;
   }, [] as { column: string; value: string; isNot: boolean }[]);
 
-  const removeFilter = (column: string, value: string) => {
+  const removeFilter = useCallback((column: string, value: string) => {
     const columnFilter = table.getColumn(column);
     if (!columnFilter) return;
 
@@ -198,9 +198,9 @@ const DataTable = ({ films }: { films: Film[] }) => {
     } else {
       columnFilter.setFilterValue("");
     }
-  };
+  }, [table]);
 
-  const handleFiltersChange = (filters: {
+  const handleFiltersChange = useCallback((filters: {
     name: string;
     brands: string[];
     types: string[];
@@ -213,7 +213,8 @@ const DataTable = ({ films }: { films: Film[] }) => {
     notIsos: number[];
     hideZeroQuantity: boolean;
   }) => {
-    setHideZeroQuantity(filters.hideZeroQuantity);
+    // Only update hideZeroQuantity if it actually changed to prevent loops
+    setHideZeroQuantity(prev => prev !== filters.hideZeroQuantity ? filters.hideZeroQuantity : prev);
     table.getColumn("name")?.setFilterValue(filters.name);
 
     // Handle regular and NOT filters
@@ -246,27 +247,34 @@ const DataTable = ({ films }: { films: Film[] }) => {
     table.getColumn("type")?.setFilterValue(typeFilter);
     table.getColumn("format")?.setFilterValue(formatFilter);
     table.getColumn("iso")?.setFilterValue(isoFilter);
-  };
+  }, [table, setHideZeroQuantity]);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     table.resetColumnFilters();
-  };
+  }, [table]);
+
+  const handleRemoveFilter = useCallback((column: string, value: string) => {
+    if (column === "quantity" && value === "hide-zero")
+      setHideZeroQuantity(false);
+    else removeFilter(column, value);
+  }, [removeFilter, setHideZeroQuantity]);
+
+  const memoizedActiveFilters = useMemo(() => 
+    activeFilters.concat(
+      hideZeroQuantity
+        ? [{ column: "quantity", value: "hide-zero", isNot: false }]
+        : []
+    ),
+    [activeFilters, hideZeroQuantity]
+  );
 
   return (
     <div className="flex flex-col gap-4 p-2 sm:p-4">
       <EnhancedFilters
         films={films}
         onFiltersChange={handleFiltersChange}
-        activeFilters={activeFilters.concat(
-          hideZeroQuantity
-            ? [{ column: "quantity", value: "hide-zero", isNot: false }]
-            : []
-        )}
-        onRemoveFilter={(column, value) => {
-          if (column === "quantity" && value === "hide-zero")
-            setHideZeroQuantity(false);
-          else removeFilter(column, value);
-        }}
+        activeFilters={memoizedActiveFilters}
+        onRemoveFilter={handleRemoveFilter}
         onClearAllFilters={clearAllFilters}
       />
       <div className="rounded-md border">

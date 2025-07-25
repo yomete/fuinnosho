@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import { Film } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ interface EnhancedFiltersProps {
   onClearAllFilters: () => void;
 }
 
-export function EnhancedFilters({
+const EnhancedFiltersComponent = function EnhancedFilters({
   films,
   onFiltersChange,
   activeFilters,
@@ -113,10 +113,45 @@ export function EnhancedFilters({
   // Use ref to avoid including onFiltersChange in dependency array
   const onFiltersChangeRef = useRef(onFiltersChange);
   onFiltersChangeRef.current = onFiltersChange;
+  
+  // Track if this is the initial mount to prevent calling onFiltersChange on mount
+  const isInitialMount = useRef(true);
+  const prevFiltersRef = useRef({
+    name: nameFilter,
+    brands: selectedBrands,
+    types: selectedTypes,
+    formats: selectedFormats,
+    isos: selectedIsos,
+    isoRange,
+    notBrands,
+    notTypes,
+    notFormats,
+    notIsos,
+    hideZeroQuantity,
+  });
 
-  // Notify parent when filters change
+  // Debounced filter change notification
   useEffect(() => {
-    onFiltersChangeRef.current({
+    // Skip calling onFiltersChange on initial mount to prevent loops
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevFiltersRef.current = {
+        name: nameFilter,
+        brands: selectedBrands,
+        types: selectedTypes,
+        formats: selectedFormats,
+        isos: selectedIsos,
+        isoRange,
+        notBrands,
+        notTypes,
+        notFormats,
+        notIsos,
+        hideZeroQuantity,
+      };
+      return;
+    }
+
+    const currentFilters = {
       name: nameFilter,
       brands: selectedBrands,
       types: selectedTypes,
@@ -128,7 +163,19 @@ export function EnhancedFilters({
       notFormats,
       notIsos,
       hideZeroQuantity,
-    });
+    };
+
+    // Only call onFiltersChange if filters actually changed
+    const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(currentFilters);
+    
+    if (!filtersChanged) return;
+
+    const timeoutId = setTimeout(() => {
+      onFiltersChangeRef.current(currentFilters);
+      prevFiltersRef.current = currentFilters;
+    }, 150); // 150ms debounce
+
+    return () => clearTimeout(timeoutId);
   }, [nameFilter, selectedBrands, selectedTypes, selectedFormats, selectedIsos, isoRange, notBrands, notTypes, notFormats, notIsos, hideZeroQuantity]);
 
 
@@ -608,4 +655,6 @@ export function EnhancedFilters({
       )}
     </div>
   );
-}
+};
+
+export const EnhancedFilters = memo(EnhancedFiltersComponent);
