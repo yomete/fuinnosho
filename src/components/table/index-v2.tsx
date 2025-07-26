@@ -22,6 +22,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { EnhancedFiltersV2, FilterAction } from "./enhanced-filters-v2";
 import { filterReducer, createInitialFilterState } from "./filter-reducer";
@@ -261,12 +263,24 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
                   {headerGroup.headers.map((header) => {
                     return (
                       <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
+                        {header.isPlaceholder ? null : (
+                          <div
+                            className={cn(
+                              "flex items-center gap-1",
+                              header.column.getCanSort() &&
+                                "cursor-pointer select-none"
+                            )}
+                            onClick={header.column.getToggleSortingHandler()}
+                          >
+                            {flexRender(
                               header.column.columnDef.header,
                               header.getContext()
                             )}
+                            {header.column.getCanSort() && (
+                              <ArrowUpDown className="h-4 w-4" />
+                            )}
+                          </div>
+                        )}
                       </TableHead>
                     );
                   })}
