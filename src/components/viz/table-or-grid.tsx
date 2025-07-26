@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Film } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TableIcon, GridIcon } from "lucide-react";
-import DataTable from "@/components/table";
+import FilmsTableV2 from "@/components/table/index-v2";
 import FilmInventoryGrid from "@/components/viz/film-inventory-grid";
 
 const TableOrGrid = ({ films }: { films: Film[] }) => {
@@ -59,7 +59,7 @@ const TableOrGrid = ({ films }: { films: Film[] }) => {
         }
       `}
         >
-          <DataTable films={films} />
+          <FilmsTableV2 films={films} />
         </div>
       )}
     </div>
