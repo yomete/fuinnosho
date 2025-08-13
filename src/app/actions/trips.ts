@@ -232,6 +232,45 @@ export async function addFilmToTrip(
   }
 }
 
+export async function updateFilmQuantityInTrip(
+  tripId: string,
+  filmId: string,
+  newQuantity: number
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    if (newQuantity < 1) {
+      return {
+        success: false,
+        error: "Quantity must be at least 1",
+      };
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("trip_films")
+      .update({ quantity: newQuantity })
+      .eq("trip_id", tripId)
+      .eq("film_id", filmId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/trips");
+    revalidatePath("/films");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating film quantity in trip:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update film quantity",
+    };
+  }
+}
+
 export async function removeFilmFromTrip(
   tripId: string,
   filmId: string

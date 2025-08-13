@@ -16,6 +16,14 @@ interface InventoryValueProps {
   films: Film[];
 }
 
+function getTotalInventoryCount(film: Film): number {
+  // For inventory value calculations, use total_count as this represents actual inventory value
+  if (typeof film.total_count === 'number' && film.total_count >= 0) {
+    return film.total_count;
+  }
+  return film.count || 1;
+}
+
 export default function InventoryValue({ films }: InventoryValueProps) {
   // Check if films is undefined or empty
   if (!films || films.length === 0) {
@@ -35,7 +43,7 @@ export default function InventoryValue({ films }: InventoryValueProps) {
   const valueMetrics = films.reduce(
     (acc, film) => {
       if (film.price) {
-        const quantity = film.count || 1;
+        const quantity = getTotalInventoryCount(film);
         const totalPrice = film.price * quantity;
         acc.totalValue += totalPrice;
         acc.byType[film.type] = (acc.byType[film.type] || 0) + totalPrice;

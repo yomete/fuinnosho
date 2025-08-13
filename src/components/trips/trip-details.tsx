@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trip, Gear, getGearTypeIcon, formatDate as formatDateUtil } from "@/lib/utils";
-import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, deleteTrip, getFilmsWithAvailability, getTripWithGear, addGearToTrip, removeGearFromTrip, getAvailableGear } from "@/app/actions/trips";
+import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, updateFilmQuantityInTrip, deleteTrip, getFilmsWithAvailability, getTripWithGear, addGearToTrip, removeGearFromTrip, getAvailableGear } from "@/app/actions/trips";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Calendar, MapPin, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Plus, Trash2, X, Edit, Filter, SortAsc, SortDesc } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/spinner";
 
 interface TripDetailsProps {
@@ -67,6 +67,11 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const [quantity, setQuantity] = useState<number>(1);
   const [isAddingFilm, setIsAddingFilm] = useState(false);
   const [isAddingGear, setIsAddingGear] = useState(false);
+  const [editingFilmId, setEditingFilmId] = useState<string | null>(null);
+  const [editQuantity, setEditQuantity] = useState<number>(1);
+  const [sortBy, setSortBy] = useState<'name' | 'iso' | 'brand' | 'quantity'>('iso');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isoFilter, setIsoFilter] = useState<string>('all');
 
   const loadTripData = useCallback(async () => {
     const [filmsResult, gearResult] = await Promise.all([
@@ -142,6 +147,93 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       loadAvailableFilms();
       router.refresh();
     }
+  };
+
+  const handleEditQuantity = (filmId: string, currentQuantity: number) => {
+    setEditingFilmId(filmId);
+    setEditQuantity(currentQuantity);
+  };
+
+  const handleSaveQuantity = async (filmId: string) => {
+    if (editQuantity < 1) {
+      alert("Quantity must be at least 1");
+      return;
+    }
+
+    const result = await updateFilmQuantityInTrip(trip.id, filmId, editQuantity);
+    
+    if (result.success) {
+      setEditingFilmId(null);
+      loadTripData();
+      loadAvailableFilms();
+      router.refresh();
+    } else {
+      alert(result.error || "Failed to update quantity");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingFilmId(null);
+    setEditQuantity(1);
+  };
+
+  const getFilteredAndSortedFilms = () => {
+    let filtered = tripFilms;
+
+    // Apply ISO filter
+    if (isoFilter && isoFilter !== 'all') {
+      const filterValue = parseInt(isoFilter);
+      if (!isNaN(filterValue)) {
+        filtered = filtered.filter(film => film.iso === filterValue);
+      }
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'iso':
+          aValue = a.iso;
+          bValue = b.iso;
+          break;
+        case 'brand':
+          aValue = a.brand.toLowerCase();
+          bValue = b.brand.toLowerCase();
+          break;
+        case 'quantity':
+          aValue = a.reserved_quantity;
+          bValue = b.reserved_quantity;
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  };
+
+  const toggleSort = (newSortBy: typeof sortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+  };
+
+  const getUniqueISOs = () => {
+    const isos = tripFilms.map(film => film.iso);
+    return [...new Set(isos)].sort((a, b) => a - b);
   };
 
   const handleAddGear = async () => {
@@ -247,14 +339,22 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between mb-4">
                 <div>
                   <CardTitle>Reserved Films</CardTitle>
                   <CardDescription>
                     Films you&apos;ve reserved for this trip
                     {tripFilms.length > 0 && (
                       <span className="ml-2 font-medium text-foreground">
-                        ({tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                        {isoFilter !== 'all' && getFilteredAndSortedFilms().length !== tripFilms.length ? (
+                          <>
+                            ({getFilteredAndSortedFilms().reduce((total, film) => total + film.reserved_quantity, 0)} of {tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                          </>
+                        ) : (
+                          <>
+                            ({tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                          </>
+                        )}
                       </span>
                     )}
                   </CardDescription>
@@ -306,8 +406,90 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   )}
                 </div>
               ) : (
+                <>
+                  {/* Sort and Filter Controls */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <Select value={isoFilter} onValueChange={setIsoFilter}>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Filter ISO" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All ISOs</SelectItem>
+                          {getUniqueISOs().map((iso) => (
+                            <SelectItem key={iso} value={iso.toString()}>
+                              ISO {iso}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isoFilter && isoFilter !== 'all' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsoFilter('all')}
+                          className="h-8 px-2"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-sm text-muted-foreground mr-2">Sort by:</span>
+                      <Button
+                        variant={sortBy === 'name' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleSort('name')}
+                        className="flex items-center gap-1"
+                      >
+                        Name
+                        {sortBy === 'name' && (
+                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
+                        )}
+                      </Button>
+                      <Button
+                        variant={sortBy === 'iso' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleSort('iso')}
+                        className="flex items-center gap-1"
+                      >
+                        ISO
+                        {sortBy === 'iso' && (
+                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
+                        )}
+                      </Button>
+                      <Button
+                        variant={sortBy === 'brand' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleSort('brand')}
+                        className="flex items-center gap-1"
+                      >
+                        Brand
+                        {sortBy === 'brand' && (
+                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
+                        )}
+                      </Button>
+                      <Button
+                        variant={sortBy === 'quantity' ? 'secondary' : 'ghost'}
+                        size="sm"
+                        onClick={() => toggleSort('quantity')}
+                        className="flex items-center gap-1"
+                      >
+                        Quantity
+                        {sortBy === 'quantity' && (
+                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {tripFilms.length > 0 && (
                 <div className="space-y-3">
-                  {tripFilms.map((film) => (
+                  {getFilteredAndSortedFilms().map((film) => (
                     <div key={film.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
                         <div>
@@ -316,19 +498,62 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                             {film.brand} • {film.format} • ISO {film.iso}
                           </p>
                         </div>
-                        <Badge variant="outline">
-                          {film.reserved_quantity} reserved
-                        </Badge>
+                        {editingFilmId === film.id ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={editQuantity}
+                              onChange={(e) => setEditQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                              className="w-16"
+                            />
+                            <span className="text-sm text-muted-foreground">reserved</span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline">
+                            {film.reserved_quantity} reserved
+                          </Badge>
+                        )}
                       </div>
                       
                       {isUpcoming(trip.trip_date) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveFilm(film.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          {editingFilmId === film.id ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSaveQuantity(film.id)}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditQuantity(film.id, film.reserved_quantity)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveFilm(film.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}

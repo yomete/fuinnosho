@@ -15,18 +15,33 @@ interface IsoDistributionProps {
   films: Film[];
 }
 
+function getAvailableFilmCount(film: Film): number {
+  // Use available_count to show distribution of films available to shoot
+  if (typeof film.available_count === 'number' && film.available_count >= 0) {
+    return film.available_count;
+  }
+  if (typeof film.total_count === 'number' && film.total_count >= 0) {
+    return film.total_count;
+  }
+  return film.count || 1;
+}
+
 export default function IsoDistribution({ films }: IsoDistributionProps) {
   // Group films by ISO and count
   const isoDistribution = films.reduce((acc, film) => {
-    acc[film.iso] = (acc[film.iso] || 0) + (film.count || 1);
+    const filmCount = getAvailableFilmCount(film);
+    acc[film.iso] = (acc[film.iso] || 0) + filmCount;
     return acc;
   }, {} as Record<number, number>);
 
   // Calculate average ISO (weighted by count)
-  const totalCount = films.reduce((sum, film) => sum + (film.count || 1), 0);
-  const averageIso =
-    films.reduce((sum, film) => sum + film.iso * (film.count || 1), 0) /
-    totalCount;
+  const totalCount = films.reduce((sum, film) => sum + getAvailableFilmCount(film), 0);
+  const averageIso = totalCount > 0 
+    ? films.reduce((sum, film) => {
+        const filmCount = getAvailableFilmCount(film);
+        return sum + film.iso * filmCount;
+      }, 0) / totalCount
+    : 0;
 
   // Convert to array and sort by ISO
   const data = Object.entries(isoDistribution)
@@ -78,7 +93,7 @@ export default function IsoDistribution({ films }: IsoDistributionProps) {
           </ResponsiveContainer>
         </div>
         <div className="mt-4 text-sm text-muted-foreground animate-in fade-in-50">
-          Average ISO: {averageIso.toFixed(0)}
+          Average ISO: {totalCount > 0 ? averageIso.toFixed(0) : 'N/A'}
         </div>
       </CardContent>
     </Card>

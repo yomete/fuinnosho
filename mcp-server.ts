@@ -567,6 +567,28 @@ class FilmInventoryMCPServer {
           },
         },
         {
+          name: "update_film_reservation_quantity",
+          description: "Update the quantity of a film reservation for a trip",
+          inputSchema: {
+            type: "object",
+            properties: {
+              trip_id: {
+                type: "string",
+                description: "Trip ID",
+              },
+              film_id: {
+                type: "string",
+                description: "Film ID",
+              },
+              quantity: {
+                type: "number",
+                description: "New quantity of rolls to reserve (must be >= 1)",
+              },
+            },
+            required: ["trip_id", "film_id", "quantity"],
+          },
+        },
+        {
           name: "get_films_with_availability",
           description: "Get films with availability data for trip planning",
           inputSchema: {
@@ -835,6 +857,9 @@ class FilmInventoryMCPServer {
 
           case "remove_film_reservation":
             return await this.removeFilmReservation(args);
+
+          case "update_film_reservation_quantity":
+            return await this.updateFilmReservationQuantity(args);
 
           case "get_films_with_availability":
             return await this.getFilmsWithAvailability(args);
@@ -1772,6 +1797,63 @@ class FilmInventoryMCPServer {
               quantity: reservation.quantity,
               film: `${reservation.films.brand} ${reservation.films.name}`,
               trip: reservation.trips.title,
+            },
+          }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async updateFilmReservationQuantity(args: any) {
+    const { trip_id, film_id, quantity } = args;
+
+    if (!trip_id || !film_id || quantity === undefined) {
+      throw new Error("trip_id, film_id, and quantity are required");
+    }
+
+    if (quantity < 1) {
+      throw new Error("Quantity must be at least 1");
+    }
+
+    // Check if reservation exists
+    const { data: existingReservation, error: fetchError } = await this.supabase
+      .from("trip_films")
+      .select(`
+        quantity,
+        trips (title),
+        films (name, brand)
+      `)
+      .eq("trip_id", trip_id)
+      .eq("film_id", film_id)
+      .single();
+
+    if (fetchError || !existingReservation) {
+      throw new Error("Film reservation not found for this trip");
+    }
+
+    // Update the quantity
+    const { error: updateError } = await this.supabase
+      .from("trip_films")
+      .update({ quantity })
+      .eq("trip_id", trip_id)
+      .eq("film_id", film_id);
+
+    if (updateError) {
+      throw new Error(`Failed to update film reservation quantity: ${updateError.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            success: true,
+            message: `Updated reservation for ${existingReservation.films.brand} ${existingReservation.films.name} in trip "${existingReservation.trips.title}" from ${existingReservation.quantity} to ${quantity} roll(s)`,
+            updated_reservation: {
+              old_quantity: existingReservation.quantity,
+              new_quantity: quantity,
+              film: `${existingReservation.films.brand} ${existingReservation.films.name}`,
+              trip: existingReservation.trips.title,
             },
           }, null, 2),
         },

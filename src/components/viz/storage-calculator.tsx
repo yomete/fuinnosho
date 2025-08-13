@@ -9,13 +9,21 @@ interface StorageCalculatorProps {
   films: Film[];
 }
 
+function getStorageCount(film: Film): number {
+  // For storage calculations, use total_count as this represents physical storage needs
+  if (typeof film.total_count === 'number' && film.total_count >= 0) {
+    return film.total_count;
+  }
+  return film.count || 1;
+}
+
 export default function StorageCalculator({ films }: StorageCalculatorProps) {
   // Calculate storage metrics
   const storageMetrics = films.reduce(
     (acc, film) => {
       const format =
         formatDimensions[film.format as keyof typeof formatDimensions];
-      const quantity = film.count || 1;
+      const quantity = getStorageCount(film);
 
       if (format) {
         // Calculate approximate volume in cubic mm
@@ -47,7 +55,7 @@ export default function StorageCalculator({ films }: StorageCalculatorProps) {
 
   // Get total count of all films
   const totalFilmCount = films.reduce(
-    (sum, film) => sum + (film.count || 1),
+    (sum, film) => sum + getStorageCount(film),
     0
   );
 

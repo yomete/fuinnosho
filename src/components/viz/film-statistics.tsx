@@ -16,14 +16,35 @@ interface FilmStatisticsProps {
   films: Film[];
 }
 
+function getFilmCount(film: Film): number {
+  // Use available_count if it exists and is valid, otherwise fall back to total_count, then count
+  if (typeof film.available_count === 'number' && film.available_count >= 0) {
+    return film.available_count;
+  }
+  if (typeof film.total_count === 'number' && film.total_count >= 0) {
+    return film.total_count;
+  }
+  return film.count || 1;
+}
+
+function getTotalCount(film: Film): number {
+  // For total inventory, prefer total_count over regular count
+  if (typeof film.total_count === 'number' && film.total_count >= 0) {
+    return film.total_count;
+  }
+  return film.count || 1;
+}
+
 export default function FilmStatistics({ films }: FilmStatisticsProps) {
   const typeCount = films.reduce((acc, film) => {
-    acc[film.type] = (acc[film.type] || 0) + (film.count || 1);
+    const filmCount = getFilmCount(film);
+    acc[film.type] = (acc[film.type] || 0) + filmCount;
     return acc;
   }, {} as Record<string, number>);
 
   const brandCount = films.reduce((acc, film) => {
-    acc[film.brand] = (acc[film.brand] || 0) + (film.count || 1);
+    const filmCount = getFilmCount(film);
+    acc[film.brand] = (acc[film.brand] || 0) + filmCount;
     return acc;
   }, {} as Record<string, number>);
 
@@ -97,9 +118,12 @@ export default function FilmStatistics({ films }: FilmStatisticsProps) {
               </div>
             </div>
             <div>
-              <h4 className="text-sm font-medium mb-2">Total Films</h4>
+              <h4 className="text-sm font-medium mb-2">Available to Shoot</h4>
               <p className="text-2xl font-bold">
-                {films.reduce((sum, film) => sum + (film.count || 1), 0)}
+                {films.reduce((sum, film) => sum + getFilmCount(film), 0)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {films.reduce((sum, film) => sum + getTotalCount(film), 0)} total inventory
               </p>
             </div>
           </div>
