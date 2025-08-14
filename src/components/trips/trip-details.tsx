@@ -3,15 +3,63 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Trip, Gear, getGearTypeIcon, formatDate as formatDateUtil } from "@/lib/utils";
-import { getTripWithFilms, addFilmToTrip, removeFilmFromTrip, updateFilmQuantityInTrip, deleteTrip, getFilmsWithAvailability, getTripWithGear, addGearToTrip, removeGearFromTrip, getAvailableGear } from "@/app/actions/trips";
+import {
+  Trip,
+  Gear,
+  getGearTypeIcon,
+  formatDate as formatDateUtil,
+} from "@/lib/utils";
+import {
+  getTripWithFilms,
+  addFilmToTrip,
+  removeFilmFromTrip,
+  updateFilmQuantityInTrip,
+  deleteTrip,
+  getFilmsWithAvailability,
+  getTripWithGear,
+  addGearToTrip,
+  removeGearFromTrip,
+  getAvailableGear,
+} from "@/app/actions/trips";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Calendar, MapPin, Plus, Trash2, X, Edit, Filter, SortAsc, SortDesc } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Plus,
+  Trash2,
+  X,
+  Edit,
+  Filter,
+  SortAsc,
+  SortDesc,
+  BookOpen,
+} from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { ShotLogger } from "@/components/shots/shot-logger";
 
 interface TripDetailsProps {
   trip: Trip;
@@ -58,7 +106,9 @@ interface GearForTrip {
 export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const router = useRouter();
   const [tripFilms, setTripFilms] = useState<FilmWithReservedQuantity[]>([]);
-  const [availableFilms, setAvailableFilms] = useState<FilmWithAvailability[]>([]);
+  const [availableFilms, setAvailableFilms] = useState<FilmWithAvailability[]>(
+    []
+  );
   const [tripGear, setTripGear] = useState<GearForTrip[]>([]);
   const [availableGear, setAvailableGear] = useState<Gear[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,31 +119,33 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const [isAddingGear, setIsAddingGear] = useState(false);
   const [editingFilmId, setEditingFilmId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState<number>(1);
-  const [sortBy, setSortBy] = useState<'name' | 'iso' | 'brand' | 'quantity'>('iso');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [isoFilter, setIsoFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<"name" | "iso" | "brand" | "quantity">(
+    "iso"
+  );
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isoFilter, setIsoFilter] = useState<string>("all");
 
   const loadTripData = useCallback(async () => {
     const [filmsResult, gearResult] = await Promise.all([
       getTripWithFilms(trip.id),
-      getTripWithGear(trip.id)
+      getTripWithGear(trip.id),
     ]);
-    
+
     if (filmsResult.films) {
       setTripFilms(filmsResult.films);
     }
-    
+
     if (gearResult.gear) {
       setTripGear(gearResult.gear);
     }
-    
+
     setIsLoading(false);
   }, [trip.id]);
 
   const loadAvailableFilms = useCallback(async () => {
     const result = await getFilmsWithAvailability();
     if (result.data) {
-      setAvailableFilms(result.data.filter(film => film.available_count > 0));
+      setAvailableFilms(result.data.filter((film) => film.available_count > 0));
     }
   }, []);
 
@@ -101,8 +153,8 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     const result = await getAvailableGear();
     if (result.data) {
       // Filter out gear that's already reserved for this trip
-      const filteredGear = result.data.filter(gear => 
-        !tripGear.some(reserved => reserved.id === gear.id)
+      const filteredGear = result.data.filter(
+        (gear) => !tripGear.some((reserved) => reserved.id === gear.id)
       );
       setAvailableGear(filteredGear);
     }
@@ -119,16 +171,20 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
   const handleAddFilm = async () => {
     if (!selectedFilmId || quantity < 1) return;
-    
-    const selectedFilm = availableFilms.find(f => f.id === selectedFilmId);
+
+    const selectedFilm = availableFilms.find((f) => f.id === selectedFilmId);
     if (!selectedFilm || quantity > selectedFilm.available_count) {
-      alert(`Cannot add ${quantity} films. Only ${selectedFilm?.available_count || 0} available.`);
+      alert(
+        `Cannot add ${quantity} films. Only ${
+          selectedFilm?.available_count || 0
+        } available.`
+      );
       return;
     }
-    
+
     setIsAddingFilm(true);
     const result = await addFilmToTrip(trip.id, selectedFilmId, quantity);
-    
+
     if (result.success) {
       setSelectedFilmId("");
       setQuantity(1);
@@ -141,7 +197,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
   const handleRemoveFilm = async (filmId: string) => {
     const result = await removeFilmFromTrip(trip.id, filmId);
-    
+
     if (result.success) {
       loadTripData();
       loadAvailableFilms();
@@ -160,8 +216,12 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       return;
     }
 
-    const result = await updateFilmQuantityInTrip(trip.id, filmId, editQuantity);
-    
+    const result = await updateFilmQuantityInTrip(
+      trip.id,
+      filmId,
+      editQuantity
+    );
+
     if (result.success) {
       setEditingFilmId(null);
       loadTripData();
@@ -181,10 +241,10 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     let filtered = tripFilms;
 
     // Apply ISO filter
-    if (isoFilter && isoFilter !== 'all') {
+    if (isoFilter && isoFilter !== "all") {
       const filterValue = parseInt(isoFilter);
       if (!isNaN(filterValue)) {
-        filtered = filtered.filter(film => film.iso === filterValue);
+        filtered = filtered.filter((film) => film.iso === filterValue);
       }
     }
 
@@ -193,19 +253,19 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       let aValue, bValue;
 
       switch (sortBy) {
-        case 'name':
+        case "name":
           aValue = a.name.toLowerCase();
           bValue = b.name.toLowerCase();
           break;
-        case 'iso':
+        case "iso":
           aValue = a.iso;
           bValue = b.iso;
           break;
-        case 'brand':
+        case "brand":
           aValue = a.brand.toLowerCase();
           bValue = b.brand.toLowerCase();
           break;
-        case 'quantity':
+        case "quantity":
           aValue = a.reserved_quantity;
           bValue = b.reserved_quantity;
           break;
@@ -214,8 +274,8 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
           bValue = b.name.toLowerCase();
       }
 
-      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -224,24 +284,24 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
   const toggleSort = (newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
       setSortBy(newSortBy);
-      setSortOrder('asc');
+      setSortOrder("asc");
     }
   };
 
   const getUniqueISOs = () => {
-    const isos = tripFilms.map(film => film.iso);
+    const isos = tripFilms.map((film) => film.iso);
     return [...new Set(isos)].sort((a, b) => a - b);
   };
 
   const handleAddGear = async () => {
     if (!selectedGearId) return;
-    
+
     setIsAddingGear(true);
     const result = await addGearToTrip(trip.id, selectedGearId);
-    
+
     if (result.success) {
       setSelectedGearId("");
       loadTripData();
@@ -252,7 +312,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
   const handleRemoveGear = async (gearId: string) => {
     const result = await removeGearFromTrip(trip.id, gearId);
-    
+
     if (result.success) {
       loadTripData();
       router.refresh();
@@ -260,21 +320,24 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   };
 
   const handleDeleteTrip = async () => {
-    if (confirm("Are you sure you want to delete this trip? This action cannot be undone.")) {
+    if (
+      confirm(
+        "Are you sure you want to delete this trip? This action cannot be undone."
+      )
+    ) {
       const result = await deleteTrip(trip.id);
-      
+
       if (result.success) {
         if (onBack) {
           router.refresh();
           onBack();
         } else {
-          router.push('/trips');
+          router.push("/trips");
           router.refresh();
         }
       }
     }
   };
-
 
   const isUpcoming = (dateString: string) => {
     return new Date(dateString) >= new Date();
@@ -305,7 +368,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               </Button>
             </Link>
           )}
-          
+
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">{trip.title}</h1>
@@ -314,12 +377,14 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   <Calendar className="h-4 w-4 mr-1" />
                   {formatDateUtil(trip.trip_date)}
                 </div>
-                <Badge variant={isUpcoming(trip.trip_date) ? "secondary" : "outline"}>
+                <Badge
+                  variant={isUpcoming(trip.trip_date) ? "secondary" : "outline"}
+                >
                   {isUpcoming(trip.trip_date) ? "Upcoming" : "Past"}
                 </Badge>
               </div>
             </div>
-            
+
             <Button variant="destructive" size="sm" onClick={handleDeleteTrip}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Trip
@@ -346,13 +411,30 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     Films you&apos;ve reserved for this trip
                     {tripFilms.length > 0 && (
                       <span className="ml-2 font-medium text-foreground">
-                        {isoFilter !== 'all' && getFilteredAndSortedFilms().length !== tripFilms.length ? (
+                        {isoFilter !== "all" &&
+                        getFilteredAndSortedFilms().length !==
+                          tripFilms.length ? (
                           <>
-                            ({getFilteredAndSortedFilms().reduce((total, film) => total + film.reserved_quantity, 0)} of {tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                            (
+                            {getFilteredAndSortedFilms().reduce(
+                              (total, film) => total + film.reserved_quantity,
+                              0
+                            )}{" "}
+                            of{" "}
+                            {tripFilms.reduce(
+                              (total, film) => total + film.reserved_quantity,
+                              0
+                            )}{" "}
+                            total)
                           </>
                         ) : (
                           <>
-                            ({tripFilms.reduce((total, film) => total + film.reserved_quantity, 0)} total)
+                            (
+                            {tripFilms.reduce(
+                              (total, film) => total + film.reserved_quantity,
+                              0
+                            )}{" "}
+                            total)
                           </>
                         )}
                       </span>
@@ -361,7 +443,10 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                 </div>
                 {isUpcoming(trip.trip_date) && (
                   <div className="flex items-center gap-2">
-                    <Select value={selectedFilmId} onValueChange={setSelectedFilmId}>
+                    <Select
+                      value={selectedFilmId}
+                      onValueChange={setSelectedFilmId}
+                    >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select a film" />
                       </SelectTrigger>
@@ -377,20 +462,30 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                       <Input
                         type="number"
                         min="1"
-                        max={selectedFilmId ? availableFilms.find(f => f.id === selectedFilmId)?.available_count || 1 : 1}
+                        max={
+                          selectedFilmId
+                            ? availableFilms.find(
+                                (f) => f.id === selectedFilmId
+                              )?.available_count || 1
+                            : 1
+                        }
                         value={quantity}
-                        onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                        onChange={(e) =>
+                          setQuantity(
+                            Math.max(1, parseInt(e.target.value) || 1)
+                          )
+                        }
                         className="w-16"
                         placeholder="Qty"
                       />
                     </div>
-                    <Button 
-                      onClick={handleAddFilm} 
+                    <Button
+                      onClick={handleAddFilm}
                       disabled={!selectedFilmId || isAddingFilm || quantity < 1}
                       size="sm"
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Add {quantity > 1 ? `${quantity} Films` : 'Film'}
+                      Add {quantity > 1 ? `${quantity} Films` : "Film"}
                     </Button>
                   </div>
                 )}
@@ -402,7 +497,9 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No films reserved for this trip yet</p>
                   {isUpcoming(trip.trip_date) && (
-                    <p className="text-sm mt-2">Add films using the selector above</p>
+                    <p className="text-sm mt-2">
+                      Add films using the selector above
+                    </p>
                   )}
                 </div>
               ) : (
@@ -424,73 +521,90 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      {isoFilter && isoFilter !== 'all' && (
+                      {isoFilter && isoFilter !== "all" && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setIsoFilter('all')}
+                          onClick={() => setIsoFilter("all")}
                           className="h-8 px-2"
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-1">
-                      <span className="text-sm text-muted-foreground mr-2">Sort by:</span>
+                      <span className="text-sm text-muted-foreground mr-2">
+                        Sort by:
+                      </span>
                       <Button
-                        variant={sortBy === 'name' ? 'secondary' : 'ghost'}
+                        variant={sortBy === "name" ? "secondary" : "ghost"}
                         size="sm"
-                        onClick={() => toggleSort('name')}
+                        onClick={() => toggleSort("name")}
                         className="flex items-center gap-1"
                       >
                         Name
-                        {sortBy === 'name' && (
-                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                        )}
+                        {sortBy === "name" &&
+                          (sortOrder === "asc" ? (
+                            <SortAsc className="h-3 w-3" />
+                          ) : (
+                            <SortDesc className="h-3 w-3" />
+                          ))}
                       </Button>
                       <Button
-                        variant={sortBy === 'iso' ? 'secondary' : 'ghost'}
+                        variant={sortBy === "iso" ? "secondary" : "ghost"}
                         size="sm"
-                        onClick={() => toggleSort('iso')}
+                        onClick={() => toggleSort("iso")}
                         className="flex items-center gap-1"
                       >
                         ISO
-                        {sortBy === 'iso' && (
-                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                        )}
+                        {sortBy === "iso" &&
+                          (sortOrder === "asc" ? (
+                            <SortAsc className="h-3 w-3" />
+                          ) : (
+                            <SortDesc className="h-3 w-3" />
+                          ))}
                       </Button>
                       <Button
-                        variant={sortBy === 'brand' ? 'secondary' : 'ghost'}
+                        variant={sortBy === "brand" ? "secondary" : "ghost"}
                         size="sm"
-                        onClick={() => toggleSort('brand')}
+                        onClick={() => toggleSort("brand")}
                         className="flex items-center gap-1"
                       >
                         Brand
-                        {sortBy === 'brand' && (
-                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                        )}
+                        {sortBy === "brand" &&
+                          (sortOrder === "asc" ? (
+                            <SortAsc className="h-3 w-3" />
+                          ) : (
+                            <SortDesc className="h-3 w-3" />
+                          ))}
                       </Button>
                       <Button
-                        variant={sortBy === 'quantity' ? 'secondary' : 'ghost'}
+                        variant={sortBy === "quantity" ? "secondary" : "ghost"}
                         size="sm"
-                        onClick={() => toggleSort('quantity')}
+                        onClick={() => toggleSort("quantity")}
                         className="flex items-center gap-1"
                       >
                         Quantity
-                        {sortBy === 'quantity' && (
-                          sortOrder === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                        )}
+                        {sortBy === "quantity" &&
+                          (sortOrder === "asc" ? (
+                            <SortAsc className="h-3 w-3" />
+                          ) : (
+                            <SortDesc className="h-3 w-3" />
+                          ))}
                       </Button>
                     </div>
                   </div>
                 </>
               )}
-              
+
               {tripFilms.length > 0 && (
                 <div className="space-y-3">
                   {getFilteredAndSortedFilms().map((film) => (
-                    <div key={film.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={film.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
                         <div>
                           <p className="font-medium">{film.name}</p>
@@ -504,10 +618,16 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                               type="number"
                               min="1"
                               value={editQuantity}
-                              onChange={(e) => setEditQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                              onChange={(e) =>
+                                setEditQuantity(
+                                  Math.max(1, parseInt(e.target.value) || 1)
+                                )
+                              }
                               className="w-16"
                             />
-                            <span className="text-sm text-muted-foreground">reserved</span>
+                            <span className="text-sm text-muted-foreground">
+                              reserved
+                            </span>
                           </div>
                         ) : (
                           <Badge variant="outline">
@@ -515,46 +635,78 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           </Badge>
                         )}
                       </div>
-                      
-                      {isUpcoming(trip.trip_date) && (
-                        <div className="flex items-center gap-1">
-                          {editingFilmId === film.id ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSaveQuantity(film.id)}
-                              >
-                                Save
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelEdit}
-                              >
-                                Cancel
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditQuantity(film.id, film.reserved_quantity)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveFilm(film.id)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      )}
+
+                      <div className="flex items-center gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1.5"
+                            >
+                              <BookOpen className="h-3.5 w-3.5" />
+                              Log Shots
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Shot Logger: {film.name}
+                              </DialogTitle>
+                            </DialogHeader>
+                            <ShotLogger
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              tripFilm={film as any}
+                              gear={tripGear}
+                            />
+                          </DialogContent>
+                        </Dialog>
+
+                        {isUpcoming(trip.trip_date) && (
+                          <div className="flex items-center gap-1">
+                            {editingFilmId === film.id ? (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSaveQuantity(film.id)}
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleCancelEdit}
+                                >
+                                  Cancel
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleEditQuantity(
+                                      film.id,
+                                      film.reserved_quantity
+                                    )
+                                  }
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveFilm(film.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -573,20 +725,24 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                 </div>
                 {isUpcoming(trip.trip_date) && (
                   <div className="flex items-center gap-2">
-                    <Select value={selectedGearId} onValueChange={setSelectedGearId}>
+                    <Select
+                      value={selectedGearId}
+                      onValueChange={setSelectedGearId}
+                    >
                       <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Select gear" />
                       </SelectTrigger>
                       <SelectContent>
                         {availableGear.map((gear) => (
                           <SelectItem key={gear.id} value={gear.id}>
-                            {getGearTypeIcon(gear.type)} {gear.brand} {gear.name}
+                            {getGearTypeIcon(gear.type)} {gear.brand}{" "}
+                            {gear.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button 
-                      onClick={handleAddGear} 
+                    <Button
+                      onClick={handleAddGear}
                       disabled={!selectedGearId || isAddingGear}
                       size="sm"
                     >
@@ -603,23 +759,31 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No gear reserved for this trip yet</p>
                   {isUpcoming(trip.trip_date) && (
-                    <p className="text-sm mt-2">Add gear using the selector above</p>
+                    <p className="text-sm mt-2">
+                      Add gear using the selector above
+                    </p>
                   )}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {tripGear.map((gear) => (
-                    <div key={gear.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div
+                      key={gear.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{getGearTypeIcon(gear.type)}</span>
+                        <span className="text-2xl">
+                          {getGearTypeIcon(gear.type)}
+                        </span>
                         <div>
                           <p className="font-medium">{gear.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {gear.brand} • {gear.type}{gear.model ? ` • ${gear.model}` : ''}
+                            {gear.brand} • {gear.type}
+                            {gear.model ? ` • ${gear.model}` : ""}
                           </p>
                         </div>
                       </div>
-                      
+
                       {isUpcoming(trip.trip_date) && (
                         <Button
                           variant="ghost"
