@@ -29,6 +29,7 @@ export async function createTrip(data: TripSchema): Promise<CreateTripResponse> 
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       user_id: user.id,
+      status: 'upcoming',
     };
 
     const { error } = await supabase.from("trips").insert([newTrip]);
