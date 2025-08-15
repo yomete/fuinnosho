@@ -104,17 +104,29 @@ export async function getTrips(): Promise<{
       throw error;
     }
 
-    // Calculate total reserved film count for each trip
+    // Calculate total reserved film count and determine status for each trip
     const tripsWithCounts = data?.map(trip => {
       const tripFilms = trip.trip_films as { quantity: number }[] | null;
       const reserved_film_count = tripFilms?.reduce((total, tf) => total + tf.quantity, 0) || 0;
       
-      // Remove trip_films from the final object and add reserved_film_count
+      // Determine status if not already completed
+      let status = trip.status;
+      if (status !== 'completed') {
+        const tripDate = new Date(trip.trip_date);
+        const today = new Date();
+        // Set time to 00:00:00 to compare dates only
+        tripDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        status = tripDate >= today ? 'upcoming' : 'past';
+      }
+
+      // Remove trip_films from the final object and add reserved_film_count and status
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { trip_films, ...tripData } = trip;
       return {
         ...tripData,
-        reserved_film_count
+        reserved_film_count,
+        status,
       };
     }) || [];
 
@@ -601,6 +613,32 @@ export async function getAvailableGear(): Promise<{
       data: null,
       error:
         error instanceof Error ? error : new Error("Failed to fetch available gear"),
+    };
+  }
+}
+
+export async function updateTripStatus(
+  tripId: string,
+  status: 'upcoming' | 'past' | 'completed'
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("trips")
+      .update({ status })
+      .eq("id", tripId);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/trips");
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating trip status:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update trip status",
     };
   }
 }

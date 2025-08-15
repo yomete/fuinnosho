@@ -49,6 +49,7 @@ export interface Trip {
   updated_at: string;
   user_id: string;
   reserved_film_count?: number;
+  status: "upcoming" | "past" | "completed";
 }
 
 export interface TripFilm {
@@ -165,6 +166,19 @@ export function getConditionColor(condition: string): string {
       return 'text-yellow-600 bg-yellow-50';
     case 'poor':
       return 'text-red-600 bg-red-50';
+    default:
+      return 'text-gray-600 bg-gray-50';
+  }
+}
+
+export function getTripStatusColor(status: 'upcoming' | 'past' | 'completed'): string {
+  switch (status) {
+    case 'upcoming':
+      return 'text-blue-600 bg-blue-50';
+    case 'past':
+      return 'text-gray-600 bg-gray-50';
+    case 'completed':
+      return 'text-green-600 bg-green-50';
     default:
       return 'text-gray-600 bg-gray-50';
   }

@@ -339,10 +339,6 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     }
   };
 
-  const isUpcoming = (dateString: string) => {
-    return new Date(dateString) >= new Date();
-  };
-
   if (isLoading) {
     return (
       <div className="container mx-auto py-8">
@@ -377,11 +373,6 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   <Calendar className="h-4 w-4 mr-1" />
                   {formatDateUtil(trip.trip_date)}
                 </div>
-                <Badge
-                  variant={isUpcoming(trip.trip_date) ? "secondary" : "outline"}
-                >
-                  {isUpcoming(trip.trip_date) ? "Upcoming" : "Past"}
-                </Badge>
               </div>
             </div>
 
@@ -441,54 +432,52 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     )}
                   </CardDescription>
                 </div>
-                {isUpcoming(trip.trip_date) && (
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={selectedFilmId}
-                      onValueChange={setSelectedFilmId}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select a film" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableFilms.map((film) => (
-                          <SelectItem key={film.id} value={film.id}>
-                            {film.name} ({film.available_count} available)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1">
-                      <Input
-                        type="number"
-                        min="1"
-                        max={
-                          selectedFilmId
-                            ? availableFilms.find(
-                                (f) => f.id === selectedFilmId
-                              )?.available_count || 1
-                            : 1
-                        }
-                        value={quantity}
-                        onChange={(e) =>
-                          setQuantity(
-                            Math.max(1, parseInt(e.target.value) || 1)
-                          )
-                        }
-                        className="w-16"
-                        placeholder="Qty"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleAddFilm}
-                      disabled={!selectedFilmId || isAddingFilm || quantity < 1}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add {quantity > 1 ? `${quantity} Films` : "Film"}
-                    </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedFilmId}
+                    onValueChange={setSelectedFilmId}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select a film" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableFilms.map((film) => (
+                        <SelectItem key={film.id} value={film.id}>
+                          {film.name} ({film.available_count} available)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="1"
+                      max={
+                        selectedFilmId
+                          ? availableFilms.find(
+                              (f) => f.id === selectedFilmId
+                            )?.available_count || 1
+                          : 1
+                      }
+                      value={quantity}
+                      onChange={(e) =>
+                        setQuantity(
+                          Math.max(1, parseInt(e.target.value) || 1)
+                        )
+                      }
+                      className="w-16"
+                      placeholder="Qty"
+                    />
                   </div>
-                )}
+                  <Button
+                    onClick={handleAddFilm}
+                    disabled={!selectedFilmId || isAddingFilm || quantity < 1}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add {quantity > 1 ? `${quantity} Films` : "Film"}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -496,11 +485,9 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No films reserved for this trip yet</p>
-                  {isUpcoming(trip.trip_date) && (
-                    <p className="text-sm mt-2">
-                      Add films using the selector above
-                    </p>
-                  )}
+                  <p className="text-sm mt-2">
+                    Add films using the selector above
+                  </p>
                 </div>
               ) : (
                 <>
@@ -662,50 +649,48 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           </DialogContent>
                         </Dialog>
 
-                        {isUpcoming(trip.trip_date) && (
-                          <div className="flex items-center gap-1">
-                            {editingFilmId === film.id ? (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleSaveQuantity(film.id)}
-                                >
-                                  Save
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={handleCancelEdit}
-                                >
-                                  Cancel
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleEditQuantity(
-                                      film.id,
-                                      film.reserved_quantity
-                                    )
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleRemoveFilm(film.id)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {editingFilmId === film.id ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleSaveQuantity(film.id)}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleCancelEdit}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleEditQuantity(
+                                    film.id,
+                                    film.reserved_quantity
+                                  )
+                                }
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveFilm(film.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -723,34 +708,32 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     Photography gear you&apos;ve reserved for this trip
                   </CardDescription>
                 </div>
-                {isUpcoming(trip.trip_date) && (
-                  <div className="flex items-center gap-2">
-                    <Select
-                      value={selectedGearId}
-                      onValueChange={setSelectedGearId}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select gear" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableGear.map((gear) => (
-                          <SelectItem key={gear.id} value={gear.id}>
-                            {getGearTypeIcon(gear.type)} {gear.brand}{" "}
-                            {gear.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      onClick={handleAddGear}
-                      disabled={!selectedGearId || isAddingGear}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Gear
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selectedGearId}
+                    onValueChange={setSelectedGearId}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select gear" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableGear.map((gear) => (
+                        <SelectItem key={gear.id} value={gear.id}>
+                          {getGearTypeIcon(gear.type)} {gear.brand}{" "}
+                          {gear.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleAddGear}
+                    disabled={!selectedGearId || isAddingGear}
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Gear
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -758,11 +741,9 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No gear reserved for this trip yet</p>
-                  {isUpcoming(trip.trip_date) && (
-                    <p className="text-sm mt-2">
-                      Add gear using the selector above
-                    </p>
-                  )}
+                  <p className="text-sm mt-2">
+                    Add gear using the selector above
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -784,15 +765,13 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         </div>
                       </div>
 
-                      {isUpcoming(trip.trip_date) && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveGear(gear.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveGear(gear.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
                 </div>

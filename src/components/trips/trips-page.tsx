@@ -9,6 +9,8 @@ import { TripDetails } from "./trip-details";
 import { TripTableOrGrid } from "./trip-table-or-grid";
 import { Plus, Calendar } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { updateTripStatus } from "@/app/actions/trips";
+import { toast } from "sonner";
 
 interface TripsPageProps {
   trips: Trip[];
@@ -18,6 +20,15 @@ export function TripsPage({ trips }: TripsPageProps) {
   const [showNewForm, setShowNewForm] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+
+  const handleTripComplete = async (trip: Trip) => {
+    const result = await updateTripStatus(trip.id, 'completed');
+    if (result.success) {
+      toast.success("Trip marked as completed");
+    } else {
+      toast.error(result.error || "Failed to mark trip as completed");
+    }
+  };
 
   if (selectedTrip) {
     return (
@@ -71,6 +82,7 @@ export function TripsPage({ trips }: TripsPageProps) {
         <TripTableOrGrid
           trips={trips}
           onTripEdit={setEditingTrip}
+          onTripComplete={handleTripComplete}
         />
       )}
     </div>

@@ -9,9 +9,10 @@ import { TripGrid } from "./trip-grid";
 interface TripTableOrGridProps {
   trips: Trip[];
   onTripEdit: (trip: Trip) => void;
+  onTripComplete: (trip: Trip) => void;
 }
 
-export function TripTableOrGrid({ trips, onTripEdit }: TripTableOrGridProps) {
+export function TripTableOrGrid({ trips, onTripEdit, onTripComplete }: TripTableOrGridProps) {
   const [view, setView] = useState<"table" | "grid">("table");
 
   return (
@@ -50,7 +51,7 @@ export function TripTableOrGrid({ trips, onTripEdit }: TripTableOrGridProps) {
             }
           `}
         >
-          <TripGrid trips={trips} onTripEdit={onTripEdit} />
+          <TripGrid trips={trips} onTripEdit={onTripEdit} onTripComplete={onTripComplete} />
         </div>
       )}
       {view === "table" && (
@@ -64,7 +65,7 @@ export function TripTableOrGrid({ trips, onTripEdit }: TripTableOrGridProps) {
             }
           `}
         >
-          <TripTable trips={trips} onTripEdit={onTripEdit} />
+          <TripTable trips={trips} onTripEdit={onTripEdit} onTripComplete={onTripComplete} />
         </div>
       )}
     </div>

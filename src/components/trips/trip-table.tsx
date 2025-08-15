@@ -1,5 +1,5 @@
 "use client";
-import { Trip, formatDate } from "@/lib/utils";
+import { Trip, formatDate, getTripStatusColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -17,14 +17,10 @@ import Link from "next/link";
 interface TripTableProps {
   trips: Trip[];
   onTripEdit: (trip: Trip) => void;
+  onTripComplete: (trip: Trip) => void;
 }
 
-export function TripTable({ trips, onTripEdit }: TripTableProps) {
-
-  const isUpcoming = (dateString: string) => {
-    return new Date(dateString) >= new Date();
-  };
-
+export function TripTable({ trips, onTripEdit, onTripComplete }: TripTableProps) {
   if (trips.length === 0) {
     return (
       <EmptyState
@@ -54,14 +50,16 @@ export function TripTable({ trips, onTripEdit }: TripTableProps) {
               <TableCell className="font-medium">{trip.title}</TableCell>
               <TableCell>{formatDate(trip.trip_date)}</TableCell>
               <TableCell>
-                <Badge variant={isUpcoming(trip.trip_date) ? "secondary" : "outline"}>
-                  {isUpcoming(trip.trip_date) ? "Upcoming" : "Past"}
+                <Badge className={getTripStatusColor(trip.status)}>
+                  {trip.status}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1">
                   <Film className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{trip.reserved_film_count || 0}</span>
+                  <span className="font-medium">
+                    {trip.reserved_film_count || 0}
+                  </span>
                 </div>
               </TableCell>
               <TableCell className="max-w-md truncate">
@@ -70,19 +68,23 @@ export function TripTable({ trips, onTripEdit }: TripTableProps) {
               <TableCell>
                 <div className="flex gap-2">
                   <Link href={`/trips/${trip.id}`}>
-                    <Button size="sm">
-                      View Details
-                    </Button>
+                    <Button size="sm">View Details</Button>
                   </Link>
-                  {isUpcoming(trip.trip_date) && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onTripEdit(trip)}
-                    >
-                      Edit
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onTripEdit(trip)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onTripComplete(trip)}
+                    disabled={trip.status === 'completed'}
+                  >
+                    Mark as Completed
+                  </Button>
                 </div>
               </TableCell>
             </TableRow>
