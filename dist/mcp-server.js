@@ -705,6 +705,69 @@ class FilmInventoryMCPServer {
                         required: ["trip_id", "gear_id"],
                     },
                 },
+                {
+                    name: "get_usage_analytics",
+                    description: "Get comprehensive film usage analytics including costs and patterns",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            period: {
+                                type: "string",
+                                description: "Time period for analysis (weekly, monthly, all)",
+                                default: "monthly",
+                            },
+                            include_costs: {
+                                type: "boolean",
+                                description: "Include cost breakdown analysis",
+                                default: true,
+                            },
+                        },
+                    },
+                },
+                {
+                    name: "get_film_usage_by_type",
+                    description: "Get film usage statistics broken down by development type (C41, B&W, ECN)",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            start_date: {
+                                type: "string",
+                                description: "Start date for analysis (YYYY-MM-DD format)",
+                            },
+                            end_date: {
+                                type: "string",
+                                description: "End date for analysis (YYYY-MM-DD format)",
+                            },
+                        },
+                    },
+                },
+                {
+                    name: "calculate_monthly_costs",
+                    description: "Calculate monthly film and development costs with detailed breakdown",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            month: {
+                                type: "string",
+                                description: "Month to analyze (YYYY-MM format), defaults to current month",
+                            },
+                        },
+                    },
+                },
+                {
+                    name: "get_shooting_patterns",
+                    description: "Analyze shooting patterns including day of week preferences and frequency",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            weeks_back: {
+                                type: "number",
+                                description: "Number of weeks to analyze (default: 12)",
+                                default: 12,
+                            },
+                        },
+                    },
+                },
             ],
         }));
         this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -761,6 +824,14 @@ class FilmInventoryMCPServer {
                         return await this.reserveGearForTrip(args);
                     case "remove_gear_reservation":
                         return await this.removeGearReservation(args);
+                    case "get_usage_analytics":
+                        return await this.getUsageAnalytics(args);
+                    case "get_film_usage_by_type":
+                        return await this.getFilmUsageByType(args);
+                    case "calculate_monthly_costs":
+                        return await this.calculateMonthlyCosts(args);
+                    case "get_shooting_patterns":
+                        return await this.getShootingPatterns(args);
                     default:
                         throw new Error(`Unknown tool: ${name}`);
                 }
@@ -1976,6 +2047,252 @@ class FilmInventoryMCPServer {
                             trip: reservation.trips.title,
                         },
                     }, null, 2),
+                },
+            ],
+        };
+    }
+    // Development cost mapping based on film types
+    // ECN/motion picture films: €9, C41: €6, B&W: €9
+    getDevelopmentCost(film) {
+        // ECN films: detect by brand (35mmdealer, Safelight)
+        // TODO: Add more ECN vendors here if needed
+        const ecnBrands = ['35mmdealer', 'safelight'];
+        const isECN = ecnBrands.some(brand => film.brand?.toLowerCase().includes(brand.toLowerCase()));
+        if (isECN) {
+            return 9; // ECN development cost
+        }
+        // C41 films: type is "Color Negative"
+        if (film.type === 'Color Negative') {
+            return 6; // C41 development cost
+        }
+        // B&W films: type contains "Black & White"
+        if (film.type?.includes('Black & White')) {
+            return 9; // B&W development cost
+        }
+        // Default to C41 cost for unknown types
+        return 6;
+    }
+    getDevelopmentType(film) {
+        const ecnBrands = ['35mmdealer', 'safelight'];
+        const isECN = ecnBrands.some(brand => film.brand?.toLowerCase().includes(brand.toLowerCase()));
+        if (isECN) {
+            return 'ECN';
+        }
+        if (film.type === 'Color Negative') {
+            return 'C41';
+        }
+        if (film.type?.includes('Black & White')) {
+            return 'B&W';
+        }
+        return 'C41'; // Default
+    }
+    async getUsageAnalytics(args) {
+        const { period = 'monthly', include_costs = true } = args;
+        // Get all usage data with film information
+        const { data: usageData, error } = await this.supabase
+            .from("film_usage")
+            .select(`
+        *,
+        films (*)
+      `)
+            .order("created_at", { ascending: false });
+        if (error) {
+            throw new Error(`Failed to fetch usage data: ${error.message}`);
+        }
+        // Calculate analytics
+        const analytics = {
+            total_rolls_used: 0,
+            total_cost: 0,
+            film_cost: 0,
+            development_cost: 0,
+            usage_by_type: {},
+            cost_by_type: {},
+            monthly_trends: {},
+            weekly_trends: {},
+        };
+        usageData.forEach((usage) => {
+            const film = usage.films;
+            const filmCost = 0; // Film cost is sunk cost - already paid when purchased
+            const devCost = this.getDevelopmentCost(film) * usage.quantity;
+            const devType = this.getDevelopmentType(film);
+            analytics.total_rolls_used += usage.quantity;
+            analytics.film_cost += filmCost;
+            analytics.development_cost += devCost;
+            analytics.total_cost += devCost; // Only count development costs
+            analytics.usage_by_type[devType] = (analytics.usage_by_type[devType] || 0) + usage.quantity;
+            analytics.cost_by_type[devType] = (analytics.cost_by_type[devType] || 0) + devCost;
+            // Group by period
+            const date = new Date(usage.created_at);
+            if (period === 'monthly') {
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                if (!analytics.monthly_trends[monthKey]) {
+                    analytics.monthly_trends[monthKey] = { rolls: 0, cost: 0 };
+                }
+                analytics.monthly_trends[monthKey].rolls += usage.quantity;
+                analytics.monthly_trends[monthKey].cost += devCost;
+            }
+        });
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(analytics, null, 2),
+                },
+            ],
+        };
+    }
+    async getFilmUsageByType(args) {
+        const { start_date, end_date } = args;
+        let query = this.supabase
+            .from("film_usage")
+            .select(`
+        *,
+        films (*)
+      `);
+        if (start_date) {
+            query = query.gte("created_at", start_date);
+        }
+        if (end_date) {
+            query = query.lte("created_at", end_date);
+        }
+        const { data: usageData, error } = await query.order("created_at", { ascending: false });
+        if (error) {
+            throw new Error(`Failed to fetch usage data: ${error.message}`);
+        }
+        const typeStats = {};
+        usageData.forEach((usage) => {
+            const film = usage.films;
+            const devType = this.getDevelopmentType(film);
+            const filmCost = (film.price || 0) * usage.quantity;
+            const devCost = this.getDevelopmentCost(film) * usage.quantity;
+            if (!typeStats[devType]) {
+                typeStats[devType] = {
+                    rolls: 0,
+                    film_cost: 0,
+                    development_cost: 0,
+                    total_cost: 0,
+                    films: [],
+                };
+            }
+            typeStats[devType].rolls += usage.quantity;
+            typeStats[devType].film_cost += filmCost;
+            typeStats[devType].development_cost += devCost;
+            typeStats[devType].total_cost += devCost;
+            if (!typeStats[devType].films.includes(film.name)) {
+                typeStats[devType].films.push(film.name);
+            }
+        });
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(typeStats, null, 2),
+                },
+            ],
+        };
+    }
+    async calculateMonthlyCosts(args) {
+        const { month } = args;
+        const targetMonth = month || new Date().toISOString().slice(0, 7); // YYYY-MM format
+        const startDate = `${targetMonth}-01`;
+        const endDate = `${targetMonth}-31`;
+        const { data: usageData, error } = await this.supabase
+            .from("film_usage")
+            .select(`
+        *,
+        films (*)
+      `)
+            .gte("created_at", startDate)
+            .lte("created_at", endDate)
+            .order("created_at", { ascending: false });
+        if (error) {
+            throw new Error(`Failed to fetch usage data: ${error.message}`);
+        }
+        const costs = {
+            month: targetMonth,
+            total_rolls: 0,
+            total_film_cost: 0,
+            total_development_cost: 0,
+            total_cost: 0,
+            breakdown_by_type: {},
+            daily_usage: {},
+        };
+        usageData.forEach((usage) => {
+            const film = usage.films;
+            const filmCost = 0; // Film cost is sunk cost - already paid when purchased
+            const devCost = this.getDevelopmentCost(film) * usage.quantity;
+            const devType = this.getDevelopmentType(film);
+            costs.total_rolls += usage.quantity;
+            costs.total_film_cost += filmCost;
+            costs.total_development_cost += devCost;
+            costs.total_cost += devCost;
+            if (!costs.breakdown_by_type[devType]) {
+                costs.breakdown_by_type[devType] = {
+                    rolls: 0,
+                    film_cost: 0,
+                    development_cost: 0,
+                    cost_per_roll: devCost / usage.quantity,
+                };
+            }
+            costs.breakdown_by_type[devType].rolls += usage.quantity;
+            costs.breakdown_by_type[devType].film_cost += filmCost;
+            costs.breakdown_by_type[devType].development_cost += devCost;
+            // Daily usage
+            const day = usage.created_at.split('T')[0];
+            costs.daily_usage[day] = (costs.daily_usage[day] || 0) + usage.quantity;
+        });
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(costs, null, 2),
+                },
+            ],
+        };
+    }
+    async getShootingPatterns(args) {
+        const { weeks_back = 12 } = args;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - (weeks_back * 7));
+        const { data: usageData, error } = await this.supabase
+            .from("film_usage")
+            .select("*")
+            .gte("created_at", startDate.toISOString())
+            .order("created_at", { ascending: false });
+        if (error) {
+            throw new Error(`Failed to fetch usage data: ${error.message}`);
+        }
+        const patterns = {
+            day_of_week: {},
+            weekly_frequency: {},
+            shooting_sessions: 0,
+            avg_rolls_per_session: 0,
+            total_rolls: 0,
+        };
+        const sessionDates = new Set();
+        usageData.forEach((usage) => {
+            const date = new Date(usage.created_at);
+            const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+            const weekKey = getWeekKey(date);
+            const dayKey = usage.created_at.split('T')[0];
+            patterns.day_of_week[dayOfWeek] = (patterns.day_of_week[dayOfWeek] || 0) + usage.quantity;
+            patterns.weekly_frequency[weekKey] = (patterns.weekly_frequency[weekKey] || 0) + usage.quantity;
+            patterns.total_rolls += usage.quantity;
+            sessionDates.add(dayKey);
+        });
+        patterns.shooting_sessions = sessionDates.size;
+        patterns.avg_rolls_per_session = patterns.shooting_sessions > 0 ?
+            patterns.total_rolls / patterns.shooting_sessions : 0;
+        function getWeekKey(date) {
+            const weekStart = new Date(date);
+            weekStart.setDate(date.getDate() - date.getDay());
+            return weekStart.toISOString().split('T')[0];
+        }
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(patterns, null, 2),
                 },
             ],
         };
