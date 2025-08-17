@@ -8,6 +8,7 @@ import { CostBreakdown } from "./cost-breakdown";
 import { FilmTypeDistribution } from "./film-type-distribution";
 import { TripUsageTable } from "./trip-usage-table";
 import { UsageOverview } from "./usage-overview";
+import { StreamlinedPredictions } from "./streamlined-predictions";
 
 export function UsageAnalytics() {
   return (
@@ -16,10 +17,10 @@ export function UsageAnalytics() {
       
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="trips">Trips</TabsTrigger>
+          <TabsTrigger value="overview">Current Usage</TabsTrigger>
+          <TabsTrigger value="predictions">Predictions & Insights</TabsTrigger>
+          <TabsTrigger value="trends">Historical Trends</TabsTrigger>
+          <TabsTrigger value="trips">Trip Analysis</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
@@ -29,32 +30,36 @@ export function UsageAnalytics() {
           </div>
         </TabsContent>
         
-        <TabsContent value="weekly" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly Usage Trends</CardTitle>
-              <CardDescription>
-                Your film consumption and lab development costs over the last 12 weeks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <WeeklyUsageChart />
-            </CardContent>
-          </Card>
+        <TabsContent value="predictions" className="space-y-4">
+          <StreamlinedPredictions />
         </TabsContent>
         
-        <TabsContent value="monthly" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Usage Analysis</CardTitle>
-              <CardDescription>
-                Monthly film usage patterns and lab development spending over the last 12 months
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <MonthlyUsageChart />
-            </CardContent>
-          </Card>
+        <TabsContent value="trends" className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Usage Trends</CardTitle>
+                <CardDescription>
+                  Your film consumption and lab development costs over the last 12 weeks
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WeeklyUsageChart />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Usage Analysis</CardTitle>
+                <CardDescription>
+                  Monthly film usage patterns and lab development spending over the last 12 months
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MonthlyUsageChart />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="trips" className="space-y-4">
