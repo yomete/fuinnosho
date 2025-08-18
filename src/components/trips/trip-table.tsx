@@ -1,5 +1,5 @@
 "use client";
-import { Trip, formatDate, getTripStatusColor } from "@/lib/utils";
+import { Trip, formatTripDateRange, formatTripDuration, getTripStatusColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -37,7 +37,8 @@ export function TripTable({ trips, onTripEdit, onTripComplete }: TripTableProps)
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>Dates</TableHead>
+            <TableHead>Duration</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Reserved Films</TableHead>
             <TableHead>Description</TableHead>
@@ -48,7 +49,10 @@ export function TripTable({ trips, onTripEdit, onTripComplete }: TripTableProps)
           {trips.map((trip) => (
             <TableRow key={trip.id}>
               <TableCell className="font-medium">{trip.title}</TableCell>
-              <TableCell>{formatDate(trip.trip_date)}</TableCell>
+              <TableCell>{formatTripDateRange(trip.start_date, trip.end_date)}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {formatTripDuration(trip.start_date, trip.end_date)}
+              </TableCell>
               <TableCell>
                 <Badge className={getTripStatusColor(trip.status)}>
                   {trip.status}

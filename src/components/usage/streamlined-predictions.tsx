@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { getPredictiveAnalysis, PredictiveAnalysis } from "@/app/actions/predictions";
+import { formatTripDuration } from "@/lib/utils";
 import { PredictiveChart } from "./predictive-chart";
 import { SeasonalPatterns } from "./seasonal-patterns";
 import { TrendAnalysisComponent } from "./trend-analysis";
@@ -218,7 +219,7 @@ export function StreamlinedPredictions() {
                   <div>
                     <div className="text-sm font-medium text-card-foreground">{trip.tripTitle}</div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(trip.tripDate).toLocaleDateString()} • {trip.daysFromNow} days
+                      {new Date(trip.tripDate).toLocaleDateString()} • {trip.daysFromNow} days • {formatTripDuration(trip.tripDate, trip.tripEndDate)}
                     </div>
                   </div>
                   <div className="flex gap-1">

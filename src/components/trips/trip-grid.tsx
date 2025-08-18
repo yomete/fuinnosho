@@ -1,5 +1,5 @@
 "use client";
-import { Trip, formatDate, getTripStatusColor } from "@/lib/utils";
+import { Trip, formatTripDateRange, formatTripDuration, getTripStatusColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,9 +43,15 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg">{trip.title}</CardTitle>
-            <CardDescription className="flex items-center mt-2">
-              <MapPin className="h-4 w-4 mr-1" />
-              {formatDate(trip.trip_date)}
+            <CardDescription className="space-y-1 mt-2">
+              <div className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1" />
+                {formatTripDateRange(trip.start_date, trip.end_date)}
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3 mr-1" />
+                {formatTripDuration(trip.start_date, trip.end_date)}
+              </div>
             </CardDescription>
           </div>
           <Badge className={getTripStatusColor(trip.status)}>

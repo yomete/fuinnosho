@@ -99,7 +99,7 @@ export async function getTrips(): Promise<{
           quantity
         )
       `)
-      .order("trip_date", { ascending: true });
+      .order("start_date", { ascending: true });
 
     if (error) {
       throw error;
@@ -113,12 +113,21 @@ export async function getTrips(): Promise<{
       // Determine status if not already completed
       let status = trip.status;
       if (status !== 'completed') {
-        const tripDate = new Date(trip.trip_date);
+        const startDate = new Date(trip.start_date);
+        const endDate = new Date(trip.end_date);
         const today = new Date();
         // Set time to 00:00:00 to compare dates only
-        tripDate.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
-        status = tripDate >= today ? 'upcoming' : 'past';
+        
+        if (startDate > today) {
+          status = 'upcoming';
+        } else if (endDate < today) {
+          status = 'past';
+        } else {
+          status = 'ongoing';
+        }
       }
 
       // Remove trip_films from the final object and add reserved_film_count and status

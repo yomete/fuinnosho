@@ -44,12 +44,13 @@ export interface Trip {
   id: string;
   title: string;
   description: string;
-  trip_date: string;
+  start_date: string;
+  end_date: string;
   created_at: string;
   updated_at: string;
   user_id: string;
   reserved_film_count?: number;
-  status: "upcoming" | "past" | "completed";
+  status: "upcoming" | "ongoing" | "past" | "completed";
 }
 
 export interface TripFilm {
@@ -113,7 +114,15 @@ export type FilmSchema = z.infer<typeof filmSchema>;
 export const tripSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
-  trip_date: z.string().min(1),
+  start_date: z.string().min(1),
+  end_date: z.string().min(1),
+}).refine((data) => {
+  const startDate = new Date(data.start_date);
+  const endDate = new Date(data.end_date);
+  return endDate >= startDate;
+}, {
+  message: "End date must be on or after start date",
+  path: ["end_date"],
 });
 
 export type TripSchema = z.infer<typeof tripSchema>;
@@ -171,10 +180,12 @@ export function getConditionColor(condition: string): string {
   }
 }
 
-export function getTripStatusColor(status: 'upcoming' | 'past' | 'completed'): string {
+export function getTripStatusColor(status: 'upcoming' | 'ongoing' | 'past' | 'completed'): string {
   switch (status) {
     case 'upcoming':
       return 'text-blue-600 bg-blue-50';
+    case 'ongoing':
+      return 'text-orange-600 bg-orange-50';
     case 'past':
       return 'text-gray-600 bg-gray-50';
     case 'completed':
@@ -242,3 +253,130 @@ export function formatDate(dateString: string): string {
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
 }
+
+// Trip duration utilities
+export function calculateTripDuration(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays + 1; // Include both start and end days
+}
+
+export function formatTripDuration(startDate: string, endDate: string): string {
+  const duration = calculateTripDuration(startDate, endDate);
+  
+  if (duration === 1) {
+    return "1 day";
+  } else if (duration < 7) {
+    return `${duration} days`;
+  } else {
+    const weeks = Math.floor(duration / 7);
+    const remainingDays = duration % 7;
+    
+    if (remainingDays === 0) {
+      return weeks === 1 ? "1 week" : `${weeks} weeks`;
+    } else {
+      const weekText = weeks === 1 ? "1 week" : `${weeks} weeks`;
+      const dayText = remainingDays === 1 ? "1 day" : `${remainingDays} days`;
+      return `${weekText}, ${dayText}`;
+    }
+  }
+}
+
+export function formatTripDateRange(startDate: string, endDate: string): string {
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+  
+  if (startDate === endDate) {
+    return start;
+  }
+  
+  return `${start} - ${end}`;
+}
+
+// Challenge-related interfaces
+export interface Challenge {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  total_days: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChallengePrompt {
+  id: string;
+  challenge_id: string;
+  day_number: number;
+  title: string;
+  prompt_text: string;
+  film_suggestion?: string;
+  frame_range?: string;
+  location_context?: string;
+  special_notes?: string;
+  phase?: string;
+  created_at: string;
+}
+
+export interface ChallengeProgress {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  prompt_id: string;
+  completion_date?: string;
+  completed: boolean;
+  notes?: string;
+  photos_taken: number;
+  film_used_id?: string;
+  frames_used?: number;
+  reflection?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChallengeFilmRoll {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  film_id: string;
+  roll_number: number;
+  start_date?: string;
+  end_date?: string;
+  frames_used: number;
+  frames_total: number;
+  status: 'loaded' | 'active' | 'completed' | 'developed';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Challenge schemas
+export const challengeSchema = z.object({
+  name: z.string().min(1, "Challenge name is required"),
+  description: z.string().optional(),
+  start_date: z.string().min(1, "Start date is required"),
+  end_date: z.string().min(1, "End date is required"),
+  total_days: z.number().min(1, "Total days must be at least 1"),
+}).refine((data) => {
+  const startDate = new Date(data.start_date);
+  const endDate = new Date(data.end_date);
+  return endDate >= startDate;
+}, {
+  message: "End date must be on or after start date",
+  path: ["end_date"],
+});
+
+export const challengeProgressSchema = z.object({
+  completed: z.boolean(),
+  notes: z.string().optional(),
+  photos_taken: z.number().min(0).default(0),
+  frames_used: z.number().min(0).optional(),
+  reflection: z.string().optional(),
+});
+
+export type ChallengeSchema = z.infer<typeof challengeSchema>;
+export type ChallengeProgressSchema = z.infer<typeof challengeProgressSchema>;

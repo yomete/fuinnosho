@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "fuinnosho-minimal": {
+      "command": "node",
+      "args": ["/Users/yomi/Documents/batcave/fuinnosho/dist/mcp-server-minimal.js"],
+      "cwd": "/Users/yomi/Documents/batcave/fuinnosho",
+      "env": {
+        "NEXT_PUBLIC_SUPABASE_URL": "https://fvdbsgeiprsxrxfavisb.supabase.co",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2ZGJzZ2VpcHJzeHJ4ZmF2aXNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAwMzQ3MjUsImV4cCI6MjA1NTYxMDcyNX0.sGPC21ZhSzC9L2rJCM9UBp0fmKGWZqqjujdsz41hC_k"
+      }
+    }
+  }
+}

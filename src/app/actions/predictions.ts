@@ -25,6 +25,7 @@ export interface PredictiveAnalysis {
 export interface PlannedTripImpact {
   tripTitle: string;
   tripDate: string;
+  tripEndDate: string;
   reservedRolls: number;
   developmentCost: number;
   daysFromNow: number;
@@ -455,7 +456,8 @@ async function getPlannedTrips(): Promise<{
       .select(`
         id,
         title,
-        trip_date,
+        start_date,
+        end_date,
         trip_films (
           quantity,
           films (
@@ -464,8 +466,8 @@ async function getPlannedTrips(): Promise<{
           )
         )
       `)
-      .gte("trip_date", new Date().toISOString().split('T')[0]) // Future trips only
-      .order("trip_date", { ascending: true });
+      .gte("start_date", new Date().toISOString().split('T')[0]) // Future trips only
+      .order("start_date", { ascending: true });
 
     if (error) {
       throw error;
@@ -479,8 +481,8 @@ async function getPlannedTrips(): Promise<{
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plannedTrips: PlannedTripImpact[] = trips.map((trip: any) => {
-      const tripDate = new Date(trip.trip_date);
-      const daysFromNow = Math.ceil((tripDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const tripStartDate = new Date(trip.start_date);
+      const daysFromNow = Math.ceil((tripStartDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
       // Calculate total reserved rolls and estimated development cost
       let totalRolls = 0;
@@ -501,12 +503,13 @@ async function getPlannedTrips(): Promise<{
 
       return {
         tripTitle: trip.title,
-        tripDate: trip.trip_date,
+        tripDate: trip.start_date,
+        tripEndDate: trip.end_date,
         reservedRolls: totalRolls,
         developmentCost: totalDevCost,
         daysFromNow,
-        impactsWeek: tripDate <= oneWeekFromNow,
-        impactsMonth: tripDate <= oneMonthFromNow
+        impactsWeek: tripStartDate <= oneWeekFromNow,
+        impactsMonth: tripStartDate <= oneMonthFromNow
       };
     });
 

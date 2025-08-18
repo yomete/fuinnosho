@@ -24,7 +24,8 @@ export function EditTripForm({ trip, onCancel }: EditTripFormProps) {
   const [formData, setFormData] = useState<TripSchema>({
     title: trip.title,
     description: trip.description,
-    trip_date: trip.trip_date,
+    start_date: trip.start_date,
+    end_date: trip.end_date,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,16 +108,31 @@ export function EditTripForm({ trip, onCancel }: EditTripFormProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="trip_date">Trip Date</Label>
-                <Input
-                  id="trip_date"
-                  name="trip_date"
-                  type="date"
-                  value={formData.trip_date}
-                  onChange={handleChange}
-                  required
-                />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="start_date">Start Date</Label>
+                  <Input
+                    id="start_date"
+                    name="start_date"
+                    type="date"
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="end_date">End Date</Label>
+                  <Input
+                    id="end_date"
+                    name="end_date"
+                    type="date"
+                    value={formData.end_date}
+                    onChange={handleChange}
+                    min={formData.start_date}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

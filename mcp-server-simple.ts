@@ -45,6 +45,18 @@ interface FilmUsage {
   created_at: string;
 }
 
+interface Trip {
+  id: string;
+  title: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+  updated_at: string;
+  user_id?: string;
+  status?: "upcoming" | "ongoing" | "past" | "completed";
+}
+
 class FilmInventoryMCPServer {
   private server: Server;
   private supabase: any;

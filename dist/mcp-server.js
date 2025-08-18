@@ -335,7 +335,7 @@ class FilmInventoryMCPServer {
                 },
                 {
                     name: "create_trip",
-                    description: "Create a new photo trip",
+                    description: "Create a new photo trip with duration support",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -348,12 +348,16 @@ class FilmInventoryMCPServer {
                                 description: "Trip description",
                                 default: "",
                             },
-                            trip_date: {
+                            start_date: {
                                 type: "string",
-                                description: "Trip date (YYYY-MM-DD format)",
+                                description: "Trip start date (YYYY-MM-DD format)",
+                            },
+                            end_date: {
+                                type: "string",
+                                description: "Trip end date (YYYY-MM-DD format)",
                             },
                         },
-                        required: ["title", "trip_date"],
+                        required: ["title", "start_date", "end_date"],
                     },
                 },
                 {
@@ -391,7 +395,7 @@ class FilmInventoryMCPServer {
                 },
                 {
                     name: "edit_trip",
-                    description: "Edit an existing trip's details",
+                    description: "Edit an existing trip's details with duration support",
                     inputSchema: {
                         type: "object",
                         properties: {
@@ -407,9 +411,18 @@ class FilmInventoryMCPServer {
                                 type: "string",
                                 description: "Trip description",
                             },
-                            trip_date: {
+                            start_date: {
                                 type: "string",
-                                description: "Trip date (YYYY-MM-DD format)",
+                                description: "Trip start date (YYYY-MM-DD format)",
+                            },
+                            end_date: {
+                                type: "string",
+                                description: "Trip end date (YYYY-MM-DD format)",
+                            },
+                            status: {
+                                type: "string",
+                                description: "Trip status (upcoming, ongoing, past, completed)",
+                                enum: ["upcoming", "ongoing", "past", "completed"],
                             },
                         },
                         required: ["trip_id"],
@@ -1219,14 +1232,20 @@ class FilmInventoryMCPServer {
         };
     }
     async createTrip(args) {
-        const { title, description = "", trip_date } = args;
-        if (!title || !trip_date) {
-            throw new Error("Missing required fields: title, trip_date");
+        const { title, description = "", start_date, end_date } = args;
+        if (!title || !start_date || !end_date) {
+            throw new Error("Missing required fields: title, start_date, end_date");
+        }
+        // Validate date range
+        if (new Date(end_date) < new Date(start_date)) {
+            throw new Error("End date must be on or after start date");
         }
         const tripData = {
             title,
             description,
-            trip_date,
+            start_date,
+            end_date,
+            status: 'upcoming',
         };
         const { data: trip, error } = await this.supabase
             .from("trips")
@@ -1254,9 +1273,9 @@ class FilmInventoryMCPServer {
         let query = this.supabase.from("trips").select("*");
         if (!include_past) {
             const today = new Date().toISOString().split('T')[0];
-            query = query.gte("trip_date", today);
+            query = query.gte("start_date", today);
         }
-        const { data: trips, error } = await query.order("trip_date", { ascending: false });
+        const { data: trips, error } = await query.order("start_date", { ascending: false });
         if (error) {
             throw new Error(`Failed to fetch trips: ${error.message}`);
         }
@@ -1283,14 +1302,14 @@ class FilmInventoryMCPServer {
             }
         }
         const upcomingTrips = trips?.filter((trip) => {
-            const tripDate = new Date(trip.trip_date);
+            const startDate = new Date(trip.start_date);
             const today = new Date();
-            return tripDate >= today;
+            return startDate >= today;
         }) || [];
         const pastTrips = trips?.filter((trip) => {
-            const tripDate = new Date(trip.trip_date);
+            const endDate = new Date(trip.end_date);
             const today = new Date();
-            return tripDate < today;
+            return endDate < today;
         }) || [];
         return {
             content: [
@@ -1397,6 +1416,14 @@ class FilmInventoryMCPServer {
         const cleanedData = Object.fromEntries(Object.entries(updateData).filter(([_, value]) => value !== undefined));
         if (Object.keys(cleanedData).length === 0) {
             throw new Error("No fields to update");
+        }
+        // Validate date range if both dates are provided
+        if (cleanedData.start_date && cleanedData.end_date) {
+            const endDate = new Date(cleanedData.end_date.toString());
+            const startDate = new Date(cleanedData.start_date.toString());
+            if (endDate < startDate) {
+                throw new Error("End date must be on or after start date");
+            }
         }
         const { data: trip, error } = await this.supabase
             .from("trips")
@@ -1752,7 +1779,8 @@ class FilmInventoryMCPServer {
             trips (
               id,
               title,
-              trip_date
+              start_date,
+              end_date
             )
           `)
                     .eq("gear_id", item.id);
@@ -1845,14 +1873,15 @@ class FilmInventoryMCPServer {
             .select(`
         trips (
           title,
-          trip_date
+          start_date,
+          end_date
         )
       `)
             .eq("gear_id", gear_id);
         const upcomingReservations = reservations?.filter((r) => {
-            const tripDate = new Date(r.trips.trip_date);
+            const tripStartDate = new Date(r.trips.start_date);
             const today = new Date();
-            return tripDate >= today;
+            return tripStartDate >= today;
         }) || [];
         if (upcomingReservations.length > 0) {
             const tripTitles = upcomingReservations.map((r) => r.trips.title).join(", ");

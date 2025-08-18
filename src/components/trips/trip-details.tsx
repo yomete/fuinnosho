@@ -7,7 +7,8 @@ import {
   Trip,
   Gear,
   getGearTypeIcon,
-  formatDate as formatDateUtil,
+  formatTripDateRange,
+  formatTripDuration,
 } from "@/lib/utils";
 import {
   getTripWithFilms,
@@ -371,7 +372,11 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               <div className="flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  {formatDateUtil(trip.trip_date)}
+                  {formatTripDateRange(trip.start_date, trip.end_date)}
+                </div>
+                <div className="flex items-center text-sm">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {formatTripDuration(trip.start_date, trip.end_date)}
                 </div>
               </div>
             </div>
