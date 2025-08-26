@@ -1,6 +1,6 @@
 "use server";
 
-import { getWeeklyUsageStats, getMonthlyUsageStats, getAllUsageData } from "./usage";
+import { getWeeklyUsageStats, getMonthlyUsageStats, getAllUsageData, getBulkFilmStats, getShootingOnlyUsageData } from "./usage";
 import { createClient } from "@/lib/supabase/server";
 import { 
   predictWeeklyUsage, 
@@ -20,6 +20,24 @@ export interface PredictiveAnalysis {
   stockRecommendations: StockRecommendation[];
   budgetAlert?: BudgetAlert;
   plannedTrips: PlannedTripImpact[];
+  bulkFilmInsights?: BulkFilmPredictions;
+}
+
+export interface BulkFilmPredictions {
+  spoolingEfficiencyTrend: 'improving' | 'declining' | 'stable';
+  predictedSpoolingNeed: {
+    weeksUntilEmpty: number[];
+    recommendedSpooling: {
+      filmName: string;
+      exposuresToSpool: number;
+      cassettesToCreate: number;
+    }[];
+  };
+  wasteAnalysis: {
+    totalWastedCassettes: number;
+    wastePercentage: number;
+    recommendation: string;
+  };
 }
 
 export interface PlannedTripImpact {
@@ -54,11 +72,12 @@ export async function getPredictiveAnalysis(): Promise<{
 }> {
   try {
     // Get historical data and planned trips
-    const [weeklyResult, monthlyResult, allUsageResult, plannedTripsResult] = await Promise.all([
+    const [weeklyResult, monthlyResult, allUsageResult, plannedTripsResult, bulkStatsResult] = await Promise.all([
       getWeeklyUsageStats(),
       getMonthlyUsageStats(), 
-      getAllUsageData(),
-      getPlannedTrips()
+      getShootingOnlyUsageData(), // Use shooting-only data for predictions
+      getPlannedTrips(),
+      getBulkFilmStats()
     ]);
 
     if (weeklyResult.error || monthlyResult.error || allUsageResult.error) {
@@ -69,6 +88,7 @@ export async function getPredictiveAnalysis(): Promise<{
     const monthlyData = monthlyResult.data || [];
     const allUsageData = allUsageResult.data || [];
     const plannedTrips = plannedTripsResult.data || [];
+    const bulkStats = bulkStatsResult.data;
 
     // Calculate planned trip impacts
     const weeklyTripImpact = plannedTrips
@@ -103,6 +123,9 @@ export async function getPredictiveAnalysis(): Promise<{
     
     // Budget alerts including planned trips
     const budgetAlert = generateBudgetAlert(monthlyData, monthlyForecast);
+    
+    // Bulk film predictions
+    const bulkFilmInsights = bulkStats ? generateBulkFilmPredictions(bulkStats, monthlyData) : undefined;
 
     const analysis: PredictiveAnalysis = {
       weeklyForecast,
@@ -111,7 +134,8 @@ export async function getPredictiveAnalysis(): Promise<{
       shootingInsights,
       stockRecommendations,
       budgetAlert,
-      plannedTrips
+      plannedTrips,
+      bulkFilmInsights
     };
 
     return { data: analysis, error: null };
@@ -521,4 +545,78 @@ async function getPlannedTrips(): Promise<{
       error: error instanceof Error ? error.message : "Failed to fetch planned trips"
     };
   }
+}
+
+function generateBulkFilmPredictions(bulkStats: any, monthlyData: any[]): BulkFilmPredictions {
+  // Calculate spooling efficiency trend
+  const spooledCassettes = bulkStats.totalCassettesCreated || 0;
+  const shotRolls = bulkStats.totalRollsShot || 0;
+  const wastedCassettes = Math.max(0, spooledCassettes - shotRolls);
+  const wastePercentage = spooledCassettes > 0 ? (wastedCassettes / spooledCassettes) * 100 : 0;
+  
+  // Determine efficiency trend (simplified for now - could be enhanced with historical data)
+  let spoolingEfficiencyTrend: 'improving' | 'declining' | 'stable' = 'stable';
+  if (wastePercentage < 10) {
+    spoolingEfficiencyTrend = 'improving';
+  } else if (wastePercentage > 30) {
+    spoolingEfficiencyTrend = 'declining';
+  }
+
+  // Calculate weekly consumption rate from monthly data
+  const recentMonthly = monthlyData.slice(-3);
+  const avgMonthlyUsage = recentMonthly.length > 0 
+    ? recentMonthly.reduce((sum, m) => sum + m.rolls_used, 0) / recentMonthly.length 
+    : 1;
+  const avgWeeklyUsage = avgMonthlyUsage / 4.33; // Average weeks per month
+
+  // Predict when active bulk films will run out and recommend spooling
+  const weeksUntilEmpty: number[] = [];
+  const recommendedSpooling: { filmName: string; exposuresToSpool: number; cassettesToCreate: number; }[] = [];
+
+  bulkStats.activeSpooling?.forEach((film: any) => {
+    const currentCassettes = film.spooledCassettes || 0;
+    const exposuresPerRoll = film.filmName.includes('120') ? 12 : 36; // Simplified format detection
+    
+    // Calculate weeks until current spooled cassettes run out
+    const weeksLeft = currentCassettes > 0 ? currentCassettes / avgWeeklyUsage : 0;
+    weeksUntilEmpty.push(Math.round(weeksLeft));
+
+    // Recommend spooling if less than 2 weeks of cassettes remain
+    if (weeksLeft < 2 && film.remainingExposures > 0) {
+      const recommendedCassettes = Math.max(4, Math.ceil(avgWeeklyUsage * 4)); // 4 weeks worth
+      const exposuresToSpool = Math.min(
+        recommendedCassettes * exposuresPerRoll,
+        film.remainingExposures
+      );
+
+      recommendedSpooling.push({
+        filmName: film.filmName,
+        exposuresToSpool,
+        cassettesToCreate: Math.floor(exposuresToSpool / exposuresPerRoll)
+      });
+    }
+  });
+
+  // Generate waste analysis recommendation
+  let wasteRecommendation = '';
+  if (wastePercentage > 30) {
+    wasteRecommendation = 'Consider spooling fewer cassettes at once to reduce waste from unused film.';
+  } else if (wastePercentage < 5) {
+    wasteRecommendation = 'Excellent spooling efficiency! Your cassette usage is very optimized.';
+  } else {
+    wasteRecommendation = 'Good spooling efficiency. Continue monitoring your usage patterns.';
+  }
+
+  return {
+    spoolingEfficiencyTrend,
+    predictedSpoolingNeed: {
+      weeksUntilEmpty,
+      recommendedSpooling
+    },
+    wasteAnalysis: {
+      totalWastedCassettes: wastedCassettes,
+      wastePercentage,
+      recommendation: wasteRecommendation
+    }
+  };
 }

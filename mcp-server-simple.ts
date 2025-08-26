@@ -5,6 +5,15 @@
  * Provides Claude with real-time access to film inventory data
  */
 
+import * as Sentry from "@sentry/node";
+
+// Initialize Sentry first, before any other imports
+Sentry.init({
+  dsn: process.env.SENTRY_DSN || "YOUR_SENTRY_DSN_HERE",
+  tracesSampleRate: 1.0,
+  environment: process.env.NODE_ENV || "development",
+});
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -62,7 +71,7 @@ class FilmInventoryMCPServer {
   private supabase: any;
 
   constructor() {
-    this.server = new Server(
+    const server = new Server(
       {
         name: "fuinnosho-film-inventory",
         version: "1.0.0",
@@ -73,6 +82,9 @@ class FilmInventoryMCPServer {
         },
       }
     );
+
+    // Wrap server with Sentry monitoring
+    this.server = Sentry.wrapMcpServerWithSentry(server);
 
     this.setupToolHandlers();
     this.initializeSupabase();

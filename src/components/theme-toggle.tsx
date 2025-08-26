@@ -13,7 +13,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function ThemeToggle() {
-  const { setTheme } = useTheme();
+  const { setTheme, theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <Button variant="outline" size="icon" disabled>
+        <Sun className="h-[1.2rem] w-[1.2rem]" />
+        <span className="sr-only">Loading theme</span>
+      </Button>
+    );
+  }
 
   return (
     <DropdownMenu>

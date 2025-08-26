@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { History, Calendar, Package } from "lucide-react";
+import { History, Calendar, Package, Scissors, Camera } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface UsageHistoryDialogProps {
@@ -46,6 +46,8 @@ export function UsageHistoryDialog({
   }, [open, loadUsageHistory]);
 
   const totalUsed = usageHistory.reduce((sum, usage) => sum + usage.quantity, 0);
+  const spooledCount = usageHistory.filter(u => u.usage_type === 'spool').reduce((sum, usage) => sum + usage.quantity, 0);
+  const shotCount = usageHistory.filter(u => u.usage_type === 'shoot').reduce((sum, usage) => sum + usage.quantity, 0);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -59,7 +61,7 @@ export function UsageHistoryDialog({
         <DialogHeader>
           <DialogTitle>Usage History for {filmName}</DialogTitle>
           <DialogDescription>
-            <div className="flex gap-4 items-center mt-2">
+            <div className="flex gap-2 items-center mt-2 flex-wrap">
               <Badge variant="outline">
                 <Package className="h-3 w-3 mr-1" />
                 Current: {currentCount}
@@ -67,6 +69,18 @@ export function UsageHistoryDialog({
               <Badge variant="secondary">
                 Total Used: {totalUsed}
               </Badge>
+              {spooledCount > 0 && (
+                <Badge variant="outline" className="text-orange-600">
+                  <Scissors className="h-3 w-3 mr-1" />
+                  Spooled: {spooledCount}
+                </Badge>
+              )}
+              {shotCount > 0 && (
+                <Badge variant="outline" className="text-green-600">
+                  <Camera className="h-3 w-3 mr-1" />
+                  Shot: {shotCount}
+                </Badge>
+              )}
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -88,10 +102,23 @@ export function UsageHistoryDialog({
                 >
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="default" className="text-xs">
-                          {usage.quantity} {usage.quantity === 1 ? "roll" : "rolls"}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge 
+                          variant={usage.usage_type === 'spool' ? 'secondary' : 'default'} 
+                          className={`text-xs ${usage.usage_type === 'spool' ? 'bg-orange-100 text-orange-800' : ''}`}
+                        >
+                          {usage.usage_type === 'spool' ? (
+                            <Scissors className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Camera className="h-3 w-3 mr-1" />
+                          )}
+                          {usage.usage_type === 'spool' ? 'Spooled' : 'Shot'} {usage.quantity} {usage.quantity === 1 ? "cassette" : "cassettes"}
                         </Badge>
+                        {usage.exposures_used && (
+                          <Badge variant="outline" className="text-xs">
+                            {usage.exposures_used} exp used
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
                           {formatDate(usage.created_at)} at{" "}

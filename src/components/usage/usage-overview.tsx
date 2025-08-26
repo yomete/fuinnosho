@@ -2,17 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAllUsageData, getMonthlyUsageStats } from "@/app/actions/usage";
+import { getAllUsageData, getMonthlyUsageStats, getShootingOnlyUsageData, getBulkFilmStats } from "@/app/actions/usage";
 import { Badge } from "@/components/ui/badge";
-import { Film, TrendingUp, DollarSign, Calendar } from "lucide-react";
+import { Film, TrendingUp, DollarSign, Calendar, Scissors } from "lucide-react";
 
 interface OverviewStats {
   totalRollsUsed: number;
+  totalRollsShot: number;
   totalCost: number;
   avgCostPerRoll: number;
   currentMonthRolls: number;
   currentMonthCost: number;
   mostUsedFilmType: string;
+  totalCassettesSpooled: number;
+  totalExposuresSpooled: number;
+  activeBulkFilms: number;
 }
 
 export function UsageOverview() {
@@ -27,27 +31,32 @@ export function UsageOverview() {
   useEffect(() => {
     async function loadStats() {
       try {
-        const [usageResult, monthlyResult] = await Promise.all([
+        const [usageResult, monthlyResult, shootingResult, bulkStatsResult] = await Promise.all([
           getAllUsageData(),
-          getMonthlyUsageStats()
+          getMonthlyUsageStats(),
+          getShootingOnlyUsageData(),
+          getBulkFilmStats()
         ]);
 
-        if (usageResult.data && monthlyResult.data) {
+        if (usageResult.data && monthlyResult.data && shootingResult.data) {
           const allUsage = usageResult.data;
+          const shootingUsage = shootingResult.data;
           const monthlyStats = monthlyResult.data;
+          const bulkStats = bulkStatsResult.data;
           
           const totalRollsUsed = allUsage.reduce((sum, usage) => sum + usage.quantity, 0);
-          const totalCost = allUsage.reduce((sum, usage) => sum + usage.development_cost, 0);
-          const avgCostPerRoll = totalRollsUsed > 0 ? totalCost / totalRollsUsed : 0;
+          const totalRollsShot = shootingUsage.reduce((sum, usage) => sum + usage.quantity, 0);
+          const totalCost = shootingUsage.reduce((sum, usage) => sum + usage.development_cost, 0);
+          const avgCostPerRoll = totalRollsShot > 0 ? totalCost / totalRollsShot : 0;
           
-          // Current month stats
+          // Current month stats (shooting only)
           const currentMonth = monthlyStats[monthlyStats.length - 1];
           const currentMonthRolls = currentMonth?.rolls_used || 0;
           const currentMonthCost = currentMonth?.development_cost || 0;
           
-          // Most used film type
+          // Most used film type (shooting only)
           const filmTypeCounts: Record<string, number> = {};
-          allUsage.forEach(usage => {
+          shootingUsage.forEach(usage => {
             filmTypeCounts[usage.development_type] = (filmTypeCounts[usage.development_type] || 0) + usage.quantity;
           });
           const mostUsedFilmType = Object.entries(filmTypeCounts)
@@ -55,11 +64,15 @@ export function UsageOverview() {
 
           setStats({
             totalRollsUsed,
+            totalRollsShot,
             totalCost,
             avgCostPerRoll,
             currentMonthRolls,
             currentMonthCost,
-            mostUsedFilmType
+            mostUsedFilmType,
+            totalCassettesSpooled: bulkStats?.totalCassettesCreated || 0,
+            totalExposuresSpooled: bulkStats?.totalExposuresSpooled || 0,
+            activeBulkFilms: bulkStats?.activeSpooling.length || 0,
           });
         }
       } catch (error) {
@@ -74,8 +87,8 @@ export function UsageOverview() {
 
   if (!mounted || loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        {[...Array(5)].map((_, i) => (
           <Card key={i}>
             <CardHeader className="animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -100,16 +113,29 @@ export function UsageOverview() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Rolls Used</CardTitle>
+          <CardTitle className="text-sm font-medium">Rolls Shot</CardTitle>
           <Film className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{stats.totalRollsUsed}</div>
+          <div className="text-2xl font-bold">{stats.totalRollsShot}</div>
           <p className="text-xs text-muted-foreground">
-            All time usage
+            Actually photographed
+          </p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Bulk Spooling</CardTitle>
+          <Scissors className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalCassettesSpooled}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.totalExposuresSpooled} exposures spooled
           </p>
         </CardContent>
       </Card>
@@ -153,6 +179,19 @@ export function UsageOverview() {
             </Badge>
             <span className="text-xs text-muted-foreground">most used</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Active Bulk</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.activeBulkFilms}</div>
+          <p className="text-xs text-muted-foreground">
+            films ready to spool
+          </p>
         </CardContent>
       </Card>
     </div>

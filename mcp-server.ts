@@ -1,5 +1,25 @@
 #!/usr/bin/env node
 
+// Import MCP Monitoring SDK
+import * as MCPMonitoring from "@mcp-monitoring/sdk";
+
+// Initialize MCP Monitoring
+console.error(`🔧 MCP Monitoring Config:
+  API Key: ${process.env.MCP_MONITORING_API_KEY ? 'SET' : 'NOT SET'}
+  Endpoint: ${process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1'}
+  Server ID: fuinnosho-film-inventory-server`);
+
+MCPMonitoring.init({
+  apiKey: process.env.MCP_MONITORING_API_KEY || 'mcp_72a8f9177ddf0bab9d3001e49e20294ea05b1959b076edff4455fc8d34db50c3',
+  endpoint: process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1',
+  serverId: 'fuinnosho-film-inventory-server',
+  // Enhanced observability features
+  enableTracing: true,
+  enableMetrics: true,
+  enableAutoInstrumentation: true,
+  metricsInterval: 10000, // Collect system metrics every 10 seconds
+});
+
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -27,6 +47,8 @@ interface Film {
   bulk_length_meters?: number;
   bulk_quantity?: number;
   calculated_rolls?: number;
+  bulk_remaining_exposures?: number;
+  spooled_cassettes?: number;
   total_count?: number;
   reserved_quantity?: number;
   available_count?: number;
@@ -38,6 +60,8 @@ interface FilmUsage {
   quantity: number;
   usage_note: string;
   created_at: string;
+  usage_type?: 'spool' | 'shoot';
+  exposures_used?: number;
 }
 
 interface Trip {
@@ -89,7 +113,13 @@ class FilmInventoryMCPServer {
   private userId: string;
 
   constructor() {
-    this.server = new Server(
+    // Log server startup
+    MCPMonitoring.info('MCP Server starting up', {
+      server_name: 'fuinnosho-film-inventory',
+      version: '1.0.0'
+    });
+    
+    const server = new Server(
       {
         name: "fuinnosho-film-inventory",
         version: "1.0.0",
@@ -101,15 +131,23 @@ class FilmInventoryMCPServer {
       }
     );
 
+    // Use server directly (monitoring will be added at tool level)
+    this.server = server;
+
     // Initialize Supabase client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase environment variables");
+      console.warn("⚠️  Missing Supabase environment variables - running in TEST MODE");
+      MCPMonitoring.warning('MCP Server starting in test mode', {
+        reason: 'Missing Supabase credentials',
+        mode: 'test'
+      });
+      this.supabase = null; // Test mode
+    } else {
+      this.supabase = createClient(supabaseUrl, supabaseKey);
     }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
     
     // Set user ID for filtering (for now using the known user ID)
     this.userId = "335461ec-7719-4c39-b023-c600e11d308c";
@@ -119,6 +157,8 @@ class FilmInventoryMCPServer {
 
   private async authenticateSession() {
     console.error("Starting authentication process...");
+    MCPMonitoring.info('Authentication process starting');
+    
     try {
       // Option 1: Use service role key if available (bypasses RLS)
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -169,8 +209,13 @@ class FilmInventoryMCPServer {
       console.error("No authentication credentials provided - using anonymous access");
     } catch (error) {
       console.error("Authentication error:", error);
+      MCPMonitoring.error('Authentication failed', {
+        error_message: error.message,
+        error_stack: error.stack
+      });
     }
     console.error("Authentication process completed");
+    MCPMonitoring.info('Authentication process completed successfully');
   }
 
   private setupToolHandlers() {
@@ -240,10 +285,35 @@ class FilmInventoryMCPServer {
               },
               usage_note: {
                 type: "string",
-                description: "Note about how the film was used",
+                description: "Note about film usage",
               },
             },
-            required: ["film_id", "quantity", "usage_note"],
+          },
+        },
+        {
+          name: "spool_bulk_film",
+          description: "Spool bulk film into cassettes (for bulk films only)",
+          inputSchema: {
+            type: "object",
+            properties: {
+              film_id: {
+                type: "string",
+                description: "Bulk film ID to spool from",
+              },
+              exposures_to_spool: {
+                type: "number",
+                description: "Number of exposures from bulk film to use for spooling",
+              },
+              cassettes_created: {
+                type: "number",
+                description: "Number of cassettes created from the bulk film",
+              },
+              spool_note: {
+                type: "string",
+                description: "Note about the spooling process",
+              },
+            },
+            required: ["film_id", "exposures_to_spool", "cassettes_created", "spool_note"],
           },
         },
         {
@@ -887,7 +957,14 @@ class FilmInventoryMCPServer {
       const { name, arguments: args } = request.params;
 
       try {
-        switch (name) {
+        console.error(`🛠️  Executing tool: ${name} with monitoring`);
+        
+        // Use MCP Monitoring tool wrapper for automatic performance tracking
+        const result = await MCPMonitoring.wrapToolExecution(
+          name,
+          async () => {
+            console.error(`📊 Inside tool wrapper for: ${name}`);
+            switch (name) {
           case "get_film_inventory":
             return await this.getFilmInventory(args);
 
@@ -896,6 +973,9 @@ class FilmInventoryMCPServer {
 
           case "update_film_quantity":
             return await this.updateFilmQuantity(args);
+
+          case "spool_bulk_film":
+            return await this.spoolBulkFilm(args);
 
           case "check_low_stock":
             return await this.checkLowStock(args);
@@ -975,10 +1055,26 @@ class FilmInventoryMCPServer {
           case "get_shooting_patterns":
             return await this.getShootingPatterns(args);
 
-          default:
-            throw new Error(`Unknown tool: ${name}`);
-        }
+              default:
+                throw new Error(`Unknown tool: ${name}`);
+            }
+          },
+          args
+        );
+        
+        return result;
       } catch (error) {
+        // Log error with MCP Monitoring
+        MCPMonitoring.error(`Tool execution failed: ${name}`, {
+          tool_name: name,
+          error_message: error.message,
+          error_stack: error.stack,
+          arguments: args,
+        }, {
+          server_id: 'fuinnosho-film-inventory-server',
+          tool_name: name,
+        });
+        
         return {
           content: [
             {
@@ -993,6 +1089,22 @@ class FilmInventoryMCPServer {
 
   private async getFilmInventory(args: any) {
     const { include_availability = false } = args;
+    
+    // Test mode - return mock data
+    if (!this.supabase) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "🎬 **Test Film Inventory** (Monitoring Test Mode)\n\n" +
+                  "• **Kodak Portra 400** (35mm) - 5 rolls\n" +
+                  "• **Ilford HP5+** (120) - 3 rolls\n" +
+                  "• **Fuji Pro 400H** (35mm) - 2 rolls\n\n" +
+                  "*This is test data - MCP monitoring is working!*"
+          }
+        ]
+      };
+    }
     
     const tableName = include_availability ? "films_with_availability" : "films";
     
@@ -1157,6 +1269,89 @@ class FilmInventoryMCPServer {
             new_count: newCount,
             quantity_used: quantity,
             usage_note,
+          }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async spoolBulkFilm(args: any) {
+    const { film_id, exposures_to_spool, cassettes_created, spool_note } = args;
+
+    if (!film_id || !exposures_to_spool || !cassettes_created || !spool_note) {
+      throw new Error("film_id, exposures_to_spool, cassettes_created, and spool_note are required");
+    }
+
+    if (exposures_to_spool <= 0 || cassettes_created <= 0) {
+      throw new Error("exposures_to_spool and cassettes_created must be positive");
+    }
+
+    // Get current film
+    const { data: film, error: filmError } = await this.supabase
+      .from("films")
+      .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, name, brand, format")
+      .eq("id", film_id)
+      .single();
+
+    if (filmError || !film) {
+      throw new Error("Film not found");
+    }
+
+    if (!film.is_bulk_film) {
+      throw new Error("This is not a bulk film");
+    }
+
+    const currentRemainingExposures = film.bulk_remaining_exposures || 0;
+    const currentSpooledCassettes = film.spooled_cassettes || 0;
+
+    if (exposures_to_spool > currentRemainingExposures) {
+      throw new Error(`Not enough bulk film remaining. Available: ${currentRemainingExposures} exposures, Requested: ${exposures_to_spool} exposures`);
+    }
+
+    const newRemainingExposures = currentRemainingExposures - exposures_to_spool;
+    const newSpooledCassettes = currentSpooledCassettes + cassettes_created;
+
+    // Update film with new remaining exposures and cassette count
+    const { error: updateError } = await this.supabase
+      .from("films")
+      .update({ 
+        bulk_remaining_exposures: newRemainingExposures,
+        spooled_cassettes: newSpooledCassettes,
+        count: newSpooledCassettes // For bulk films, count represents spooled cassettes
+      })
+      .eq("id", film_id);
+
+    if (updateError) {
+      throw new Error(`Failed to update film: ${updateError.message}`);
+    }
+
+    // Record spooling usage
+    const { error: usageError } = await this.supabase
+      .from("film_usage")
+      .insert({
+        film_id,
+        quantity: cassettes_created,
+        usage_note: spool_note,
+        usage_type: 'spool',
+        exposures_used: exposures_to_spool,
+      });
+
+    if (usageError) {
+      throw new Error(`Failed to record spooling: ${usageError.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            success: true,
+            film: `${film.brand} ${film.name}`,
+            exposures_used: exposures_to_spool,
+            cassettes_created,
+            remaining_exposures: newRemainingExposures,
+            total_spooled_cassettes: newSpooledCassettes,
+            spool_note,
           }, null, 2),
         },
       ],

@@ -5,6 +5,7 @@ import { Film, formatDate } from "@/lib/utils";
 import { EditFilm } from "@/components/film-form/edit-form";
 import { ReduceCountDialog } from "@/components/films/reduce-count-dialog";
 import { UsageHistoryDialog } from "@/components/films/usage-history-dialog";
+import { SpoolBulkDialog } from "@/components/films/spool-bulk-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,14 +14,65 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Edit, Minus, History } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ActionsCell = ({ row }: { row: { original: Film } }) => {
   const film = row.original;
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [filmData, setFilmData] = useState(film);
+
+  // Sync local state when film prop changes
+  useEffect(() => {
+    setFilmData(film);
+    // Debug logging - remove after fixing
+    if (film.is_bulk_film) {
+      console.log("ActionsCell film data:", {
+        name: film.name,
+        bulk_remaining_exposures: film.bulk_remaining_exposures,
+        calculated_rolls: film.calculated_rolls,
+        spooled_cassettes: film.spooled_cassettes,
+      });
+    }
+  }, [film]);
+
+  const handleSpoolingComplete = (
+    remainingExposures: number,
+    spooledCassettes: number
+  ) => {
+    setFilmData((prev) => ({
+      ...prev,
+      bulk_remaining_exposures: remainingExposures,
+      spooled_cassettes: spooledCassettes,
+      count: spooledCassettes,
+    }));
+  };
+
+  const handleCountUpdated = (newCount: number) => {
+    setFilmData((prev) => ({
+      ...prev,
+      count: newCount,
+      spooled_cassettes: film.is_bulk_film ? newCount : prev.spooled_cassettes,
+    }));
+  };
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-2">
+      {film.is_bulk_film && (
+        <SpoolBulkDialog
+          filmId={filmData.id}
+          filmName={filmData.name}
+          format={filmData.format}
+          remainingExposures={filmData.bulk_remaining_exposures || 0}
+          spooledCassettes={filmData.spooled_cassettes || 0}
+          onSpoolingComplete={handleSpoolingComplete}
+        />
+      )}
+      <ReduceCountDialog
+        filmId={filmData.id}
+        filmName={filmData.name}
+        currentCount={filmData.count || 0}
+        onCountUpdated={handleCountUpdated}
+      />
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -29,13 +81,15 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();
               setDropdownOpen(false);
               // Small delay to ensure dropdown closes before dialog opens
               setTimeout(() => {
-                const editButton = document.querySelector(`[data-edit-film="${film.id}"] button`);
+                const editButton = document.querySelector(
+                  `[data-edit-film="${film.id}"] button`
+                );
                 if (editButton) {
                   (editButton as HTMLElement).click();
                 }
@@ -46,12 +100,14 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
             Edit
           </DropdownMenuItem>
           {film.count !== undefined && film.count > 0 && (
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onSelect={(event) => {
                 event.preventDefault();
                 setDropdownOpen(false);
                 setTimeout(() => {
-                  const reduceButton = document.querySelector(`[data-reduce-film="${film.id}"] button`);
+                  const reduceButton = document.querySelector(
+                    `[data-reduce-film="${film.id}"] button`
+                  );
                   if (reduceButton) {
                     (reduceButton as HTMLElement).click();
                   }
@@ -62,12 +118,14 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
               Use Film
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem 
+          <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();
               setDropdownOpen(false);
               setTimeout(() => {
-                const historyButton = document.querySelector(`[data-history-film="${film.id}"] button`);
+                const historyButton = document.querySelector(
+                  `[data-history-film="${film.id}"] button`
+                );
                 if (historyButton) {
                   (historyButton as HTMLElement).click();
                 }
@@ -80,19 +138,10 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Hidden dialog triggers with data attributes */}
-      <div style={{ position: 'absolute', left: '-9999px', opacity: 0 }}>
+      <div style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
         <div data-edit-film={film.id}>
           <EditFilm film={film} />
         </div>
-        {film.count !== undefined && film.count > 0 && (
-          <div data-reduce-film={film.id}>
-            <ReduceCountDialog
-              filmId={film.id}
-              filmName={film.name}
-              currentCount={film.count}
-            />
-          </div>
-        )}
         <div data-history-film={film.id}>
           <UsageHistoryDialog
             filmId={film.id}
@@ -120,7 +169,9 @@ export const columns: ColumnDef<Film>[] = [
         return !filterValue.not.includes(row.getValue(columnId));
       }
       if (Array.isArray(filterValue) && filterValue.length === 0) return true;
-      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
+      return Array.isArray(filterValue)
+        ? filterValue.includes(row.getValue(columnId))
+        : true;
     },
   },
   {
@@ -132,7 +183,9 @@ export const columns: ColumnDef<Film>[] = [
         return !filterValue.not.includes(row.getValue(columnId));
       }
       if (Array.isArray(filterValue) && filterValue.length === 0) return true;
-      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
+      return Array.isArray(filterValue)
+        ? filterValue.includes(row.getValue(columnId))
+        : true;
     },
   },
   {
@@ -144,7 +197,9 @@ export const columns: ColumnDef<Film>[] = [
         return !filterValue.not.includes(row.getValue(columnId));
       }
       if (Array.isArray(filterValue) && filterValue.length === 0) return true;
-      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
+      return Array.isArray(filterValue)
+        ? filterValue.includes(row.getValue(columnId))
+        : true;
     },
   },
   {
@@ -156,7 +211,9 @@ export const columns: ColumnDef<Film>[] = [
         return !filterValue.not.includes(row.getValue(columnId));
       }
       if (Array.isArray(filterValue) && filterValue.length === 0) return true;
-      return Array.isArray(filterValue) ? filterValue.includes(row.getValue(columnId)) : true;
+      return Array.isArray(filterValue)
+        ? filterValue.includes(row.getValue(columnId))
+        : true;
     },
   },
   {
@@ -172,22 +229,35 @@ export const columns: ColumnDef<Film>[] = [
   },
   {
     accessorKey: "count",
-    header: "Total Count",
+    header: "Bulk Status / Count",
     cell: ({ row }) => {
       const film = row.original;
       if (film.is_bulk_film) {
+        const remainingExposures = film.bulk_remaining_exposures || 0;
+        const spooledCassettes = film.spooled_cassettes || 0;
+        const totalExposures =
+          (film.calculated_rolls || 0) * (film.format === "120" ? 12 : 36);
+
         return (
-          <div className="space-y-1">
-            <div className="font-medium text-blue-600">
-              {film.bulk_quantity}× {film.bulk_length_meters}m bulk
+          <div className="text-center space-y-0.5">
+            <div className="text-sm">
+              <span className="font-medium text-blue-600">
+                {remainingExposures} exp
+              </span>
+              <div className="text-xs text-muted-foreground">remaining</div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              ≈ {film.calculated_rolls} total rolls
+            <div className="text-xs text-muted-foreground">
+              {spooledCassettes} cassettes ready
             </div>
           </div>
         );
       }
-      return film.count || 0;
+      return (
+        <div className="text-center">
+          <span className="font-medium">{film.count || 0}</span>
+          <div className="text-xs text-muted-foreground">rolls</div>
+        </div>
+      );
     },
   },
   {
@@ -200,25 +270,47 @@ export const columns: ColumnDef<Film>[] = [
     header: "Available for Shooting",
     cell: ({ row }) => {
       const film = row.original;
-      const available = film.available_count ?? 0;
-      const isLow = available <= 2 && available > 0;
-      const isEmpty = available === 0;
-      
+
       if (film.is_bulk_film) {
+        // For bulk films, available = spooled cassettes - reserved
+        const spooledCassettes = film.spooled_cassettes || 0;
+        const reserved = film.reserved_quantity || 0;
+        const available = Math.max(0, spooledCassettes - reserved);
+        const isLow = available <= 2 && available > 0;
+        const isEmpty = available === 0;
+
         return (
-          <div className="space-y-1">
-            <span className={`font-medium ${isEmpty ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-600'}`}>
-              {available} rolls
+          <div className="text-center">
+            <span
+              className={`font-medium ${
+                isEmpty
+                  ? "text-red-600"
+                  : isLow
+                  ? "text-yellow-600"
+                  : "text-green-600"
+              }`}
+            >
+              {available}
             </span>
-            <div className="text-xs text-muted-foreground">
-              from bulk
-            </div>
+            <div className="text-xs text-muted-foreground">cassettes</div>
           </div>
         );
       }
-      
+
+      const available = film.available_count ?? 0;
+      const isLow = available <= 2 && available > 0;
+      const isEmpty = available === 0;
+
       return (
-        <span className={`font-medium ${isEmpty ? 'text-red-600' : isLow ? 'text-yellow-600' : 'text-green-600'}`}>
+        <span
+          className={`font-medium ${
+            isEmpty
+              ? "text-red-600"
+              : isLow
+              ? "text-yellow-600"
+              : "text-green-600"
+          }`}
+        >
           {available}
         </span>
       );

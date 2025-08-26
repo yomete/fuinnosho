@@ -33,8 +33,23 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(pnpm run:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:docs.sentry.io)",
+      "Bash(SENTRY_DSN=test NEXT_PUBLIC_SUPABASE_URL=test NEXT_PUBLIC_SUPABASE_ANON_KEY=test timeout 5s npx tsx --check mcp-server.ts)",
+      "Bash(go mod init:*)",
+      "Bash(go get:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(go mod:*)",
+      "Bash(go build:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker rm:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker port:*)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/Users/yomi/Documents/batcave/mcp-monitoring"
+    ]
   }
 }

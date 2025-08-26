@@ -29,6 +29,8 @@ export async function editFilm(
       bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
       bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
       calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
+      bulk_remaining_exposures: validatedData.bulk_remaining_exposures ? Number(validatedData.bulk_remaining_exposures) : undefined,
+      spooled_cassettes: validatedData.spooled_cassettes ? Number(validatedData.spooled_cassettes) : undefined,
     };
 
     // Update in Supabase (don't include id, created_at, or user_id in update)
@@ -89,6 +91,11 @@ export async function createFilm(
       bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
       bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
       calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
+      bulk_remaining_exposures: validatedData.is_bulk_film ? 
+        (validatedData.bulk_remaining_exposures !== undefined ? Number(validatedData.bulk_remaining_exposures) : 
+          // Calculate initial exposures from bulk film length and format
+          Number(validatedData.calculated_rolls || 0) * (validatedData.format === '120' ? 12 : 36)) : undefined,
+      spooled_cassettes: validatedData.is_bulk_film ? (validatedData.spooled_cassettes !== undefined ? Number(validatedData.spooled_cassettes) : 0) : undefined,
     };
 
     // Save to Supabase
@@ -192,7 +199,7 @@ export async function reduceFilmCount(
 
   const { data: film, error: filmError } = await supabase
     .from("films")
-    .select("count")
+    .select("count, is_bulk_film, spooled_cassettes")
     .eq("id", filmId)
     .single();
 
@@ -203,9 +210,14 @@ export async function reduceFilmCount(
   const currentCount = film.count || 0;
   const newCount = Math.max(0, currentCount - quantity);
 
+  // For bulk films, also update spooled_cassettes count
+  const updateData = film.is_bulk_film 
+    ? { count: newCount, spooled_cassettes: Math.max(0, (film.spooled_cassettes || 0) - quantity) }
+    : { count: newCount };
+
   const { error: updateError } = await supabase
     .from("films")
-    .update({ count: newCount })
+    .update(updateData)
     .eq("id", filmId);
 
   if (updateError) {
@@ -216,12 +228,8 @@ export async function reduceFilmCount(
     film_id: filmId,
     quantity,
     usage_note: usageNote,
+    usage_type: 'shoot', // This is for shooting/using spooled cassettes
   });
-
-  console.log(
-    "🚀 ~ const{error:usageError}=awaitsupabase.from ~ usageError:",
-    usageError
-  );
 
   if (usageError) {
     return { error: "Failed to record usage" };
@@ -229,6 +237,73 @@ export async function reduceFilmCount(
 
   revalidatePath("/films");
   return { success: true, newCount };
+}
+
+export async function spoolBulkFilm(
+  filmId: string,
+  exposuresToSpool: number,
+  cassettesCreated: number,
+  spoolNote: string
+) {
+  const supabase = await createClient();
+
+  const { data: film, error: filmError } = await supabase
+    .from("films")
+    .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, format")
+    .eq("id", filmId)
+    .single();
+
+  if (filmError || !film) {
+    return { error: "Film not found" };
+  }
+
+  if (!film.is_bulk_film) {
+    return { error: "This is not a bulk film" };
+  }
+
+  const currentRemainingExposures = film.bulk_remaining_exposures || 0;
+  const currentSpooledCassettes = film.spooled_cassettes || 0;
+
+  if (exposuresToSpool > currentRemainingExposures) {
+    return { error: "Not enough bulk film remaining" };
+  }
+
+  const newRemainingExposures = currentRemainingExposures - exposuresToSpool;
+  const newSpooledCassettes = currentSpooledCassettes + cassettesCreated;
+
+  // Update film with new remaining exposures and cassette count
+  const { error: updateError } = await supabase
+    .from("films")
+    .update({ 
+      bulk_remaining_exposures: newRemainingExposures,
+      spooled_cassettes: newSpooledCassettes,
+      count: newSpooledCassettes // For bulk films, count represents spooled cassettes
+    })
+    .eq("id", filmId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  // Record spooling usage
+  const { error: usageError } = await supabase.from("film_usage").insert({
+    film_id: filmId,
+    quantity: cassettesCreated,
+    usage_note: spoolNote,
+    usage_type: 'spool',
+    exposures_used: exposuresToSpool,
+  });
+
+  if (usageError) {
+    return { error: "Failed to record spooling" };
+  }
+
+  revalidatePath("/films");
+  return { 
+    success: true, 
+    remainingExposures: newRemainingExposures,
+    spooledCassettes: newSpooledCassettes 
+  };
 }
 
 export async function getFilmUsageHistory(filmId: string): Promise<{

@@ -23,7 +23,8 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart3,
-  Activity
+  Activity,
+  Scissors
 } from "lucide-react";
 
 export function StreamlinedPredictions() {
@@ -228,6 +229,60 @@ export function StreamlinedPredictions() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bulk Film Predictions */}
+      {predictions.bulkFilmInsights && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Scissors className="h-5 w-5 text-orange-600" />
+              Bulk Film Predictions
+            </CardTitle>
+            <CardDescription>
+              Spooling recommendations and efficiency insights
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Efficiency Status */}
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <div className="text-sm font-medium">Spooling Efficiency</div>
+                  <div className="text-xs text-muted-foreground">
+                    {predictions.bulkFilmInsights.wasteAnalysis.wastePercentage.toFixed(1)}% waste rate
+                  </div>
+                </div>
+                <Badge 
+                  variant={
+                    predictions.bulkFilmInsights.spoolingEfficiencyTrend === 'improving' ? 'default' :
+                    predictions.bulkFilmInsights.spoolingEfficiencyTrend === 'declining' ? 'destructive' : 'secondary'
+                  }
+                >
+                  {predictions.bulkFilmInsights.spoolingEfficiencyTrend}
+                </Badge>
+              </div>
+              
+              {/* Spooling Recommendations */}
+              {predictions.bulkFilmInsights.predictedSpoolingNeed.recommendedSpooling.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-amber-600">Action Needed:</div>
+                  {predictions.bulkFilmInsights.predictedSpoolingNeed.recommendedSpooling.map((rec, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 border rounded bg-amber-50">
+                      <div>
+                        <div className="text-sm font-medium">{rec.filmName}</div>
+                        <div className="text-xs text-muted-foreground">Spool {rec.exposuresToSpool} exposures</div>
+                      </div>
+                      <Badge variant="outline" className="text-amber-700">
+                        {rec.cassettesToCreate} cassettes
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

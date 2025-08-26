@@ -9,6 +9,7 @@ import { FilmTypeDistribution } from "./film-type-distribution";
 import { TripUsageTable } from "./trip-usage-table";
 import { UsageOverview } from "./usage-overview";
 import { StreamlinedPredictions } from "./streamlined-predictions";
+import { BulkFilmInsights } from "./bulk-film-insights";
 
 export function UsageAnalytics() {
   return (
@@ -18,6 +19,7 @@ export function UsageAnalytics() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Current Usage</TabsTrigger>
+          <TabsTrigger value="bulk">Bulk Film</TabsTrigger>
           <TabsTrigger value="predictions">Predictions & Insights</TabsTrigger>
           <TabsTrigger value="trends">Historical Trends</TabsTrigger>
           <TabsTrigger value="trips">Trip Analysis</TabsTrigger>
@@ -28,6 +30,10 @@ export function UsageAnalytics() {
             <CostBreakdown />
             <FilmTypeDistribution />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="bulk" className="space-y-4">
+          <BulkFilmInsights />
         </TabsContent>
         
         <TabsContent value="predictions" className="space-y-4">

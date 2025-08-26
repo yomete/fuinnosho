@@ -10,15 +10,17 @@ MCPMonitoring.init({
     apiKey: process.env.MCP_MONITORING_API_KEY || 'mcp_72a8f9177ddf0bab9d3001e49e20294ea05b1959b076edff4455fc8d34db50c3',
     endpoint: process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1',
     serverId: 'fuinnosho-film-inventory-server',
+    // Enhanced observability features
+    enableTracing: true,
+    enableMetrics: true,
+    enableAutoInstrumentation: true,
+    metricsInterval: 10000, // Collect system metrics every 10 seconds
 });
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { createClient } from "@supabase/supabase-js";
 class FilmInventoryMCPServer {
-    server;
-    supabase;
-    userId;
     constructor() {
         // Log server startup
         MCPMonitoring.info('MCP Server starting up', {

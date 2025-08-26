@@ -12,6 +12,18 @@ export interface UsageData extends FilmUsage {
   total_cost: number;
 }
 
+export interface BulkFilmStats {
+  totalExposuresSpooled: number;
+  totalCassettesCreated: number;
+  totalRollsShot: number;
+  bulkFilmsSpoiled: Film[];
+  activeSpooling: {
+    filmName: string;
+    remainingExposures: number;
+    spooledCassettes: number;
+  }[];
+}
+
 export interface WeeklyUsage {
   week: string;
   rolls_used: number;
@@ -253,6 +265,112 @@ export async function getTripUsageStats(): Promise<{
         error instanceof Error
           ? error.message
           : "Failed to fetch trip usage stats",
+    };
+  }
+}
+
+export async function getShootingOnlyUsageData(): Promise<{
+  data: UsageData[] | null;
+  error: string | null;
+}> {
+  try {
+    const { data: allUsage, error } = await getAllUsageData();
+    
+    if (error || !allUsage) {
+      return { data: null, error };
+    }
+
+    // Filter to only include shooting usage (not spooling)
+    const shootingUsage = allUsage.filter(usage => 
+      usage.usage_type !== 'spool'
+    );
+
+    return { data: shootingUsage, error: null };
+  } catch (error) {
+    console.error("Error fetching shooting usage data:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Failed to fetch shooting usage data",
+    };
+  }
+}
+
+export async function getBulkFilmStats(): Promise<{
+  data: BulkFilmStats | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Get all bulk films
+    const { data: bulkFilms, error: bulkError } = await supabase
+      .from("films")
+      .select("*")
+      .eq("is_bulk_film", true);
+
+    if (bulkError) {
+      throw bulkError;
+    }
+
+    // Get all spooling usage
+    const { data: spoolingUsage, error: spoolingError } = await supabase
+      .from("film_usage")
+      .select("*")
+      .eq("usage_type", "spool");
+
+    if (spoolingError) {
+      throw spoolingError;
+    }
+
+    // Get all shooting usage for bulk films  
+    const { data: shootingUsage, error: shootingError } = await supabase
+      .from("film_usage")
+      .select("*")
+      .eq("usage_type", "shoot")
+      .in("film_id", bulkFilms?.map(f => f.id) || []);
+
+    if (shootingError) {
+      throw shootingError;
+    }
+
+    // Calculate totals
+    const totalExposuresSpooled = spoolingUsage?.reduce((sum, usage) => 
+      sum + (usage.exposures_used || 0), 0) || 0;
+    
+    const totalCassettesCreated = spoolingUsage?.reduce((sum, usage) => 
+      sum + usage.quantity, 0) || 0;
+    
+    const totalRollsShot = shootingUsage?.reduce((sum, usage) => 
+      sum + usage.quantity, 0) || 0;
+
+    // Find films that have been completely used up
+    const bulkFilmsSpoiled = bulkFilms?.filter(film => 
+      (film.bulk_remaining_exposures || 0) === 0
+    ) || [];
+
+    // Active spooling status
+    const activeSpooling = bulkFilms?.filter(film => 
+      (film.bulk_remaining_exposures || 0) > 0
+    ).map(film => ({
+      filmName: `${film.brand} ${film.name}`,
+      remainingExposures: film.bulk_remaining_exposures || 0,
+      spooledCassettes: film.spooled_cassettes || 0,
+    })) || [];
+
+    const stats: BulkFilmStats = {
+      totalExposuresSpooled,
+      totalCassettesCreated,
+      totalRollsShot,
+      bulkFilmsSpoiled,
+      activeSpooling,
+    };
+
+    return { data: stats, error: null };
+  } catch (error) {
+    console.error("Error fetching bulk film stats:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Failed to fetch bulk film stats",
     };
   }
 }

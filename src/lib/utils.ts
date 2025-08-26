@@ -26,6 +26,8 @@ export interface Film {
   bulk_length_meters?: number;
   bulk_quantity?: number;
   calculated_rolls?: number;
+  bulk_remaining_exposures?: number;
+  spooled_cassettes?: number;
   // Optional availability fields for when using films_with_availability view
   total_count?: number;
   reserved_quantity?: number;
@@ -38,6 +40,8 @@ export interface FilmUsage {
   quantity: number;
   usage_note: string;
   created_at: string;
+  usage_type?: 'spool' | 'shoot';
+  exposures_used?: number;
 }
 
 export interface Trip {
@@ -107,6 +111,8 @@ export const filmSchema = z.object({
   bulk_length_meters: z.number().positive().optional(),
   bulk_quantity: z.number().positive().optional(),
   calculated_rolls: z.number().optional(),
+  bulk_remaining_exposures: z.number().nonnegative().optional(),
+  spooled_cassettes: z.number().nonnegative().optional(),
 });
 
 export type FilmSchema = z.infer<typeof filmSchema>;
