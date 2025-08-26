@@ -9,14 +9,17 @@ This document contains important guidelines and reminders for Claude when workin
 ### Steps to Update MCP Server:
 
 1. **Update Data Models**: Add new fields to the relevant interfaces in both:
+
    - `mcp-server.ts` (main MCP server)
    - `mcp-server-simple.ts` (simplified version)
 
 2. **Update Tool Schemas**: Modify the tool input schemas to include new fields in:
+
    - `create_*` tools (for creating new records)
    - `edit_*` tools (for updating existing records)
 
 3. **Update Handler Functions**: Ensure the handler functions properly process the new fields:
+
    - Extract new fields from function parameters
    - Include them in database operations
    - Handle them in the response data
@@ -48,6 +51,7 @@ This ensures Claude has access to all the latest features when working with your
 ## Testing and Validation
 
 After updating the MCP server:
+
 - Test the updated tools work correctly
 - Verify new fields appear in responses
 - Ensure backward compatibility is maintained
@@ -60,3 +64,7 @@ After updating the MCP server:
 - **TypeScript Config**: `/tsconfig.mcp.json`
 - **Build Output**: `/dist/mcp-server.js`
 - **Documentation**: `/README-MCP.md`
+
+## GitHub
+
+When committing file changes, please don't add yourself as a contributor in the commit message. Just describe the changes made.

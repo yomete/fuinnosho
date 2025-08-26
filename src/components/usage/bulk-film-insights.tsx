@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getBulkFilmStats, BulkFilmStats } from "@/app/actions/usage";
-import { Scissors, Camera, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Scissors, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export function BulkFilmInsights() {
   const [bulkStats, setBulkStats] = useState<BulkFilmStats | null>(null);

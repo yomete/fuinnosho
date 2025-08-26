@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle2, Circle, Search, Filter, MapPin, Film, Camera } from 'lucide-react'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 
 interface AllPromptsProps {
   prompts: ChallengePrompt[]
@@ -38,9 +38,9 @@ export function AllPrompts({ prompts, progress, currentDay }: AllPromptsProps) {
   const [selectedPhase, setSelectedPhase] = useState('All Phases')
   const [statusFilter, setStatusFilter] = useState('All')
 
-  const getProgressForPrompt = (promptId: string) => {
+  const getProgressForPrompt = useCallback((promptId: string) => {
     return progress.find(p => p.prompt_id === promptId)
-  }
+  }, [progress])
 
   const filteredPrompts = useMemo(() => {
     return prompts.filter(prompt => {
@@ -68,7 +68,7 @@ export function AllPrompts({ prompts, progress, currentDay }: AllPromptsProps) {
       
       return matchesSearch && matchesPhase && matchesStatus
     })
-  }, [prompts, searchTerm, selectedPhase, statusFilter, progress, currentDay])
+  }, [prompts, searchTerm, selectedPhase, statusFilter, currentDay, getProgressForPrompt])
 
   return (
     <div className="space-y-6">

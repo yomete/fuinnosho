@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import NavUserIcon from "./nav-user-icon";
+// import NavUserIcon from "./nav-user-icon";
 
 const NavUserIconWrapper = () => {
   const [mounted, setMounted] = useState(false);

@@ -42,7 +42,7 @@ export function SpoolBulkDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
-  const exposuresPerRoll = formatInfo?.rollLength || 36;
+  const exposuresPerRoll = 'rollLength' in formatInfo ? formatInfo.rollLength : 'sheetsPerBox' in formatInfo ? formatInfo.sheetsPerBox : 36;
 
   // Calculate suggested exposures based on cassettes
   const suggestedExposures = cassettesCreated * exposuresPerRoll;

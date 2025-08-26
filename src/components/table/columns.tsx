@@ -235,8 +235,8 @@ export const columns: ColumnDef<Film>[] = [
       if (film.is_bulk_film) {
         const remainingExposures = film.bulk_remaining_exposures || 0;
         const spooledCassettes = film.spooled_cassettes || 0;
-        const totalExposures =
-          (film.calculated_rolls || 0) * (film.format === "120" ? 12 : 36);
+        // const totalExposures =
+        //   (film.calculated_rolls || 0) * (film.format === "120" ? 12 : 36);
 
         return (
           <div className="text-center space-y-0.5">
