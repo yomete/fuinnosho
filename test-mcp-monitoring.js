@@ -63,7 +63,7 @@ setTimeout(() => {
   }
   
   console.log('\n🔍 Check the monitoring dashboard for events!');
-  console.log('Dashboard: http://localhost:3000');
+  console.log('Dashboard: https://mcp-monitoring.vercel.app');
   
   mcpServer.kill();
   process.exit(0);

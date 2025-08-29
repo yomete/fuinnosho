@@ -5,20 +5,30 @@ import * as MCPMonitoring from "@mcp-monitoring/sdk";
 
 // Initialize MCP Monitoring
 console.error(`🔧 MCP Monitoring Config:
-  API Key: ${process.env.MCP_MONITORING_API_KEY ? 'SET' : 'NOT SET'}
-  Endpoint: ${process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1'}
+  API Key: ${process.env.MCP_MONITORING_API_KEY ? "SET" : "NOT SET"}
+  Endpoint: ${
+    process.env.MCP_MONITORING_ENDPOINT || "http://localhost:8080/api/v1"
+  }
   Server ID: fuinnosho-film-inventory-server`);
 
 MCPMonitoring.init({
-  apiKey: process.env.MCP_MONITORING_API_KEY || 'mcp_72a8f9177ddf0bab9d3001e49e20294ea05b1959b076edff4455fc8d34db50c3',
-  endpoint: process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1',
-  serverId: 'fuinnosho-film-inventory-server',
+  apiKey:
+    process.env.MCP_MONITORING_API_KEY ||
+    "mcp_72a8f9177ddf0bab9d3001e49e20294ea05b1959b076edff4455fc8d34db50c3",
+  endpoint:
+    process.env.MCP_MONITORING_ENDPOINT || "http://localhost:8080/api/v1",
+  serverId: "fuinnosho-film-inventory-server",
   // Enhanced observability features
   enableTracing: true,
   enableMetrics: true,
   enableAutoInstrumentation: true,
   metricsInterval: 10000, // Collect system metrics every 10 seconds
 });
+
+// Helper function to log monitoring events
+function logMCPEvent(type: string, details: any) {
+  console.error(`🔍 MCP Monitoring ${type}:`, JSON.stringify(details, null, 2));
+}
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -62,7 +72,7 @@ interface FilmUsage {
   quantity: number;
   usage_note: string;
   created_at: string;
-  usage_type?: 'spool' | 'shoot';
+  usage_type?: "spool" | "shoot";
   exposures_used?: number;
 }
 
@@ -116,11 +126,11 @@ class FilmInventoryMCPServer {
 
   constructor() {
     // Log server startup
-    MCPMonitoring.info('MCP Server starting up', {
-      server_name: 'fuinnosho-film-inventory',
-      version: '1.0.0'
+    MCPMonitoring.info("MCP Server starting up", {
+      server_name: "fuinnosho-film-inventory",
+      version: "1.0.0",
     });
-    
+
     const server = new Server(
       {
         name: "fuinnosho-film-inventory",
@@ -139,18 +149,20 @@ class FilmInventoryMCPServer {
     // Initialize Supabase client
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
-      console.warn("⚠️  Missing Supabase environment variables - running in TEST MODE");
-      MCPMonitoring.warning('MCP Server starting in test mode', {
-        reason: 'Missing Supabase credentials',
-        mode: 'test'
+      console.warn(
+        "⚠️  Missing Supabase environment variables - running in TEST MODE"
+      );
+      MCPMonitoring.warning("MCP Server starting in test mode", {
+        reason: "Missing Supabase credentials",
+        mode: "test",
       });
       this.supabase = null; // Test mode
     } else {
       this.supabase = createClient(supabaseUrl, supabaseKey);
     }
-    
+
     // Set user ID for filtering (for now using the known user ID)
     this.userId = "335461ec-7719-4c39-b023-c600e11d308c";
 
@@ -159,8 +171,8 @@ class FilmInventoryMCPServer {
 
   private async authenticateSession() {
     console.error("Starting authentication process...");
-    MCPMonitoring.info('Authentication process starting');
-    
+    MCPMonitoring.info("Authentication process starting");
+
     try {
       // Option 1: Use service role key if available (bypasses RLS)
       const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -174,8 +186,8 @@ class FilmInventoryMCPServer {
             auth: {
               autoRefreshToken: false,
               persistSession: false,
-              detectSessionInUrl: false
-            }
+              detectSessionInUrl: false,
+            },
           }
         );
         console.error("Service role client created successfully");
@@ -185,7 +197,7 @@ class FilmInventoryMCPServer {
       // Option 2: Use user credentials if available
       const userEmail = process.env.MCP_USER_EMAIL;
       const userPassword = process.env.MCP_USER_PASSWORD;
-      
+
       if (userEmail && userPassword) {
         console.error("Authenticating with user credentials");
         // Only try to authenticate if we absolutely need to
@@ -193,31 +205,40 @@ class FilmInventoryMCPServer {
           try {
             const { error } = await this.supabase.auth.signInWithPassword({
               email: userEmail,
-              password: userPassword
+              password: userPassword,
             });
-            
+
             if (error) {
               console.error("Authentication failed:", error.message);
             } else {
               console.error("Successfully authenticated user session");
             }
           } catch (authError) {
-            console.error("Authentication error during deferred login:", authError);
+            console.error(
+              "Authentication error during deferred login:",
+              authError
+            );
           }
         }, 1000); // Defer authentication by 1 second
         return;
       }
 
-      console.error("No authentication credentials provided - using anonymous access");
+      console.error(
+        "No authentication credentials provided - using anonymous access"
+      );
     } catch (error) {
       console.error("Authentication error:", error);
-      MCPMonitoring.error('Authentication failed', {
-        error_message: error.message,
-        error_stack: error.stack
+      logMCPEvent("Error", {
+        message: "Authentication failed",
+        error: error instanceof Error ? error.message : String(error),
+      });
+      MCPMonitoring.error("Authentication failed", {
+        error_message: error instanceof Error ? error.message : String(error),
+        error_stack: error instanceof Error ? error.stack : undefined,
       });
     }
     console.error("Authentication process completed");
-    MCPMonitoring.info('Authentication process completed successfully');
+    MCPMonitoring.info("Authentication process completed successfully");
   }
 
   private setupToolHandlers() {
@@ -239,7 +260,8 @@ class FilmInventoryMCPServer {
         },
         {
           name: "filter_films",
-          description: "Filter films by type, ISO range, format, or other criteria",
+          description:
+            "Filter films by type, ISO range, format, or other criteria",
           inputSchema: {
             type: "object",
             properties: {
@@ -273,7 +295,8 @@ class FilmInventoryMCPServer {
         },
         {
           name: "update_film_quantity",
-          description: "Update film quantity when using rolls (reduces count and logs usage)",
+          description:
+            "Update film quantity when using rolls (reduces count and logs usage)",
           inputSchema: {
             type: "object",
             properties: {
@@ -304,7 +327,8 @@ class FilmInventoryMCPServer {
               },
               exposures_to_spool: {
                 type: "number",
-                description: "Number of exposures from bulk film to use for spooling",
+                description:
+                  "Number of exposures from bulk film to use for spooling",
               },
               cassettes_created: {
                 type: "number",
@@ -315,12 +339,18 @@ class FilmInventoryMCPServer {
                 description: "Note about the spooling process",
               },
             },
-            required: ["film_id", "exposures_to_spool", "cassettes_created", "spool_note"],
+            required: [
+              "film_id",
+              "exposures_to_spool",
+              "cassettes_created",
+              "spool_note",
+            ],
           },
         },
         {
           name: "check_low_stock",
-          description: "Check for films with low stock (configurable threshold)",
+          description:
+            "Check for films with low stock (configurable threshold)",
           inputSchema: {
             type: "object",
             properties: {
@@ -417,7 +447,8 @@ class FilmInventoryMCPServer {
               },
               is_ecn: {
                 type: "boolean",
-                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
+                description:
+                  "Whether this is an ECN (Eastman Color Negative) motion picture film",
                 default: false,
               },
               is_bulk_film: {
@@ -430,7 +461,14 @@ class FilmInventoryMCPServer {
                 description: "Length in meters for bulk film",
               },
             },
-            required: ["name", "brand", "iso", "format", "type", "expiration_date"],
+            required: [
+              "name",
+              "brand",
+              "iso",
+              "format",
+              "type",
+              "expiration_date",
+            ],
           },
         },
         {
@@ -485,7 +523,8 @@ class FilmInventoryMCPServer {
               },
               is_ecn: {
                 type: "boolean",
-                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
+                description:
+                  "Whether this is an ECN (Eastman Color Negative) motion picture film",
               },
               is_bulk_film: {
                 type: "boolean",
@@ -719,8 +758,17 @@ class FilmInventoryMCPServer {
               },
               type: {
                 type: "string",
-                description: "Gear type (camera, lens, flash, accessory, tripod, filter, bag)",
-                enum: ["camera", "lens", "flash", "accessory", "tripod", "filter", "bag"],
+                description:
+                  "Gear type (camera, lens, flash, accessory, tripod, filter, bag)",
+                enum: [
+                  "camera",
+                  "lens",
+                  "flash",
+                  "accessory",
+                  "tripod",
+                  "filter",
+                  "bag",
+                ],
               },
               model: {
                 type: "string",
@@ -762,7 +810,15 @@ class FilmInventoryMCPServer {
               type: {
                 type: "string",
                 description: "Filter by gear type",
-                enum: ["camera", "lens", "flash", "accessory", "tripod", "filter", "bag"],
+                enum: [
+                  "camera",
+                  "lens",
+                  "flash",
+                  "accessory",
+                  "tripod",
+                  "filter",
+                  "bag",
+                ],
               },
               brand: {
                 type: "string",
@@ -802,7 +858,15 @@ class FilmInventoryMCPServer {
               type: {
                 type: "string",
                 description: "Gear type",
-                enum: ["camera", "lens", "flash", "accessory", "tripod", "filter", "bag"],
+                enum: [
+                  "camera",
+                  "lens",
+                  "flash",
+                  "accessory",
+                  "tripod",
+                  "filter",
+                  "bag",
+                ],
               },
               model: {
                 type: "string",
@@ -900,7 +964,8 @@ class FilmInventoryMCPServer {
         },
         {
           name: "get_usage_analytics",
-          description: "Get comprehensive film usage analytics including costs and patterns",
+          description:
+            "Get comprehensive film usage analytics including costs and patterns",
           inputSchema: {
             type: "object",
             properties: {
@@ -919,7 +984,8 @@ class FilmInventoryMCPServer {
         },
         {
           name: "get_film_usage_by_type",
-          description: "Get film usage statistics broken down by development type (C41, B&W, ECN)",
+          description:
+            "Get film usage statistics broken down by development type (C41, B&W, ECN)",
           inputSchema: {
             type: "object",
             properties: {
@@ -936,20 +1002,23 @@ class FilmInventoryMCPServer {
         },
         {
           name: "calculate_monthly_costs",
-          description: "Calculate monthly film and development costs with detailed breakdown",
+          description:
+            "Calculate monthly film and development costs with detailed breakdown",
           inputSchema: {
             type: "object",
             properties: {
               month: {
                 type: "string",
-                description: "Month to analyze (YYYY-MM format), defaults to current month",
+                description:
+                  "Month to analyze (YYYY-MM format), defaults to current month",
               },
             },
           },
         },
         {
           name: "get_shooting_patterns",
-          description: "Analyze shooting patterns including day of week preferences and frequency",
+          description:
+            "Analyze shooting patterns including day of week preferences and frequency",
           inputSchema: {
             type: "object",
             properties: {
@@ -970,101 +1039,105 @@ class FilmInventoryMCPServer {
       try {
         console.error(`🛠️  Executing tool: ${name} with monitoring`);
         
+        // Log tool execution start
+        logMCPEvent('Tool Start', { tool_name: name, arguments: args });
+        MCPMonitoring.info(`Tool execution started: ${name}`, { tool_name: name, arguments: args });
+
         // Use MCP Monitoring tool wrapper for automatic performance tracking
         const result = await MCPMonitoring.wrapToolExecution(
           name,
           async () => {
             console.error(`📊 Inside tool wrapper for: ${name}`);
             switch (name) {
-          case "get_film_inventory":
-            return await this.getFilmInventory(args);
+              case "get_film_inventory":
+                return await this.getFilmInventory(args);
 
-          case "filter_films":
-            return await this.filterFilms(args);
+              case "filter_films":
+                return await this.filterFilms(args);
 
-          case "update_film_quantity":
-            return await this.updateFilmQuantity(args);
+              case "update_film_quantity":
+                return await this.updateFilmQuantity(args);
 
-          case "spool_bulk_film":
-            return await this.spoolBulkFilm(args);
+              case "spool_bulk_film":
+                return await this.spoolBulkFilm(args);
 
-          case "check_low_stock":
-            return await this.checkLowStock(args);
+              case "check_low_stock":
+                return await this.checkLowStock(args);
 
-          case "get_film_usage_history":
-            return await this.getFilmUsageHistory(args);
+              case "get_film_usage_history":
+                return await this.getFilmUsageHistory(args);
 
-          case "get_film_stats":
-            return await this.getFilmStats(args);
+              case "get_film_stats":
+                return await this.getFilmStats(args);
 
-          case "create_film":
-            return await this.createFilm(args);
+              case "create_film":
+                return await this.createFilm(args);
 
-          case "edit_film":
-            return await this.editFilm(args);
+              case "edit_film":
+                return await this.editFilm(args);
 
-          case "delete_film":
-            return await this.deleteFilm(args);
+              case "delete_film":
+                return await this.deleteFilm(args);
 
-          case "create_trip":
-            return await this.createTrip(args);
+              case "create_trip":
+                return await this.createTrip(args);
 
-          case "list_trips":
-            return await this.listTrips(args);
+              case "list_trips":
+                return await this.listTrips(args);
 
-          case "get_trip_details":
-            return await this.getTripDetails(args);
+              case "get_trip_details":
+                return await this.getTripDetails(args);
 
-          case "edit_trip":
-            return await this.editTrip(args);
+              case "edit_trip":
+                return await this.editTrip(args);
 
-          case "delete_trip":
-            return await this.deleteTrip(args);
+              case "delete_trip":
+                return await this.deleteTrip(args);
 
-          case "reserve_film_for_trip":
-            return await this.reserveFilmForTrip(args);
+              case "reserve_film_for_trip":
+                return await this.reserveFilmForTrip(args);
 
-          case "remove_film_reservation":
-            return await this.removeFilmReservation(args);
+              case "remove_film_reservation":
+                return await this.removeFilmReservation(args);
 
-          case "update_film_reservation_quantity":
-            return await this.updateFilmReservationQuantity(args);
+              case "update_film_reservation_quantity":
+                return await this.updateFilmReservationQuantity(args);
 
-          case "get_films_with_availability":
-            return await this.getFilmsWithAvailability(args);
+              case "get_films_with_availability":
+                return await this.getFilmsWithAvailability(args);
 
-          case "create_gear":
-            return await this.createGear(args);
+              case "create_gear":
+                return await this.createGear(args);
 
-          case "list_gear":
-            return await this.listGear(args);
+              case "list_gear":
+                return await this.listGear(args);
 
-          case "edit_gear":
-            return await this.editGear(args);
+              case "edit_gear":
+                return await this.editGear(args);
 
-          case "delete_gear":
-            return await this.deleteGear(args);
+              case "delete_gear":
+                return await this.deleteGear(args);
 
-          case "get_gear_stats":
-            return await this.getGearStats(args);
+              case "get_gear_stats":
+                return await this.getGearStats(args);
 
-          case "reserve_gear_for_trip":
-            return await this.reserveGearForTrip(args);
+              case "reserve_gear_for_trip":
+                return await this.reserveGearForTrip(args);
 
-          case "remove_gear_reservation":
-            return await this.removeGearReservation(args);
+              case "remove_gear_reservation":
+                return await this.removeGearReservation(args);
 
-          case "get_usage_analytics":
-            return await this.getUsageAnalytics(args);
+              case "get_usage_analytics":
+                return await this.getUsageAnalytics(args);
 
-          case "get_film_usage_by_type":
-            return await this.getFilmUsageByType(args);
+              case "get_film_usage_by_type":
+                return await this.getFilmUsageByType(args);
 
-          case "calculate_monthly_costs":
-            return await this.calculateMonthlyCosts(args);
+              case "calculate_monthly_costs":
+                return await this.calculateMonthlyCosts(args);
 
-          case "get_shooting_patterns":
-            return await this.getShootingPatterns(args);
+              case "get_shooting_patterns":
+                return await this.getShootingPatterns(args);
 
               default:
                 throw new Error(`Unknown tool: ${name}`);
@@ -1072,25 +1145,42 @@ class FilmInventoryMCPServer {
           },
           args
         );
-        
+
+        // Log tool execution completion
+        logMCPEvent('Tool Complete', { tool_name: name, success: true });
+        MCPMonitoring.info(`Tool execution completed: ${name}`, { tool_name: name, success: true });
+
         return result;
       } catch (error) {
         // Log error with MCP Monitoring
-        MCPMonitoring.error(`Tool execution failed: ${name}`, {
-          tool_name: name,
-          error_message: error.message,
-          error_stack: error.stack,
-          arguments: args,
-        }, {
-          server_id: 'fuinnosho-film-inventory-server',
-          tool_name: name,
+        logMCPEvent("Error", {
+          message: `Tool execution failed: ${name}`,
+          tool: name,
+          error: error instanceof Error ? error.message : String(error),
+          args,
         });
-        
+        MCPMonitoring.error(
+          `Tool execution failed: ${name}`,
+          {
+            tool_name: name,
+            error_message:
+              error instanceof Error ? error.message : String(error),
+            error_stack: error instanceof Error ? error.stack : undefined,
+            arguments: args,
+          },
+          {
+            server_id: "fuinnosho-film-inventory-server",
+            tool_name: name,
+          }
+        );
+
         return {
           content: [
             {
               type: "text",
-              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+              text: `Error: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
             },
           ],
         };
@@ -1100,25 +1190,28 @@ class FilmInventoryMCPServer {
 
   private async getFilmInventory(args: any) {
     const { include_availability = false } = args;
-    
+
     // Test mode - return mock data
     if (!this.supabase) {
       return {
         content: [
           {
             type: "text",
-            text: "🎬 **Test Film Inventory** (Monitoring Test Mode)\n\n" +
-                  "• **Kodak Portra 400** (35mm) - 5 rolls\n" +
-                  "• **Ilford HP5+** (120) - 3 rolls\n" +
-                  "• **Fuji Pro 400H** (35mm) - 2 rolls\n\n" +
-                  "*This is test data - MCP monitoring is working!*"
-          }
-        ]
+            text:
+              "🎬 **Test Film Inventory** (Monitoring Test Mode)\n\n" +
+              "• **Kodak Portra 400** (35mm) - 5 rolls\n" +
+              "• **Ilford HP5+** (120) - 3 rolls\n" +
+              "• **Fuji Pro 400H** (35mm) - 2 rolls\n\n" +
+              "*This is test data - MCP monitoring is working!*",
+          },
+        ],
       };
     }
-    
-    const tableName = include_availability ? "films_with_availability" : "films";
-    
+
+    const tableName = include_availability
+      ? "films_with_availability"
+      : "films";
+
     const { data: films, error } = await this.supabase
       .from(tableName)
       .select("*")
@@ -1130,26 +1223,32 @@ class FilmInventoryMCPServer {
       throw new Error(`Failed to fetch films: ${error.message}`);
     }
 
-    const totalValue = films?.reduce((sum: number, film: Film) => {
-      return sum + ((film.price || 0) * (film.count || 0));
-    }, 0) || 0;
+    const totalValue =
+      films?.reduce((sum: number, film: Film) => {
+        return sum + (film.price || 0) * (film.count || 0);
+      }, 0) || 0;
 
-    const totalRolls = films?.reduce((sum: number, film: Film) => {
-      return sum + (film.count || 0);
-    }, 0) || 0;
+    const totalRolls =
+      films?.reduce((sum: number, film: Film) => {
+        return sum + (film.count || 0);
+      }, 0) || 0;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            summary: {
-              total_films: films?.length || 0,
-              total_rolls: totalRolls,
-              total_value: totalValue,
+          text: JSON.stringify(
+            {
+              summary: {
+                total_films: films?.length || 0,
+                total_rolls: totalRolls,
+                total_value: totalValue,
+              },
+              films: films || [],
             },
-            films: films || [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1165,10 +1264,7 @@ class FilmInventoryMCPServer {
       in_stock_only = false,
     } = args;
 
-    let query = this.supabase
-      .from("films")
-      .select("*")
-      .is("deleted_at", null); // Exclude soft deleted films
+    let query = this.supabase.from("films").select("*").is("deleted_at", null); // Exclude soft deleted films
 
     if (type) {
       query = query.eq("type", type);
@@ -1206,17 +1302,24 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            filters_applied: {
-              type,
-              iso_range: iso_min !== undefined || iso_max !== undefined ? `${iso_min || 0}-${iso_max || '∞'}` : null,
-              format,
-              brand,
-              in_stock_only,
+          text: JSON.stringify(
+            {
+              filters_applied: {
+                type,
+                iso_range:
+                  iso_min !== undefined || iso_max !== undefined
+                    ? `${iso_min || 0}-${iso_max || "∞"}`
+                    : null,
+                format,
+                brand,
+                in_stock_only,
+              },
+              results_count: films?.length || 0,
+              films: films || [],
             },
-            results_count: films?.length || 0,
-            films: films || [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1274,14 +1377,18 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            film: `${film.brand} ${film.name}`,
-            previous_count: currentCount,
-            new_count: newCount,
-            quantity_used: quantity,
-            usage_note,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              film: `${film.brand} ${film.name}`,
+              previous_count: currentCount,
+              new_count: newCount,
+              quantity_used: quantity,
+              usage_note,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1291,17 +1398,23 @@ class FilmInventoryMCPServer {
     const { film_id, exposures_to_spool, cassettes_created, spool_note } = args;
 
     if (!film_id || !exposures_to_spool || !cassettes_created || !spool_note) {
-      throw new Error("film_id, exposures_to_spool, cassettes_created, and spool_note are required");
+      throw new Error(
+        "film_id, exposures_to_spool, cassettes_created, and spool_note are required"
+      );
     }
 
     if (exposures_to_spool <= 0 || cassettes_created <= 0) {
-      throw new Error("exposures_to_spool and cassettes_created must be positive");
+      throw new Error(
+        "exposures_to_spool and cassettes_created must be positive"
+      );
     }
 
     // Get current film
     const { data: film, error: filmError } = await this.supabase
       .from("films")
-      .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, name, brand, format")
+      .select(
+        "bulk_remaining_exposures, spooled_cassettes, is_bulk_film, name, brand, format"
+      )
       .eq("id", film_id)
       .single();
 
@@ -1317,19 +1430,22 @@ class FilmInventoryMCPServer {
     const currentSpooledCassettes = film.spooled_cassettes || 0;
 
     if (exposures_to_spool > currentRemainingExposures) {
-      throw new Error(`Not enough bulk film remaining. Available: ${currentRemainingExposures} exposures, Requested: ${exposures_to_spool} exposures`);
+      throw new Error(
+        `Not enough bulk film remaining. Available: ${currentRemainingExposures} exposures, Requested: ${exposures_to_spool} exposures`
+      );
     }
 
-    const newRemainingExposures = currentRemainingExposures - exposures_to_spool;
+    const newRemainingExposures =
+      currentRemainingExposures - exposures_to_spool;
     const newSpooledCassettes = currentSpooledCassettes + cassettes_created;
 
     // Update film with new remaining exposures and cassette count
     const { error: updateError } = await this.supabase
       .from("films")
-      .update({ 
+      .update({
         bulk_remaining_exposures: newRemainingExposures,
         spooled_cassettes: newSpooledCassettes,
-        count: newSpooledCassettes // For bulk films, count represents spooled cassettes
+        count: newSpooledCassettes, // For bulk films, count represents spooled cassettes
       })
       .eq("id", film_id);
 
@@ -1344,7 +1460,7 @@ class FilmInventoryMCPServer {
         film_id,
         quantity: cassettes_created,
         usage_note: spool_note,
-        usage_type: 'spool',
+        usage_type: "spool",
         exposures_used: exposures_to_spool,
       });
 
@@ -1356,15 +1472,19 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            film: `${film.brand} ${film.name}`,
-            exposures_used: exposures_to_spool,
-            cassettes_created,
-            remaining_exposures: newRemainingExposures,
-            total_spooled_cassettes: newSpooledCassettes,
-            spool_note,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              film: `${film.brand} ${film.name}`,
+              exposures_used: exposures_to_spool,
+              cassettes_created,
+              remaining_exposures: newRemainingExposures,
+              total_spooled_cassettes: newSpooledCassettes,
+              spool_note,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1392,22 +1512,29 @@ class FilmInventoryMCPServer {
     }
 
     const outOfStock = films?.filter((f: Film) => (f.count || 0) === 0) || [];
-    const lowStock = films?.filter((f: Film) => (f.count || 0) > 0 && (f.count || 0) <= threshold) || [];
+    const lowStock =
+      films?.filter(
+        (f: Film) => (f.count || 0) > 0 && (f.count || 0) <= threshold
+      ) || [];
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            alert_threshold: threshold,
-            summary: {
-              out_of_stock: outOfStock.length,
-              low_stock: lowStock.length,
-              total_alerts: films?.length || 0,
+          text: JSON.stringify(
+            {
+              alert_threshold: threshold,
+              summary: {
+                out_of_stock: outOfStock.length,
+                low_stock: lowStock.length,
+                total_alerts: films?.length || 0,
+              },
+              out_of_stock: outOfStock,
+              low_stock: lowStock,
             },
-            out_of_stock: outOfStock,
-            low_stock: lowStock,
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1430,18 +1557,23 @@ class FilmInventoryMCPServer {
       throw new Error(`Failed to fetch usage history: ${error.message}`);
     }
 
-    const totalUsed = usage?.reduce((sum: number, u: FilmUsage) => sum + u.quantity, 0) || 0;
+    const totalUsed =
+      usage?.reduce((sum: number, u: FilmUsage) => sum + u.quantity, 0) || 0;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            film_id,
-            total_usage_records: usage?.length || 0,
-            total_rolls_used: totalUsed,
-            usage_history: usage || [],
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              film_id,
+              total_usage_records: usage?.length || 0,
+              total_rolls_used: totalUsed,
+              usage_history: usage || [],
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1460,10 +1592,10 @@ class FilmInventoryMCPServer {
     }
 
     const stats: Record<string, any> = {};
-    
+
     films?.forEach((film: Film) => {
       const key = film[group_by as keyof Film] as string;
-      
+
       if (!stats[key]) {
         stats[key] = {
           count: 0,
@@ -1472,7 +1604,7 @@ class FilmInventoryMCPServer {
           films: [],
         };
       }
-      
+
       stats[key].count++;
       stats[key].total_rolls += film.count || 0;
       stats[key].total_value += (film.price || 0) * (film.count || 0);
@@ -1488,11 +1620,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            grouped_by: group_by,
-            total_categories: Object.keys(stats).length,
-            statistics: stats,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              grouped_by: group_by,
+              total_categories: Object.keys(stats).length,
+              statistics: stats,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1516,7 +1652,9 @@ class FilmInventoryMCPServer {
     } = args;
 
     if (!name || !brand || !iso || !format || !type || !expiration_date) {
-      throw new Error("Missing required fields: name, brand, iso, format, type, expiration_date");
+      throw new Error(
+        "Missing required fields: name, brand, iso, format, type, expiration_date"
+      );
     }
 
     const filmData: any = {
@@ -1559,11 +1697,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Film created successfully",
-            film: film,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Film created successfully",
+              film: film,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1587,7 +1729,9 @@ class FilmInventoryMCPServer {
 
     // Handle bulk film calculations if relevant fields are being updated
     if (cleanedData.is_bulk_film && cleanedData.bulk_length_meters) {
-      cleanedData.calculated_rolls = Math.floor(Number(cleanedData.bulk_length_meters) / 1.5);
+      cleanedData.calculated_rolls = Math.floor(
+        Number(cleanedData.bulk_length_meters) / 1.5
+      );
       if (!cleanedData.count) {
         cleanedData.count = cleanedData.calculated_rolls;
       }
@@ -1612,11 +1756,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Film updated successfully",
-            film: film,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Film updated successfully",
+              film: film,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1655,15 +1803,19 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Film "${film.brand} ${film.name}" moved to trash`,
-            deleted_film: {
-              id: film_id,
-              name: film.name,
-              brand: film.brand,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Film "${film.brand} ${film.name}" moved to trash`,
+              deleted_film: {
+                id: film_id,
+                name: film.name,
+                brand: film.brand,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1686,7 +1838,7 @@ class FilmInventoryMCPServer {
       description,
       start_date,
       end_date,
-      status: 'upcoming',
+      status: "upcoming",
     };
 
     const { data: trip, error } = await this.supabase
@@ -1703,11 +1855,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Trip created successfully",
-            trip: trip,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Trip created successfully",
+              trip: trip,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1719,11 +1875,13 @@ class FilmInventoryMCPServer {
     let query = this.supabase.from("trips").select("*");
 
     if (!include_past) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       query = query.gte("start_date", today);
     }
 
-    const { data: trips, error } = await query.order("start_date", { ascending: false });
+    const { data: trips, error } = await query.order("start_date", {
+      ascending: false,
+    });
 
     if (error) {
       throw new Error(`Failed to fetch trips: ${error.message}`);
@@ -1734,7 +1892,8 @@ class FilmInventoryMCPServer {
       for (const trip of trips) {
         const { data: tripFilms, error: filmsError } = await this.supabase
           .from("trip_films")
-          .select(`
+          .select(
+            `
             quantity,
             films (
               id,
@@ -1744,7 +1903,8 @@ class FilmInventoryMCPServer {
               format,
               type
             )
-          `)
+          `
+          )
           .eq("trip_id", trip.id);
 
         if (!filmsError) {
@@ -1753,31 +1913,37 @@ class FilmInventoryMCPServer {
       }
     }
 
-    const upcomingTrips = trips?.filter((trip: Trip) => {
-      const startDate = new Date(trip.start_date);
-      const today = new Date();
-      return startDate >= today;
-    }) || [];
+    const upcomingTrips =
+      trips?.filter((trip: Trip) => {
+        const startDate = new Date(trip.start_date);
+        const today = new Date();
+        return startDate >= today;
+      }) || [];
 
-    const pastTrips = trips?.filter((trip: Trip) => {
-      const endDate = new Date(trip.end_date);
-      const today = new Date();
-      return endDate < today;
-    }) || [];
+    const pastTrips =
+      trips?.filter((trip: Trip) => {
+        const endDate = new Date(trip.end_date);
+        const today = new Date();
+        return endDate < today;
+      }) || [];
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            summary: {
-              total_trips: trips?.length || 0,
-              upcoming_trips: upcomingTrips.length,
-              past_trips: pastTrips.length,
+          text: JSON.stringify(
+            {
+              summary: {
+                total_trips: trips?.length || 0,
+                upcoming_trips: upcomingTrips.length,
+                past_trips: pastTrips.length,
+              },
+              upcoming_trips: upcomingTrips,
+              past_trips: include_past ? pastTrips : [],
             },
-            upcoming_trips: upcomingTrips,
-            past_trips: include_past ? pastTrips : [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1803,7 +1969,8 @@ class FilmInventoryMCPServer {
     // Get reserved films for this trip
     const { data: tripFilms, error: filmsError } = await this.supabase
       .from("trip_films")
-      .select(`
+      .select(
+        `
         quantity,
         films (
           id,
@@ -1815,7 +1982,8 @@ class FilmInventoryMCPServer {
           count,
           price
         )
-      `)
+      `
+      )
       .eq("trip_id", trip_id);
 
     if (filmsError) {
@@ -1825,7 +1993,8 @@ class FilmInventoryMCPServer {
     // Get reserved gear for this trip
     const { data: tripGear, error: gearError } = await this.supabase
       .from("trip_gear")
-      .select(`
+      .select(
+        `
         gear (
           id,
           name,
@@ -1835,39 +2004,47 @@ class FilmInventoryMCPServer {
           condition,
           purchase_price
         )
-      `)
+      `
+      )
       .eq("trip_id", trip_id);
 
     if (gearError) {
       throw new Error(`Failed to fetch trip gear: ${gearError.message}`);
     }
 
-    const totalRolls = tripFilms?.reduce((sum: number, tf: any) => sum + tf.quantity, 0) || 0;
-    const totalFilmValue = tripFilms?.reduce((sum: number, tf: any) => {
-      return sum + (tf.quantity * (tf.films?.price || 0));
-    }, 0) || 0;
+    const totalRolls =
+      tripFilms?.reduce((sum: number, tf: any) => sum + tf.quantity, 0) || 0;
+    const totalFilmValue =
+      tripFilms?.reduce((sum: number, tf: any) => {
+        return sum + tf.quantity * (tf.films?.price || 0);
+      }, 0) || 0;
 
-    const totalGearValue = tripGear?.reduce((sum: number, tg: any) => {
-      return sum + (tg.gear?.purchase_price || 0);
-    }, 0) || 0;
+    const totalGearValue =
+      tripGear?.reduce((sum: number, tg: any) => {
+        return sum + (tg.gear?.purchase_price || 0);
+      }, 0) || 0;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            trip: trip,
-            summary: {
-              total_films_reserved: tripFilms?.length || 0,
-              total_rolls: totalRolls,
-              total_gear_reserved: tripGear?.length || 0,
-              estimated_film_value: totalFilmValue,
-              estimated_gear_value: totalGearValue,
-              total_estimated_value: totalFilmValue + totalGearValue,
+          text: JSON.stringify(
+            {
+              trip: trip,
+              summary: {
+                total_films_reserved: tripFilms?.length || 0,
+                total_rolls: totalRolls,
+                total_gear_reserved: tripGear?.length || 0,
+                estimated_film_value: totalFilmValue,
+                estimated_gear_value: totalGearValue,
+                total_estimated_value: totalFilmValue + totalGearValue,
+              },
+              reserved_films: tripFilms || [],
+              reserved_gear: tripGear || [],
             },
-            reserved_films: tripFilms || [],
-            reserved_gear: tripGear || [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1917,11 +2094,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Trip updated successfully",
-            trip: trip,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Trip updated successfully",
+              trip: trip,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -1959,14 +2140,18 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Trip "${trip.title}" deleted successfully`,
-            deleted_trip: {
-              id: trip_id,
-              title: trip.title,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Trip "${trip.title}" deleted successfully`,
+              deleted_trip: {
+                id: trip_id,
+                title: trip.title,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2006,7 +2191,9 @@ class FilmInventoryMCPServer {
     }
 
     if (film.available_count < quantity) {
-      throw new Error(`Not enough available stock. Available: ${film.available_count}, Requested: ${quantity}`);
+      throw new Error(
+        `Not enough available stock. Available: ${film.available_count}, Requested: ${quantity}`
+      );
     }
 
     // Check if film is already reserved for this trip
@@ -2028,11 +2215,15 @@ class FilmInventoryMCPServer {
         .eq("film_id", film_id)
         .select()
         .single();
-      
+
       if (error) {
         throw new Error(`Failed to update film reservation: ${error.message}`);
       }
-      result = { ...data, action: "updated", previous_quantity: existingReservation.quantity };
+      result = {
+        ...data,
+        action: "updated",
+        previous_quantity: existingReservation.quantity,
+      };
     } else {
       // Create new reservation
       const { data, error } = await this.supabase
@@ -2055,16 +2246,20 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `${quantity} roll(s) of ${film.brand} ${film.name} ${result.action} for trip "${trip.title}"`,
-            reservation: result,
-            film: {
-              name: film.name,
-              brand: film.brand,
-              remaining_available: film.available_count - quantity,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `${quantity} roll(s) of ${film.brand} ${film.name} ${result.action} for trip "${trip.title}"`,
+              reservation: result,
+              film: {
+                name: film.name,
+                brand: film.brand,
+                remaining_available: film.available_count - quantity,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2080,11 +2275,13 @@ class FilmInventoryMCPServer {
     // Get reservation details before deleting
     const { data: reservation, error: fetchError } = await this.supabase
       .from("trip_films")
-      .select(`
+      .select(
+        `
         quantity,
         trips (title),
         films (name, brand)
-      `)
+      `
+      )
       .eq("trip_id", trip_id)
       .eq("film_id", film_id)
       .single();
@@ -2101,22 +2298,28 @@ class FilmInventoryMCPServer {
       .eq("film_id", film_id);
 
     if (deleteError) {
-      throw new Error(`Failed to remove film reservation: ${deleteError.message}`);
+      throw new Error(
+        `Failed to remove film reservation: ${deleteError.message}`
+      );
     }
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Removed ${reservation.quantity} roll(s) of ${reservation.films.brand} ${reservation.films.name} from trip "${reservation.trips.title}"`,
-            removed_reservation: {
-              quantity: reservation.quantity,
-              film: `${reservation.films.brand} ${reservation.films.name}`,
-              trip: reservation.trips.title,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Removed ${reservation.quantity} roll(s) of ${reservation.films.brand} ${reservation.films.name} from trip "${reservation.trips.title}"`,
+              removed_reservation: {
+                quantity: reservation.quantity,
+                film: `${reservation.films.brand} ${reservation.films.name}`,
+                trip: reservation.trips.title,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2136,11 +2339,13 @@ class FilmInventoryMCPServer {
     // Check if reservation exists
     const { data: existingReservation, error: fetchError } = await this.supabase
       .from("trip_films")
-      .select(`
+      .select(
+        `
         quantity,
         trips (title),
         films (name, brand)
-      `)
+      `
+      )
       .eq("trip_id", trip_id)
       .eq("film_id", film_id)
       .single();
@@ -2157,23 +2362,29 @@ class FilmInventoryMCPServer {
       .eq("film_id", film_id);
 
     if (updateError) {
-      throw new Error(`Failed to update film reservation quantity: ${updateError.message}`);
+      throw new Error(
+        `Failed to update film reservation quantity: ${updateError.message}`
+      );
     }
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Updated reservation for ${existingReservation.films.brand} ${existingReservation.films.name} in trip "${existingReservation.trips.title}" from ${existingReservation.quantity} to ${quantity} roll(s)`,
-            updated_reservation: {
-              old_quantity: existingReservation.quantity,
-              new_quantity: quantity,
-              film: `${existingReservation.films.brand} ${existingReservation.films.name}`,
-              trip: existingReservation.trips.title,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Updated reservation for ${existingReservation.films.brand} ${existingReservation.films.name} in trip "${existingReservation.trips.title}" from ${existingReservation.quantity} to ${quantity} roll(s)`,
+              updated_reservation: {
+                old_quantity: existingReservation.quantity,
+                new_quantity: quantity,
+                film: `${existingReservation.films.brand} ${existingReservation.films.name}`,
+                trip: existingReservation.trips.title,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2182,9 +2393,7 @@ class FilmInventoryMCPServer {
   private async getFilmsWithAvailability(args: any) {
     const { available_only = false, min_available = 1 } = args;
 
-    let query = this.supabase
-      .from("films_with_availability")
-      .select("*");
+    let query = this.supabase.from("films_with_availability").select("*");
 
     if (available_only) {
       query = query.gte("available_count", min_available);
@@ -2195,30 +2404,48 @@ class FilmInventoryMCPServer {
       .order("name", { ascending: true });
 
     if (error) {
-      throw new Error(`Failed to fetch films with availability: ${error.message}`);
+      throw new Error(
+        `Failed to fetch films with availability: ${error.message}`
+      );
     }
 
-    const availableFilms = films?.filter((f: Film) => (f.available_count || 0) >= min_available) || [];
-    const reservedFilms = films?.filter((f: Film) => (f.reserved_quantity || 0) > 0) || [];
-    const totalValue = films?.reduce((sum: number, film: Film) => {
-      return sum + ((film.price || 0) * (film.available_count || 0));
-    }, 0) || 0;
+    const availableFilms =
+      films?.filter((f: Film) => (f.available_count || 0) >= min_available) ||
+      [];
+    const reservedFilms =
+      films?.filter((f: Film) => (f.reserved_quantity || 0) > 0) || [];
+    const totalValue =
+      films?.reduce((sum: number, film: Film) => {
+        return sum + (film.price || 0) * (film.available_count || 0);
+      }, 0) || 0;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            summary: {
-              total_films: films?.length || 0,
-              films_with_availability: availableFilms.length,
-              films_with_reservations: reservedFilms.length,
-              total_available_rolls: films?.reduce((sum: number, f: Film) => sum + (f.available_count || 0), 0) || 0,
-              total_reserved_rolls: films?.reduce((sum: number, f: Film) => sum + (f.reserved_quantity || 0), 0) || 0,
-              available_inventory_value: totalValue,
+          text: JSON.stringify(
+            {
+              summary: {
+                total_films: films?.length || 0,
+                films_with_availability: availableFilms.length,
+                films_with_reservations: reservedFilms.length,
+                total_available_rolls:
+                  films?.reduce(
+                    (sum: number, f: Film) => sum + (f.available_count || 0),
+                    0
+                  ) || 0,
+                total_reserved_rolls:
+                  films?.reduce(
+                    (sum: number, f: Film) => sum + (f.reserved_quantity || 0),
+                    0
+                  ) || 0,
+                available_inventory_value: totalValue,
+              },
+              films: films || [],
             },
-            films: films || [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2269,23 +2496,22 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Gear created successfully",
-            gear: gear,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Gear created successfully",
+              gear: gear,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
   }
 
   private async listGear(args: any) {
-    const {
-      type,
-      brand,
-      condition,
-      include_trip_reservations = false,
-    } = args;
+    const { type, brand, condition, include_trip_reservations = false } = args;
 
     let query = this.supabase
       .from("gear")
@@ -2318,47 +2544,55 @@ class FilmInventoryMCPServer {
       for (const item of gear) {
         const { data: reservations } = await this.supabase
           .from("trip_gear")
-          .select(`
+          .select(
+            `
             trips (
               id,
               title,
               start_date,
               end_date
             )
-          `)
+          `
+          )
           .eq("gear_id", item.id);
 
         item.trip_reservations = reservations || [];
       }
     }
 
-    const totalValue = gear?.reduce((sum: number, item: Gear) => {
-      return sum + (item.purchase_price || 0);
-    }, 0) || 0;
+    const totalValue =
+      gear?.reduce((sum: number, item: Gear) => {
+        return sum + (item.purchase_price || 0);
+      }, 0) || 0;
 
-    const gearByType = gear?.reduce((acc: Record<string, number>, item: Gear) => {
-      acc[item.type] = (acc[item.type] || 0) + 1;
-      return acc;
-    }, {}) || {};
+    const gearByType =
+      gear?.reduce((acc: Record<string, number>, item: Gear) => {
+        acc[item.type] = (acc[item.type] || 0) + 1;
+        return acc;
+      }, {}) || {};
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            summary: {
-              total_gear: gear?.length || 0,
-              total_value: totalValue,
-              gear_by_type: gearByType,
-              filters_applied: {
-                type,
-                brand,
-                condition,
-                include_trip_reservations,
+          text: JSON.stringify(
+            {
+              summary: {
+                total_gear: gear?.length || 0,
+                total_value: totalValue,
+                gear_by_type: gearByType,
+                filters_applied: {
+                  type,
+                  brand,
+                  condition,
+                  include_trip_reservations,
+                },
               },
+              gear: gear || [],
             },
-            gear: gear || [],
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2400,11 +2634,15 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: "Gear updated successfully",
-            gear: gear,
-          }, null, 2),
+          text: JSON.stringify(
+            {
+              success: true,
+              message: "Gear updated successfully",
+              gear: gear,
+            },
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2432,24 +2670,31 @@ class FilmInventoryMCPServer {
     // Check if gear is reserved for any upcoming trips
     const { data: reservations } = await this.supabase
       .from("trip_gear")
-      .select(`
+      .select(
+        `
         trips (
           title,
           start_date,
           end_date
         )
-      `)
+      `
+      )
       .eq("gear_id", gear_id);
 
-    const upcomingReservations = reservations?.filter((r: any) => {
-      const tripStartDate = new Date(r.trips.start_date);
-      const today = new Date();
-      return tripStartDate >= today;
-    }) || [];
+    const upcomingReservations =
+      reservations?.filter((r: any) => {
+        const tripStartDate = new Date(r.trips.start_date);
+        const today = new Date();
+        return tripStartDate >= today;
+      }) || [];
 
     if (upcomingReservations.length > 0) {
-      const tripTitles = upcomingReservations.map((r: any) => r.trips.title).join(", ");
-      throw new Error(`Cannot delete gear: it's reserved for upcoming trips: ${tripTitles}`);
+      const tripTitles = upcomingReservations
+        .map((r: any) => r.trips.title)
+        .join(", ");
+      throw new Error(
+        `Cannot delete gear: it's reserved for upcoming trips: ${tripTitles}`
+      );
     }
 
     // Delete the gear
@@ -2467,16 +2712,20 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Gear "${gear.brand} ${gear.name}" (${gear.type}) deleted successfully`,
-            deleted_gear: {
-              id: gear_id,
-              name: gear.name,
-              brand: gear.brand,
-              type: gear.type,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Gear "${gear.brand} ${gear.name}" (${gear.type}) deleted successfully`,
+              deleted_gear: {
+                id: gear_id,
+                name: gear.name,
+                brand: gear.brand,
+                type: gear.type,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2495,10 +2744,10 @@ class FilmInventoryMCPServer {
     }
 
     const stats: Record<string, any> = {};
-    
+
     gear?.forEach((item: Gear) => {
       const key = item[group_by as keyof Gear] as string;
-      
+
       if (!stats[key]) {
         stats[key] = {
           count: 0,
@@ -2506,7 +2755,7 @@ class FilmInventoryMCPServer {
           gear: [],
         };
       }
-      
+
       stats[key].count++;
       stats[key].total_value += item.purchase_price || 0;
       stats[key].gear.push({
@@ -2518,23 +2767,31 @@ class FilmInventoryMCPServer {
       });
     });
 
-    const totalValue = gear?.reduce((sum: number, item: Gear) => sum + (item.purchase_price || 0), 0) || 0;
+    const totalValue =
+      gear?.reduce(
+        (sum: number, item: Gear) => sum + (item.purchase_price || 0),
+        0
+      ) || 0;
     const totalGear = gear?.length || 0;
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            grouped_by: group_by,
-            total_categories: Object.keys(stats).length,
-            overall_summary: {
-              total_gear: totalGear,
-              total_value: totalValue,
-              average_value: totalGear > 0 ? totalValue / totalGear : 0,
+          text: JSON.stringify(
+            {
+              grouped_by: group_by,
+              total_categories: Object.keys(stats).length,
+              overall_summary: {
+                total_gear: totalGear,
+                total_value: totalValue,
+                average_value: totalGear > 0 ? totalValue / totalGear : 0,
+              },
+              statistics: stats,
             },
-            statistics: stats,
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2580,7 +2837,9 @@ class FilmInventoryMCPServer {
       .single();
 
     if (existingReservation) {
-      throw new Error(`Gear "${gear.brand} ${gear.name}" is already reserved for trip "${trip.title}"`);
+      throw new Error(
+        `Gear "${gear.brand} ${gear.name}" is already reserved for trip "${trip.title}"`
+      );
     }
 
     // Create new gear reservation
@@ -2601,16 +2860,20 @@ class FilmInventoryMCPServer {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `${gear.brand} ${gear.name} (${gear.type}) reserved for trip "${trip.title}"`,
-            reservation: {
-              id: reservation.id,
-              trip_title: trip.title,
-              gear: `${gear.brand} ${gear.name}`,
-              gear_type: gear.type,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `${gear.brand} ${gear.name} (${gear.type}) reserved for trip "${trip.title}"`,
+              reservation: {
+                id: reservation.id,
+                trip_title: trip.title,
+                gear: `${gear.brand} ${gear.name}`,
+                gear_type: gear.type,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2626,10 +2889,12 @@ class FilmInventoryMCPServer {
     // Get reservation details before deleting
     const { data: reservation, error: fetchError } = await this.supabase
       .from("trip_gear")
-      .select(`
+      .select(
+        `
         trips (title),
         gear (name, brand, type)
-      `)
+      `
+      )
       .eq("trip_id", trip_id)
       .eq("gear_id", gear_id)
       .single();
@@ -2640,8 +2905,18 @@ class FilmInventoryMCPServer {
 
     // Verify the trip and gear belong to the user (additional security)
     const [tripCheck, gearCheck] = await Promise.all([
-      this.supabase.from("trips").select("id").eq("id", trip_id).eq("user_id", this.userId).single(),
-      this.supabase.from("gear").select("id").eq("id", gear_id).eq("user_id", this.userId).single()
+      this.supabase
+        .from("trips")
+        .select("id")
+        .eq("id", trip_id)
+        .eq("user_id", this.userId)
+        .single(),
+      this.supabase
+        .from("gear")
+        .select("id")
+        .eq("id", gear_id)
+        .eq("user_id", this.userId)
+        .single(),
     ]);
 
     if (tripCheck.error || gearCheck.error) {
@@ -2656,22 +2931,28 @@ class FilmInventoryMCPServer {
       .eq("gear_id", gear_id);
 
     if (deleteError) {
-      throw new Error(`Failed to remove gear reservation: ${deleteError.message}`);
+      throw new Error(
+        `Failed to remove gear reservation: ${deleteError.message}`
+      );
     }
 
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            message: `Removed ${reservation.gear.brand} ${reservation.gear.name} (${reservation.gear.type}) from trip "${reservation.trips.title}"`,
-            removed_reservation: {
-              gear: `${reservation.gear.brand} ${reservation.gear.name}`,
-              gear_type: reservation.gear.type,
-              trip: reservation.trips.title,
+          text: JSON.stringify(
+            {
+              success: true,
+              message: `Removed ${reservation.gear.brand} ${reservation.gear.name} (${reservation.gear.type}) from trip "${reservation.trips.title}"`,
+              removed_reservation: {
+                gear: `${reservation.gear.brand} ${reservation.gear.name}`,
+                gear_type: reservation.gear.type,
+                trip: reservation.trips.title,
+              },
             },
-          }, null, 2),
+            null,
+            2
+          ),
         },
       ],
     };
@@ -2684,47 +2965,49 @@ class FilmInventoryMCPServer {
     if (film.is_ecn) {
       return 9; // ECN development cost
     }
-    
+
     // C41 films: type is "Color Negative"
-    if (film.type === 'Color Negative') {
+    if (film.type === "Color Negative") {
       return 6; // C41 development cost
     }
-    
+
     // B&W films: type contains "Black & White"
-    if (film.type?.includes('Black & White')) {
+    if (film.type?.includes("Black & White")) {
       return 9; // B&W development cost
     }
-    
+
     // Default to C41 cost for unknown types
     return 6;
   }
 
   private getDevelopmentType(film: Film): string {
     if (film.is_ecn) {
-      return 'ECN';
+      return "ECN";
     }
-    
-    if (film.type === 'Color Negative') {
-      return 'C41';
+
+    if (film.type === "Color Negative") {
+      return "C41";
     }
-    
-    if (film.type?.includes('Black & White')) {
-      return 'B&W';
+
+    if (film.type?.includes("Black & White")) {
+      return "B&W";
     }
-    
-    return 'C41'; // Default
+
+    return "C41"; // Default
   }
 
   private async getUsageAnalytics(args: any) {
-    const { period = 'monthly', include_costs = true } = args;
+    const { period = "monthly", include_costs = true } = args;
 
     // Get all usage data with film information
     const { data: usageData, error } = await this.supabase
       .from("film_usage")
-      .select(`
+      .select(
+        `
         *,
         films (*)
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -2754,13 +3037,17 @@ class FilmInventoryMCPServer {
       analytics.development_cost += devCost;
       analytics.total_cost += devCost; // Only count development costs
 
-      analytics.usage_by_type[devType] = (analytics.usage_by_type[devType] || 0) + usage.quantity;
-      analytics.cost_by_type[devType] = (analytics.cost_by_type[devType] || 0) + devCost;
+      analytics.usage_by_type[devType] =
+        (analytics.usage_by_type[devType] || 0) + usage.quantity;
+      analytics.cost_by_type[devType] =
+        (analytics.cost_by_type[devType] || 0) + devCost;
 
       // Group by period
       const date = new Date(usage.created_at);
-      if (period === 'monthly') {
-        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (period === "monthly") {
+        const monthKey = `${date.getFullYear()}-${String(
+          date.getMonth() + 1
+        ).padStart(2, "0")}`;
         if (!analytics.monthly_trends[monthKey]) {
           analytics.monthly_trends[monthKey] = { rolls: 0, cost: 0 };
         }
@@ -2782,9 +3069,7 @@ class FilmInventoryMCPServer {
   private async getFilmUsageByType(args: any) {
     const { start_date, end_date } = args;
 
-    let query = this.supabase
-      .from("film_usage")
-      .select(`
+    let query = this.supabase.from("film_usage").select(`
         *,
         films (*)
       `);
@@ -2796,19 +3081,24 @@ class FilmInventoryMCPServer {
       query = query.lte("created_at", end_date);
     }
 
-    const { data: usageData, error } = await query.order("created_at", { ascending: false });
+    const { data: usageData, error } = await query.order("created_at", {
+      ascending: false,
+    });
 
     if (error) {
       throw new Error(`Failed to fetch usage data: ${error.message}`);
     }
 
-    const typeStats = {} as Record<string, {
-      rolls: number;
-      film_cost: number;
-      development_cost: number;
-      total_cost: number;
-      films: string[];
-    }>;
+    const typeStats = {} as Record<
+      string,
+      {
+        rolls: number;
+        film_cost: number;
+        development_cost: number;
+        total_cost: number;
+        films: string[];
+      }
+    >;
 
     usageData.forEach((usage: any) => {
       const film = usage.films as Film;
@@ -2855,10 +3145,12 @@ class FilmInventoryMCPServer {
 
     const { data: usageData, error } = await this.supabase
       .from("film_usage")
-      .select(`
+      .select(
+        `
         *,
         films (*)
-      `)
+      `
+      )
       .gte("created_at", startDate)
       .lte("created_at", endDate)
       .order("created_at", { ascending: false });
@@ -2902,7 +3194,7 @@ class FilmInventoryMCPServer {
       costs.breakdown_by_type[devType].development_cost += devCost;
 
       // Daily usage
-      const day = usage.created_at.split('T')[0];
+      const day = usage.created_at.split("T")[0];
       costs.daily_usage[day] = (costs.daily_usage[day] || 0) + usage.quantity;
     });
 
@@ -2919,7 +3211,7 @@ class FilmInventoryMCPServer {
   private async getShootingPatterns(args: any) {
     const { weeks_back = 12 } = args;
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - (weeks_back * 7));
+    startDate.setDate(startDate.getDate() - weeks_back * 7);
 
     const { data: usageData, error } = await this.supabase
       .from("film_usage")
@@ -2943,24 +3235,28 @@ class FilmInventoryMCPServer {
 
     usageData.forEach((usage: any) => {
       const date = new Date(usage.created_at);
-      const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+      const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "long" });
       const weekKey = getWeekKey(date);
-      const dayKey = usage.created_at.split('T')[0];
+      const dayKey = usage.created_at.split("T")[0];
 
-      patterns.day_of_week[dayOfWeek] = (patterns.day_of_week[dayOfWeek] || 0) + usage.quantity;
-      patterns.weekly_frequency[weekKey] = (patterns.weekly_frequency[weekKey] || 0) + usage.quantity;
+      patterns.day_of_week[dayOfWeek] =
+        (patterns.day_of_week[dayOfWeek] || 0) + usage.quantity;
+      patterns.weekly_frequency[weekKey] =
+        (patterns.weekly_frequency[weekKey] || 0) + usage.quantity;
       patterns.total_rolls += usage.quantity;
       sessionDates.add(dayKey);
     });
 
     patterns.shooting_sessions = sessionDates.size;
-    patterns.avg_rolls_per_session = patterns.shooting_sessions > 0 ? 
-      patterns.total_rolls / patterns.shooting_sessions : 0;
+    patterns.avg_rolls_per_session =
+      patterns.shooting_sessions > 0
+        ? patterns.total_rolls / patterns.shooting_sessions
+        : 0;
 
     function getWeekKey(date: Date): string {
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay());
-      return weekStart.toISOString().split('T')[0];
+      return weekStart.toISOString().split("T")[0];
     }
 
     return {
@@ -2980,9 +3276,9 @@ class FilmInventoryMCPServer {
     await this.server.connect(transport);
     console.error("Film Inventory MCP server running on stdio");
     console.error("Server connected successfully, starting authentication...");
-    
+
     // Authenticate after the server starts with better error handling
-    this.authenticateSession().catch(error => {
+    this.authenticateSession().catch((error) => {
       console.error("Authentication failed during startup:", error);
     });
     console.error("Server ready to accept requests");
