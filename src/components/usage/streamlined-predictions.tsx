@@ -1,21 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { getPredictiveAnalysis, PredictiveAnalysis } from "@/app/actions/predictions";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  getPredictiveAnalysis,
+  PredictiveAnalysis,
+} from "@/app/actions/predictions";
 import { formatTripDuration } from "@/lib/utils";
 import { PredictiveChart } from "./predictive-chart";
 import { SeasonalPatterns } from "./seasonal-patterns";
 import { TrendAnalysisComponent } from "./trend-analysis";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar, 
-  DollarSign, 
-  Film, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Calendar,
+  DollarSign,
+  Film,
   Target,
   AlertTriangle,
   Lightbulb,
@@ -24,17 +37,19 @@ import {
   ChevronUp,
   BarChart3,
   Activity,
-  Scissors
+  Scissors,
 } from "lucide-react";
 
 export function StreamlinedPredictions() {
-  const [predictions, setPredictions] = useState<PredictiveAnalysis | null>(null);
+  const [predictions, setPredictions] = useState<PredictiveAnalysis | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     charts: false,
     patterns: false,
-    trends: false
+    trends: false,
   });
 
   useEffect(() => {
@@ -49,7 +64,7 @@ export function StreamlinedPredictions() {
           setPredictions(result.data);
         }
       } catch (error) {
-        console.error('Error loading predictions:', error);
+        console.error("Error loading predictions:", error);
       } finally {
         setLoading(false);
       }
@@ -61,9 +76,9 @@ export function StreamlinedPredictions() {
   }, [mounted]);
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -101,16 +116,19 @@ export function StreamlinedPredictions() {
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
-      case 'increasing': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'decreasing': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Target className="h-4 w-4 text-blue-600" />;
+      case "increasing":
+        return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case "decreasing":
+        return <TrendingDown className="h-4 w-4 text-red-600" />;
+      default:
+        return <Target className="h-4 w-4 text-blue-600" />;
     }
   };
 
   const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 80) return 'bg-green-100 text-green-800';
-    if (confidence >= 60) return 'bg-yellow-100 text-yellow-800';
-    return 'bg-orange-100 text-orange-800';
+    if (confidence >= 80) return "bg-green-100 text-green-800";
+    if (confidence >= 60) return "bg-yellow-100 text-yellow-800";
+    return "bg-orange-100 text-orange-800";
   };
 
   return (
@@ -125,15 +143,23 @@ export function StreamlinedPredictions() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold">{predictions.weeklyForecast.expected}</div>
+              <div className="text-2xl font-bold">
+                {predictions.weeklyForecast.expected}
+              </div>
               <span className="text-sm text-muted-foreground">rolls</span>
               {getTrendIcon(predictions.weeklyForecast.trend)}
             </div>
             <div className="flex items-center justify-between mt-2">
               <p className="text-xs text-muted-foreground">
-                {predictions.weeklyForecast.conservative}-{predictions.weeklyForecast.optimistic} range
+                {predictions.weeklyForecast.conservative}-
+                {predictions.weeklyForecast.optimistic} range
               </p>
-              <Badge variant="outline" className={getConfidenceColor(predictions.weeklyForecast.confidence)}>
+              <Badge
+                variant="outline"
+                className={getConfidenceColor(
+                  predictions.weeklyForecast.confidence
+                )}
+              >
                 {predictions.weeklyForecast.confidence}%
               </Badge>
             </div>
@@ -148,12 +174,15 @@ export function StreamlinedPredictions() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-2">
-              <div className="text-2xl font-bold">{predictions.monthlyForecast.expected}</div>
+              <div className="text-2xl font-bold">
+                {predictions.monthlyForecast.expected}
+              </div>
               <span className="text-sm text-muted-foreground">rolls</span>
               {getTrendIcon(predictions.monthlyForecast.trend)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {predictions.monthlyForecast.conservative}-{predictions.monthlyForecast.optimistic} range
+              {predictions.monthlyForecast.conservative}-
+              {predictions.monthlyForecast.optimistic} range
             </p>
           </CardContent>
         </Card>
@@ -169,7 +198,8 @@ export function StreamlinedPredictions() {
               €{predictions.monthlyForecast.developmentCost.expected.toFixed(0)}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              €{predictions.monthlyForecast.developmentCost.min.toFixed(0)}-€{predictions.monthlyForecast.developmentCost.max.toFixed(0)} range
+              €{predictions.monthlyForecast.developmentCost.min.toFixed(0)}-€
+              {predictions.monthlyForecast.developmentCost.max.toFixed(0)} range
             </p>
           </CardContent>
         </Card>
@@ -178,16 +208,25 @@ export function StreamlinedPredictions() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Trend</CardTitle>
-            {getTrendIcon(predictions.trendAnalysis.direction === 'up' ? 'increasing' : 
-                          predictions.trendAnalysis.direction === 'down' ? 'decreasing' : 'stable')}
+            {getTrendIcon(
+              predictions.trendAnalysis.direction === "up"
+                ? "increasing"
+                : predictions.trendAnalysis.direction === "down"
+                ? "decreasing"
+                : "stable"
+            )}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {predictions.trendAnalysis.direction === 'up' ? 'Growing' : 
-               predictions.trendAnalysis.direction === 'down' ? 'Declining' : 'Stable'}
+              {predictions.trendAnalysis.direction === "up"
+                ? "Growing"
+                : predictions.trendAnalysis.direction === "down"
+                ? "Declining"
+                : "Stable"}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {Math.abs(predictions.trendAnalysis.changeRate).toFixed(1)}% per month
+              {Math.abs(predictions.trendAnalysis.changeRate).toFixed(1)}% per
+              month
             </p>
           </CardContent>
         </Card>
@@ -198,8 +237,9 @@ export function StreamlinedPredictions() {
         <Alert>
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Budget Alert:</strong> {predictions.budgetAlert.message} - 
-            €{predictions.budgetAlert.amount.toFixed(2)} {predictions.budgetAlert.comparison}
+            <strong>Budget Alert:</strong> {predictions.budgetAlert.message} - €
+            {predictions.budgetAlert.amount.toFixed(2)}{" "}
+            {predictions.budgetAlert.comparison}
           </AlertDescription>
         </Alert>
       )}
@@ -216,16 +256,27 @@ export function StreamlinedPredictions() {
           <CardContent>
             <div className="grid gap-2 md:grid-cols-2">
               {predictions.plannedTrips.slice(0, 4).map((trip, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 border rounded-lg bg-card"
+                >
                   <div>
-                    <div className="text-sm font-medium text-card-foreground">{trip.tripTitle}</div>
+                    <div className="text-sm font-medium text-card-foreground">
+                      {trip.tripTitle}
+                    </div>
                     <div className="text-xs text-muted-foreground">
-                      {new Date(trip.tripDate).toLocaleDateString()} • {trip.daysFromNow} days • {formatTripDuration(trip.tripDate, trip.tripEndDate)}
+                      {new Date(trip.tripDate).toLocaleDateString()} •{" "}
+                      {trip.daysFromNow} days •{" "}
+                      {formatTripDuration(trip.tripDate, trip.tripEndDate)}
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Badge variant="outline" className="text-xs">{trip.reservedRolls}</Badge>
-                    <Badge variant="secondary" className="text-xs">€{trip.developmentCost}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {trip.reservedRolls}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs">
+                      €{trip.developmentCost}
+                    </Badge>
                   </div>
                 </div>
               ))}
@@ -253,34 +304,57 @@ export function StreamlinedPredictions() {
                 <div>
                   <div className="text-sm font-medium">Spooling Efficiency</div>
                   <div className="text-xs text-muted-foreground">
-                    {predictions.bulkFilmInsights.wasteAnalysis.wastePercentage.toFixed(1)}% waste rate
+                    {predictions.bulkFilmInsights.wasteAnalysis.wastePercentage.toFixed(
+                      1
+                    )}
+                    % waste rate
                   </div>
                 </div>
-                <Badge 
+                <Badge
                   variant={
-                    predictions.bulkFilmInsights.spoolingEfficiencyTrend === 'improving' ? 'default' :
-                    predictions.bulkFilmInsights.spoolingEfficiencyTrend === 'declining' ? 'destructive' : 'secondary'
+                    predictions.bulkFilmInsights.spoolingEfficiencyTrend ===
+                    "improving"
+                      ? "default"
+                      : predictions.bulkFilmInsights.spoolingEfficiencyTrend ===
+                        "declining"
+                      ? "destructive"
+                      : "secondary"
                   }
                 >
                   {predictions.bulkFilmInsights.spoolingEfficiencyTrend}
                 </Badge>
               </div>
-              
+
               {/* Spooling Recommendations */}
-              {predictions.bulkFilmInsights.predictedSpoolingNeed.recommendedSpooling.length > 0 && (
+              {predictions.bulkFilmInsights.predictedSpoolingNeed
+                .recommendedSpooling.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-amber-600">Action Needed:</div>
-                  {predictions.bulkFilmInsights.predictedSpoolingNeed.recommendedSpooling.map((rec, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded bg-amber-50">
-                      <div>
-                        <div className="text-sm font-medium">{rec.filmName}</div>
-                        <div className="text-xs text-muted-foreground">Spool {rec.exposuresToSpool} exposures</div>
+                  <div className="text-sm font-medium text-amber-600">
+                    Action Needed:
+                  </div>
+                  {predictions.bulkFilmInsights.predictedSpoolingNeed.recommendedSpooling.map(
+                    (rec, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 border rounded bg-amber-50 dark:bg-amber-800"
+                      >
+                        <div>
+                          <div className="text-sm font-medium">
+                            {rec.filmName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Spool {rec.exposuresToSpool} exposures
+                          </div>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-amber-700 dark:text-amber-300 text-xs"
+                        >
+                          {rec.cassettesToCreate} cassettes
+                        </Badge>
                       </div>
-                      <Badge variant="outline" className="text-amber-700">
-                        {rec.cassettesToCreate} cassettes
-                      </Badge>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               )}
             </div>
@@ -299,11 +373,16 @@ export function StreamlinedPredictions() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {predictions.shootingInsights.slice(0, 3).map((insight, index) => (
-                <div key={index} className="text-sm p-3 border rounded-lg bg-muted/30 text-foreground">
-                  {insight}
-                </div>
-              ))}
+              {predictions.shootingInsights
+                .slice(0, 3)
+                .map((insight, index) => (
+                  <div
+                    key={index}
+                    className="text-sm p-3 border rounded-lg bg-muted/30 text-foreground"
+                  >
+                    {insight}
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -317,20 +396,29 @@ export function StreamlinedPredictions() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {predictions.stockRecommendations.slice(0, 3).map((rec, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg bg-card">
-                  <div>
-                    <div className="text-sm font-medium text-card-foreground">{rec.filmType}</div>
-                    <div className="text-xs text-muted-foreground">{rec.reason}</div>
-                  </div>
-                  <Badge 
-                    variant={rec.action === 'buy' ? 'default' : 'secondary'}
-                    className="text-xs"
+              {predictions.stockRecommendations
+                .slice(0, 3)
+                .map((rec, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border rounded-lg bg-card"
                   >
-                    {rec.action === 'buy' ? `Buy (${rec.urgency})` : 'OK'}
-                  </Badge>
-                </div>
-              ))}
+                    <div>
+                      <div className="text-sm font-medium text-card-foreground">
+                        {rec.filmType}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {rec.reason}
+                      </div>
+                    </div>
+                    <Badge
+                      variant={rec.action === "buy" ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {rec.action === "buy" ? `Buy (${rec.urgency})` : "OK"}
+                    </Badge>
+                  </div>
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -339,7 +427,10 @@ export function StreamlinedPredictions() {
       {/* Expandable Detailed Sections */}
       <div className="space-y-4">
         {/* Charts Section */}
-        <Collapsible open={expandedSections.charts} onOpenChange={() => toggleSection('charts')}>
+        <Collapsible
+          open={expandedSections.charts}
+          onOpenChange={() => toggleSection("charts")}
+        >
           <Card>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -348,7 +439,11 @@ export function StreamlinedPredictions() {
                     <BarChart3 className="h-5 w-5" />
                     Forecast Charts
                   </CardTitle>
-                  {expandedSections.charts ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {expandedSections.charts ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
                 </div>
                 <CardDescription>
                   Detailed historical trends and future predictions
@@ -367,7 +462,10 @@ export function StreamlinedPredictions() {
         </Collapsible>
 
         {/* Seasonal Patterns */}
-        <Collapsible open={expandedSections.patterns} onOpenChange={() => toggleSection('patterns')}>
+        <Collapsible
+          open={expandedSections.patterns}
+          onOpenChange={() => toggleSection("patterns")}
+        >
           <Card>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -376,7 +474,11 @@ export function StreamlinedPredictions() {
                     <Calendar className="h-5 w-5" />
                     Seasonal Patterns
                   </CardTitle>
-                  {expandedSections.patterns ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {expandedSections.patterns ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
                 </div>
                 <CardDescription>
                   Your shooting patterns throughout the year
@@ -392,7 +494,10 @@ export function StreamlinedPredictions() {
         </Collapsible>
 
         {/* Trend Analysis */}
-        <Collapsible open={expandedSections.trends} onOpenChange={() => toggleSection('trends')}>
+        <Collapsible
+          open={expandedSections.trends}
+          onOpenChange={() => toggleSection("trends")}
+        >
           <Card>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -401,7 +506,11 @@ export function StreamlinedPredictions() {
                     <Activity className="h-5 w-5" />
                     Detailed Trend Analysis
                   </CardTitle>
-                  {expandedSections.trends ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {expandedSections.trends ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
                 </div>
                 <CardDescription>
                   Deep insights into your photography habits and trends

@@ -10,6 +10,7 @@ export function useBrands() {
       const { data, error } = await supabase
         .from("films")
         .select("brand")
+        .is("deleted_at", null)
         .order("brand");
 
       if (error) {

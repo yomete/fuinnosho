@@ -10,15 +10,17 @@ MCPMonitoring.init({
     apiKey: process.env.MCP_MONITORING_API_KEY || 'mcp_72a8f9177ddf0bab9d3001e49e20294ea05b1959b076edff4455fc8d34db50c3',
     endpoint: process.env.MCP_MONITORING_ENDPOINT || 'http://localhost:8080/api/v1',
     serverId: 'fuinnosho-film-inventory-server',
+    // Enhanced observability features
+    enableTracing: true,
+    enableMetrics: true,
+    enableAutoInstrumentation: true,
+    metricsInterval: 10000, // Collect system metrics every 10 seconds
 });
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { createClient } from "@supabase/supabase-js";
 class FilmInventoryMCPServer {
-    server;
-    supabase;
-    userId;
     constructor() {
         // Log server startup
         MCPMonitoring.info('MCP Server starting up', {
@@ -176,10 +178,35 @@ class FilmInventoryMCPServer {
                             },
                             usage_note: {
                                 type: "string",
-                                description: "Note about how the film was used",
+                                description: "Note about film usage",
                             },
                         },
-                        required: ["film_id", "quantity", "usage_note"],
+                    },
+                },
+                {
+                    name: "spool_bulk_film",
+                    description: "Spool bulk film into cassettes (for bulk films only)",
+                    inputSchema: {
+                        type: "object",
+                        properties: {
+                            film_id: {
+                                type: "string",
+                                description: "Bulk film ID to spool from",
+                            },
+                            exposures_to_spool: {
+                                type: "number",
+                                description: "Number of exposures from bulk film to use for spooling",
+                            },
+                            cassettes_created: {
+                                type: "number",
+                                description: "Number of cassettes created from the bulk film",
+                            },
+                            spool_note: {
+                                type: "string",
+                                description: "Note about the spooling process",
+                            },
+                        },
+                        required: ["film_id", "exposures_to_spool", "cassettes_created", "spool_note"],
                     },
                 },
                 {
@@ -279,6 +306,11 @@ class FilmInventoryMCPServer {
                                 description: "Editing tips and notes for this film stock",
                                 default: "",
                             },
+                            is_ecn: {
+                                type: "boolean",
+                                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
+                                default: false,
+                            },
                             is_bulk_film: {
                                 type: "boolean",
                                 description: "Whether this is bulk film",
@@ -341,6 +373,10 @@ class FilmInventoryMCPServer {
                             editing_notes: {
                                 type: "string",
                                 description: "Editing tips and notes for this film stock",
+                            },
+                            is_ecn: {
+                                type: "boolean",
+                                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
                             },
                             is_bulk_film: {
                                 type: "boolean",
@@ -832,6 +868,8 @@ class FilmInventoryMCPServer {
                             return await this.filterFilms(args);
                         case "update_film_quantity":
                             return await this.updateFilmQuantity(args);
+                        case "spool_bulk_film":
+                            return await this.spoolBulkFilm(args);
                         case "check_low_stock":
                             return await this.checkLowStock(args);
                         case "get_film_usage_history":
@@ -965,7 +1003,8 @@ class FilmInventoryMCPServer {
         const { type, iso_min, iso_max, format, brand, in_stock_only = false, } = args;
         let query = this.supabase
             .from("films")
-            .select("*");
+            .select("*")
+            .is("deleted_at", null); // Exclude soft deleted films
         if (type) {
             query = query.eq("type", type);
         }
@@ -1063,11 +1102,81 @@ class FilmInventoryMCPServer {
             ],
         };
     }
+    async spoolBulkFilm(args) {
+        const { film_id, exposures_to_spool, cassettes_created, spool_note } = args;
+        if (!film_id || !exposures_to_spool || !cassettes_created || !spool_note) {
+            throw new Error("film_id, exposures_to_spool, cassettes_created, and spool_note are required");
+        }
+        if (exposures_to_spool <= 0 || cassettes_created <= 0) {
+            throw new Error("exposures_to_spool and cassettes_created must be positive");
+        }
+        // Get current film
+        const { data: film, error: filmError } = await this.supabase
+            .from("films")
+            .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, name, brand, format")
+            .eq("id", film_id)
+            .single();
+        if (filmError || !film) {
+            throw new Error("Film not found");
+        }
+        if (!film.is_bulk_film) {
+            throw new Error("This is not a bulk film");
+        }
+        const currentRemainingExposures = film.bulk_remaining_exposures || 0;
+        const currentSpooledCassettes = film.spooled_cassettes || 0;
+        if (exposures_to_spool > currentRemainingExposures) {
+            throw new Error(`Not enough bulk film remaining. Available: ${currentRemainingExposures} exposures, Requested: ${exposures_to_spool} exposures`);
+        }
+        const newRemainingExposures = currentRemainingExposures - exposures_to_spool;
+        const newSpooledCassettes = currentSpooledCassettes + cassettes_created;
+        // Update film with new remaining exposures and cassette count
+        const { error: updateError } = await this.supabase
+            .from("films")
+            .update({
+            bulk_remaining_exposures: newRemainingExposures,
+            spooled_cassettes: newSpooledCassettes,
+            count: newSpooledCassettes // For bulk films, count represents spooled cassettes
+        })
+            .eq("id", film_id);
+        if (updateError) {
+            throw new Error(`Failed to update film: ${updateError.message}`);
+        }
+        // Record spooling usage
+        const { error: usageError } = await this.supabase
+            .from("film_usage")
+            .insert({
+            film_id,
+            quantity: cassettes_created,
+            usage_note: spool_note,
+            usage_type: 'spool',
+            exposures_used: exposures_to_spool,
+        });
+        if (usageError) {
+            throw new Error(`Failed to record spooling: ${usageError.message}`);
+        }
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify({
+                        success: true,
+                        film: `${film.brand} ${film.name}`,
+                        exposures_used: exposures_to_spool,
+                        cassettes_created,
+                        remaining_exposures: newRemainingExposures,
+                        total_spooled_cassettes: newSpooledCassettes,
+                        spool_note,
+                    }, null, 2),
+                },
+            ],
+        };
+    }
     async checkLowStock(args) {
         const { threshold = 3, include_out_of_stock = true } = args;
         let query = this.supabase
             .from("films")
             .select("*")
+            .is("deleted_at", null) // Exclude soft deleted films
             .lte("count", threshold);
         if (!include_out_of_stock) {
             query = query.gt("count", 0);
@@ -1130,7 +1239,8 @@ class FilmInventoryMCPServer {
         const { group_by = "type" } = args;
         const { data: films, error } = await this.supabase
             .from("films")
-            .select("*");
+            .select("*")
+            .is("deleted_at", null); // Exclude soft deleted films
         if (error) {
             throw new Error(`Failed to fetch films for stats: ${error.message}`);
         }
@@ -1169,7 +1279,7 @@ class FilmInventoryMCPServer {
         };
     }
     async createFilm(args) {
-        const { name, brand, iso, format, type, expiration_date, count = 1, price, notes = "", editing_notes = "", is_bulk_film = false, bulk_length_meters, } = args;
+        const { name, brand, iso, format, type, expiration_date, count = 1, price, notes = "", editing_notes = "", is_ecn = false, is_bulk_film = false, bulk_length_meters, } = args;
         if (!name || !brand || !iso || !format || !type || !expiration_date) {
             throw new Error("Missing required fields: name, brand, iso, format, type, expiration_date");
         }
@@ -1183,6 +1293,7 @@ class FilmInventoryMCPServer {
             count,
             notes,
             editing_notes,
+            is_ecn,
             is_bulk_film,
         };
         if (price !== undefined) {
@@ -1268,14 +1379,15 @@ class FilmInventoryMCPServer {
             .from("films")
             .select("name, brand")
             .eq("id", film_id)
+            .is("deleted_at", null) // Only find non-deleted films
             .single();
         if (fetchError || !film) {
             throw new Error("Film not found");
         }
-        // Delete the film
+        // Soft delete the film
         const { error: deleteError } = await this.supabase
             .from("films")
-            .delete()
+            .update({ deleted_at: new Date().toISOString() })
             .eq("id", film_id);
         if (deleteError) {
             throw new Error(`Failed to delete film: ${deleteError.message}`);
@@ -1286,7 +1398,7 @@ class FilmInventoryMCPServer {
                     type: "text",
                     text: JSON.stringify({
                         success: true,
-                        message: `Film "${film.brand} ${film.name}" deleted successfully`,
+                        message: `Film "${film.brand} ${film.name}" moved to trash`,
                         deleted_film: {
                             id: film_id,
                             name: film.name,
@@ -2149,11 +2261,8 @@ class FilmInventoryMCPServer {
     // Development cost mapping based on film types
     // ECN/motion picture films: €9, C41: €6, B&W: €9
     getDevelopmentCost(film) {
-        // ECN films: detect by brand (35mmdealer, Safelight)
-        // TODO: Add more ECN vendors here if needed
-        const ecnBrands = ['35mmdealer', 'safelight'];
-        const isECN = ecnBrands.some(brand => film.brand?.toLowerCase().includes(brand.toLowerCase()));
-        if (isECN) {
+        // ECN films: check the is_ecn field
+        if (film.is_ecn) {
             return 9; // ECN development cost
         }
         // C41 films: type is "Color Negative"
@@ -2168,9 +2277,7 @@ class FilmInventoryMCPServer {
         return 6;
     }
     getDevelopmentType(film) {
-        const ecnBrands = ['35mmdealer', 'safelight'];
-        const isECN = ecnBrands.some(brand => film.brand?.toLowerCase().includes(brand.toLowerCase()));
-        if (isECN) {
+        if (film.is_ecn) {
             return 'ECN';
         }
         if (film.type === 'Color Negative') {

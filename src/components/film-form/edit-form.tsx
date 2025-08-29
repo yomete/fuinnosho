@@ -38,6 +38,14 @@ export function EditFilm({ film }: EditFilmProps) {
       count: Number(film.count) || 1,
       price: Number(film.price) || 0,
       notes: film.notes || "",
+      editing_notes: film.editing_notes || "",
+      is_ecn: film.is_ecn || false,
+      is_bulk_film: film.is_bulk_film || false,
+      bulk_length_meters: film.bulk_length_meters ? Number(film.bulk_length_meters) : undefined,
+      bulk_quantity: film.bulk_quantity ? Number(film.bulk_quantity) : undefined,
+      calculated_rolls: film.calculated_rolls ? Number(film.calculated_rolls) : undefined,
+      bulk_remaining_exposures: film.bulk_remaining_exposures ? Number(film.bulk_remaining_exposures) : undefined,
+      spooled_cassettes: film.spooled_cassettes ? Number(film.spooled_cassettes) : undefined,
     },
   });
 

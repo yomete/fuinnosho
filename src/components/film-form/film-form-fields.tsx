@@ -242,6 +242,29 @@ export function FilmFormFields({
                   )}
                 />
               )}
+
+              <FormField
+                control={form.control}
+                name="is_ecn"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between">
+                    <div className="space-y-0.5">
+                      <FormLabel>
+                        ECN Film
+                      </FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        This is an ECN (Eastman Color Negative) motion picture film
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Right Column */}

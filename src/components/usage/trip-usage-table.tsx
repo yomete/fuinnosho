@@ -16,7 +16,7 @@ import {
 interface TripUsageData {
   id: string;
   title: string;
-  trip_date: string;
+  start_date: string;
   status: string;
   total_rolls: number;
   total_cost: number;
@@ -92,7 +92,7 @@ export function TripUsageTable() {
             data.map((trip) => (
               <TableRow key={trip.id}>
                 <TableCell className="font-medium">{trip.title}</TableCell>
-                <TableCell>{formatDate(trip.trip_date)}</TableCell>
+                <TableCell>{formatDate(trip.start_date)}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusColor(trip.status)}>
                     {trip.status || 'planned'}

@@ -34,6 +34,8 @@ export function NewFilm() {
       count: 1,
       price: 0,
       notes: "",
+      editing_notes: "",
+      is_ecn: false,
       is_bulk_film: false,
       bulk_length_meters: undefined,
       bulk_quantity: undefined,

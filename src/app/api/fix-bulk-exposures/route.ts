@@ -9,7 +9,8 @@ export async function POST() {
     const { data: bulkFilms, error: fetchError } = await supabase
       .from('films')
       .select('id, name, format, calculated_rolls, bulk_remaining_exposures, spooled_cassettes')
-      .eq('is_bulk_film', true);
+      .eq('is_bulk_film', true)
+      .is('deleted_at', null);
 
     if (fetchError) {
       return NextResponse.json({ error: fetchError.message }, { status: 500 });

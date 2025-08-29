@@ -43,6 +43,8 @@ interface Film {
   count?: number;
   notes?: string;
   editing_notes?: string;
+  is_ecn?: boolean;
+  deleted_at?: string;
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
   bulk_quantity?: number;
@@ -413,6 +415,11 @@ class FilmInventoryMCPServer {
                 description: "Editing tips and notes for this film stock",
                 default: "",
               },
+              is_ecn: {
+                type: "boolean",
+                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
+                default: false,
+              },
               is_bulk_film: {
                 type: "boolean",
                 description: "Whether this is bulk film",
@@ -475,6 +482,10 @@ class FilmInventoryMCPServer {
               editing_notes: {
                 type: "string",
                 description: "Editing tips and notes for this film stock",
+              },
+              is_ecn: {
+                type: "boolean",
+                description: "Whether this is an ECN (Eastman Color Negative) motion picture film",
               },
               is_bulk_film: {
                 type: "boolean",
@@ -1156,7 +1167,8 @@ class FilmInventoryMCPServer {
 
     let query = this.supabase
       .from("films")
-      .select("*");
+      .select("*")
+      .is("deleted_at", null); // Exclude soft deleted films
 
     if (type) {
       query = query.eq("type", type);
@@ -1364,6 +1376,7 @@ class FilmInventoryMCPServer {
     let query = this.supabase
       .from("films")
       .select("*")
+      .is("deleted_at", null) // Exclude soft deleted films
       .lte("count", threshold);
 
     if (!include_out_of_stock) {
@@ -1439,7 +1452,8 @@ class FilmInventoryMCPServer {
 
     const { data: films, error } = await this.supabase
       .from("films")
-      .select("*");
+      .select("*")
+      .is("deleted_at", null); // Exclude soft deleted films
 
     if (error) {
       throw new Error(`Failed to fetch films for stats: ${error.message}`);
@@ -1496,6 +1510,7 @@ class FilmInventoryMCPServer {
       price,
       notes = "",
       editing_notes = "",
+      is_ecn = false,
       is_bulk_film = false,
       bulk_length_meters,
     } = args;
@@ -1514,6 +1529,7 @@ class FilmInventoryMCPServer {
       count,
       notes,
       editing_notes,
+      is_ecn,
       is_bulk_film,
     };
 
@@ -1618,16 +1634,17 @@ class FilmInventoryMCPServer {
       .from("films")
       .select("name, brand")
       .eq("id", film_id)
+      .is("deleted_at", null) // Only find non-deleted films
       .single();
 
     if (fetchError || !film) {
       throw new Error("Film not found");
     }
 
-    // Delete the film
+    // Soft delete the film
     const { error: deleteError } = await this.supabase
       .from("films")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", film_id);
 
     if (deleteError) {
@@ -1640,7 +1657,7 @@ class FilmInventoryMCPServer {
           type: "text",
           text: JSON.stringify({
             success: true,
-            message: `Film "${film.brand} ${film.name}" deleted successfully`,
+            message: `Film "${film.brand} ${film.name}" moved to trash`,
             deleted_film: {
               id: film_id,
               name: film.name,
@@ -2663,14 +2680,8 @@ class FilmInventoryMCPServer {
   // Development cost mapping based on film types
   // ECN/motion picture films: €9, C41: €6, B&W: €9
   private getDevelopmentCost(film: Film): number {
-    // ECN films: detect by brand (35mmdealer, Safelight)
-    // TODO: Add more ECN vendors here if needed
-    const ecnBrands = ['35mmdealer', 'safelight'];
-    const isECN = ecnBrands.some(brand => 
-      film.brand?.toLowerCase().includes(brand.toLowerCase())
-    );
-    
-    if (isECN) {
+    // ECN films: check the is_ecn field
+    if (film.is_ecn) {
       return 9; // ECN development cost
     }
     
@@ -2689,12 +2700,7 @@ class FilmInventoryMCPServer {
   }
 
   private getDevelopmentType(film: Film): string {
-    const ecnBrands = ['35mmdealer', 'safelight'];
-    const isECN = ecnBrands.some(brand => 
-      film.brand?.toLowerCase().includes(brand.toLowerCase())
-    );
-    
-    if (isECN) {
+    if (film.is_ecn) {
       return 'ECN';
     }
     

@@ -148,6 +148,7 @@ export async function getFilmById(id: string): Promise<Film | null> {
       .from("films")
       .select("*")
       .eq("id", id)
+      .is("deleted_at", null) // Exclude soft deleted films
       .single();
 
     if (error) {
@@ -168,19 +169,107 @@ export async function deleteFilm(id: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    const { error } = await supabase.from("films").delete().eq("id", id);
+    
+    // Soft delete: set deleted_at timestamp instead of hard delete
+    const { error } = await supabase
+      .from("films")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
 
     if (error) {
       throw error;
     }
 
-    return { success: true, message: "Film deleted successfully" };
+    return { success: true, message: "Film moved to trash" };
   } catch (error) {
     console.error("Error deleting film:", error);
     return {
       success: false,
       error:
         error instanceof Error ? error : new Error("Failed to delete film"),
+    };
+  }
+}
+
+export async function restoreFilm(id: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: Error;
+}> {
+  try {
+    const supabase = await createClient();
+    
+    // Restore film by clearing deleted_at timestamp
+    const { error } = await supabase
+      .from("films")
+      .update({ deleted_at: null })
+      .eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+
+    revalidatePath("/films");
+    return { success: true, message: "Film restored successfully" };
+  } catch (error) {
+    console.error("Error restoring film:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error : new Error("Failed to restore film"),
+    };
+  }
+}
+
+export async function getDeletedFilms(): Promise<{
+  data: Film[] | null;
+  error: Error | null;
+}> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("films")
+      .select("*")
+      .is("deleted_at", "not.null")
+      .order("deleted_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error("Error fetching deleted films:", error);
+    return {
+      data: null,
+      error:
+        error instanceof Error ? error : new Error("Failed to fetch deleted films"),
+    };
+  }
+}
+
+export async function permanentlyDeleteFilm(id: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: Error;
+}> {
+  try {
+    const supabase = await createClient();
+    
+    // Hard delete - actually remove from database
+    const { error } = await supabase.from("films").delete().eq("id", id);
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true, message: "Film permanently deleted" };
+  } catch (error) {
+    console.error("Error permanently deleting film:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error : new Error("Failed to permanently delete film"),
     };
   }
 }

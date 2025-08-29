@@ -3,14 +3,8 @@ import { Film } from "./utils";
 // Development cost mapping based on film types
 // ECN/motion picture films: €9, C41: €6, B&W: €9
 export function getDevelopmentCost(film: Film): number {
-  // ECN films: detect by brand (35mmdealer, Safelight)
-  // TODO: Add more ECN vendors here if needed
-  const ecnBrands = ['35mmdealer', 'safelight'];
-  const isECN = ecnBrands.some(brand => 
-    film.brand?.toLowerCase().includes(brand.toLowerCase())
-  );
-  
-  if (isECN) {
+  // ECN films: check the is_ecn field
+  if (film.is_ecn) {
     return 9; // ECN development cost
   }
   
@@ -29,12 +23,7 @@ export function getDevelopmentCost(film: Film): number {
 }
 
 export function getDevelopmentType(film: Film): string {
-  const ecnBrands = ['35mmdealer', 'safelight'];
-  const isECN = ecnBrands.some(brand => 
-    film.brand?.toLowerCase().includes(brand.toLowerCase())
-  );
-  
-  if (isECN) {
+  if (film.is_ecn) {
     return 'ECN';
   }
   

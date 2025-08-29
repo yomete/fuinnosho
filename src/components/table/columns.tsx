@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Minus, History } from "lucide-react";
+import { MoreHorizontal, Edit, History } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const ActionsCell = ({ row }: { row: { original: Film } }) => {
@@ -99,25 +99,6 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          {film.count !== undefined && film.count > 0 && (
-            <DropdownMenuItem
-              onSelect={(event) => {
-                event.preventDefault();
-                setDropdownOpen(false);
-                setTimeout(() => {
-                  const reduceButton = document.querySelector(
-                    `[data-reduce-film="${film.id}"] button`
-                  );
-                  if (reduceButton) {
-                    (reduceButton as HTMLElement).click();
-                  }
-                }, 100);
-              }}
-            >
-              <Minus className="mr-2 h-4 w-4" />
-              Use Film
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();
@@ -214,6 +195,23 @@ export const columns: ColumnDef<Film>[] = [
       return Array.isArray(filterValue)
         ? filterValue.includes(row.getValue(columnId))
         : true;
+    },
+  },
+  {
+    accessorKey: "is_ecn",
+    header: "ECN",
+    cell: ({ row }) => {
+      const film = row.original;
+      return film.is_ecn ? (
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+          ECN
+        </span>
+      ) : null;
+    },
+    filterFn: (row, columnId, filterValue) => {
+      if (filterValue === undefined || filterValue === "") return true;
+      const isEcn = Boolean(row.getValue(columnId));
+      return Boolean(filterValue) ? isEcn : !isEcn;
     },
   },
   {

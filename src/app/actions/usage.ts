@@ -223,7 +223,7 @@ export async function getTripUsageStats(): Promise<{
         )
       `
       )
-      .order("trip_date", { ascending: false });
+      .order("start_date", { ascending: false });
 
     if (error) {
       throw error;
@@ -306,7 +306,8 @@ export async function getBulkFilmStats(): Promise<{
     const { data: bulkFilms, error: bulkError } = await supabase
       .from("films")
       .select("*")
-      .eq("is_bulk_film", true);
+      .eq("is_bulk_film", true)
+      .is("deleted_at", null);
 
     if (bulkError) {
       throw bulkError;

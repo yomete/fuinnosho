@@ -10,6 +10,7 @@ export async function GET() {
       .from('films')
       .select('id, name, format, calculated_rolls, bulk_remaining_exposures, spooled_cassettes, is_bulk_film')
       .eq('is_bulk_film', true)
+      .is('deleted_at', null)
       .order('name');
 
     if (fetchError) {

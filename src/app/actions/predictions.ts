@@ -626,10 +626,7 @@ async function getPlannedTrips(): Promise<{
 
         // Calculate development cost based on film type
         const film = tf.films;
-        const isECN = ["35mmdealer", "safelight"].some((brand) =>
-          film?.brand?.toLowerCase().includes(brand.toLowerCase())
-        );
-        const devCost = isECN ? 9 : film?.type === "Color Negative" ? 6 : 9;
+        const devCost = film?.is_ecn ? 9 : film?.type === "Color Negative" ? 6 : 9;
         totalDevCost += devCost * tf.quantity;
       });
 

@@ -10,6 +10,7 @@ class CloudStorage implements StorageInterface {
     const { data, error } = await this.supabase
       .from("films")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -21,6 +22,7 @@ class CloudStorage implements StorageInterface {
       .from("films")
       .select("*")
       .eq("id", id)
+      .is("deleted_at", null)
       .single();
 
     if (error) throw error;
@@ -51,7 +53,11 @@ class CloudStorage implements StorageInterface {
   }
 
   async deleteFilm(id: string) {
-    const { error } = await this.supabase.from("films").delete().eq("id", id);
+    // Soft delete: set deleted_at timestamp instead of hard delete
+    const { error } = await this.supabase
+      .from("films")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
 
     if (error) throw error;
   }
