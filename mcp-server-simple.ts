@@ -68,6 +68,64 @@ interface Trip {
   status?: "upcoming" | "ongoing" | "past" | "completed";
 }
 
+interface Challenge {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  start_date: string;
+  end_date: string;
+  total_days: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ChallengePrompt {
+  id: string;
+  challenge_id: string;
+  day_number: number;
+  title: string;
+  prompt_text: string;
+  film_suggestion?: string;
+  frame_range?: string;
+  location_context?: string;
+  special_notes?: string;
+  phase?: string;
+  created_at: string;
+}
+
+interface ChallengeProgress {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  prompt_id: string;
+  completion_date?: string;
+  completed: boolean;
+  notes?: string;
+  photos_taken: number;
+  film_used_id?: string;
+  frames_used?: number;
+  reflection?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ChallengeFilmRoll {
+  id: string;
+  user_id: string;
+  challenge_id: string;
+  film_id: string;
+  roll_number: number;
+  start_date?: string;
+  end_date?: string;
+  frames_used: number;
+  frames_total: number;
+  status: 'loaded' | 'active' | 'completed' | 'developed';
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 class FilmInventoryMCPServer {
   private server: Server;
   private supabase: any;
@@ -233,6 +291,96 @@ class FilmInventoryMCPServer {
             },
           },
         },
+        {
+          name: "get_challenges",
+          description: "Get all photography challenges",
+          inputSchema: {
+            type: "object",
+            properties: {},
+          },
+        },
+        {
+          name: "get_challenge",
+          description: "Get a specific challenge by ID with full details",
+          inputSchema: {
+            type: "object",
+            properties: {
+              challenge_id: {
+                type: "string",
+                description: "Challenge ID",
+              },
+            },
+            required: ["challenge_id"],
+          },
+        },
+        {
+          name: "get_challenge_prompts",
+          description: "Get daily prompts for a challenge",
+          inputSchema: {
+            type: "object",
+            properties: {
+              challenge_id: {
+                type: "string",
+                description: "Challenge ID",
+              },
+            },
+            required: ["challenge_id"],
+          },
+        },
+        {
+          name: "get_todays_prompt",
+          description: "Get today's prompt for an active challenge",
+          inputSchema: {
+            type: "object",
+            properties: {
+              challenge_id: {
+                type: "string",
+                description: "Challenge ID",
+              },
+            },
+            required: ["challenge_id"],
+          },
+        },
+        {
+          name: "get_challenge_prompt",
+          description: "Get a specific challenge prompt by ID",
+          inputSchema: {
+            type: "object",
+            properties: {
+              prompt_id: {
+                type: "string",
+                description: "Challenge prompt ID",
+              },
+            },
+            required: ["prompt_id"],
+          },
+        },
+        {
+          name: "update_challenge_prompt",
+          description: "Update a challenge prompt's details",
+          inputSchema: {
+            type: "object",
+            properties: {
+              prompt_id: {
+                type: "string",
+                description: "Challenge prompt ID",
+              },
+              title: {
+                type: "string",
+                description: "Prompt title",
+              },
+              prompt_text: {
+                type: "string",
+                description: "The prompt description",
+              },
+              film_suggestion: {
+                type: "string",
+                description: "Suggested film stock",
+              },
+            },
+            required: ["prompt_id"],
+          },
+        },
       ],
     }));
 
@@ -253,6 +401,18 @@ class FilmInventoryMCPServer {
             return await this.getFilmUsageHistory(args);
           case "get_film_stats":
             return await this.getFilmStats(args);
+          case "get_challenges":
+            return await this.getChallenges(args);
+          case "get_challenge":
+            return await this.getChallenge(args);
+          case "get_challenge_prompts":
+            return await this.getChallengePrompts(args);
+          case "get_todays_prompt":
+            return await this.getTodaysPrompt(args);
+          case "get_challenge_prompt":
+            return await this.getChallengePrompt(args);
+          case "update_challenge_prompt":
+            return await this.updateChallengePrompt(args);
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
@@ -581,6 +741,188 @@ class FilmInventoryMCPServer {
             total_categories: Object.keys(stats).length,
             statistics: stats,
           }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async getChallenges(args: any) {
+    const { data: challenges, error } = await this.supabase
+      .from("challenges")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch challenges: ${error.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            challenges: challenges || [],
+            total_challenges: (challenges || []).length,
+          }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async getChallenge(args: any) {
+    const { challenge_id } = args;
+
+    const { data: challenge, error } = await this.supabase
+      .from("challenges")
+      .select("*")
+      .eq("id", challenge_id)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch challenge: ${error.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(challenge, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async getChallengePrompts(args: any) {
+    const { challenge_id } = args;
+
+    const { data: prompts, error } = await this.supabase
+      .from("challenge_prompts")
+      .select("*")
+      .eq("challenge_id", challenge_id)
+      .order("day_number", { ascending: true });
+
+    if (error) {
+      throw new Error(`Failed to fetch challenge prompts: ${error.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            prompts: prompts || [],
+            total_prompts: (prompts || []).length,
+          }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async getTodaysPrompt(args: any) {
+    const { challenge_id } = args;
+
+    // Get the challenge first
+    const { data: challenge, error: challengeError } = await this.supabase
+      .from("challenges")
+      .select("*")
+      .eq("id", challenge_id)
+      .single();
+
+    if (challengeError || !challenge) {
+      throw new Error(`Failed to fetch challenge: ${challengeError?.message || 'Challenge not found'}`);
+    }
+
+    // Calculate current day
+    const today = new Date();
+    const startDate = new Date(challenge.start_date);
+    const diffTime = today.getTime() - startDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const currentDay = Math.max(1, Math.min(diffDays, challenge.total_days));
+
+    // Get today's prompt
+    const { data: prompt, error } = await this.supabase
+      .from("challenge_prompts")
+      .select("*")
+      .eq("challenge_id", challenge_id)
+      .eq("day_number", currentDay)
+      .single();
+
+    if (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              challenge,
+              current_day: currentDay,
+              error: "No prompt found for today",
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            challenge,
+            current_day: currentDay,
+            todays_prompt: prompt,
+          }, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async getChallengePrompt(args: any) {
+    const { prompt_id } = args;
+
+    const { data: prompt, error } = await this.supabase
+      .from("challenge_prompts")
+      .select("*")
+      .eq("id", prompt_id)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch challenge prompt: ${error.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(prompt, null, 2),
+        },
+      ],
+    };
+  }
+
+  private async updateChallengePrompt(args: any) {
+    const { prompt_id, ...updates } = args;
+
+    // Remove any undefined values
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, value]) => value !== undefined)
+    );
+
+    const { data, error } = await this.supabase
+      .from("challenge_prompts")
+      .update(cleanUpdates)
+      .eq("id", prompt_id)
+      .select("*")
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to update challenge prompt: ${error.message}`);
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
         },
       ],
     };

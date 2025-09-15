@@ -93,19 +93,64 @@ export async function updateChallengeProgress(
     throw new Error('Prompt not found')
   }
   
-  const { error } = await supabase
-    .from('challenge_progress')
-    .upsert({
-      prompt_id: promptId,
-      user_id: user.id,
-      challenge_id: prompt.challenge_id,
-      ...updates,
-      updated_at: new Date().toISOString(),
+  // Clean the updates to handle empty strings and null values properly
+  const cleanedUpdates = Object.fromEntries(
+    Object.entries(updates).map(([key, value]) => {
+      // Convert empty strings to null for UUID fields
+      if (key === 'film_used_id' && value === '') {
+        return [key, null]
+      }
+      // Handle completion_date properly
+      if (key === 'completion_date' && !value) {
+        return [key, null]
+      }
+      return [key, value]
     })
+  )
+
+  // First, try to update existing progress, then insert if none exists
+  const { data: existingProgress } = await supabase
+    .from('challenge_progress')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('prompt_id', promptId)
+    .maybeSingle()
+
+  let error
+  
+  if (existingProgress) {
+    // Update existing progress
+    const updateResult = await supabase
+      .from('challenge_progress')
+      .update({
+        ...cleanedUpdates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existingProgress.id)
+    error = updateResult.error
+  } else {
+    // Insert new progress
+    const insertResult = await supabase
+      .from('challenge_progress')
+      .insert({
+        prompt_id: promptId,
+        user_id: user.id,
+        challenge_id: prompt.challenge_id,
+        ...cleanedUpdates,
+        updated_at: new Date().toISOString(),
+      })
+    error = insertResult.error
+  }
   
   if (error) {
     console.error('Error updating challenge progress:', error)
-    throw new Error('Failed to update challenge progress')
+    console.error('Attempted upsert data:', {
+      prompt_id: promptId,
+      user_id: user.id,
+      challenge_id: prompt.challenge_id,
+      ...cleanedUpdates,
+    })
+    throw new Error(`Failed to update challenge progress: ${error.message}`)
   }
 }
 
@@ -210,4 +255,62 @@ export async function createChallengePrompts(prompts: Omit<ChallengePrompt, 'id'
     console.error('Error creating challenge prompts:', error)
     throw new Error('Failed to create challenge prompts')
   }
+}
+
+export async function updateChallengePrompt(
+  promptId: string,
+  updates: Partial<Omit<ChallengePrompt, 'id' | 'challenge_id' | 'created_at'>>
+): Promise<void> {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('challenge_prompts')
+    .update(updates)
+    .eq('id', promptId)
+  
+  if (error) {
+    console.error('Error updating challenge prompt:', error)
+    throw new Error('Failed to update challenge prompt')
+  }
+}
+
+export async function getChallengePrompt(promptId: string): Promise<ChallengePrompt | null> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('challenge_prompts')
+    .select('*')
+    .eq('id', promptId)
+    .single()
+  
+  if (error) {
+    console.error('Error fetching challenge prompt:', error)
+    return null
+  }
+  
+  return data
+}
+
+export async function getProgressForPrompt(promptId: string): Promise<ChallengeProgress | null> {
+  const supabase = await createClient()
+  
+  // Get current user
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  if (userError || !user) {
+    throw new Error('User not authenticated')
+  }
+  
+  const { data, error } = await supabase
+    .from('challenge_progress')
+    .select('*')
+    .eq('prompt_id', promptId)
+    .eq('user_id', user.id)
+    .single()
+  
+  if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" which is OK
+    console.error('Error fetching challenge progress:', error)
+    throw new Error('Failed to fetch challenge progress')
+  }
+  
+  return data || null
 }

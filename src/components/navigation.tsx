@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Film, MapPin, Camera, BarChart3, Target } from "lucide-react";
+import { Film, MapPin, Camera, BarChart3, Target, Shield } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -28,8 +28,8 @@ export function Navigation() {
       active: pathname.startsWith("/trips"),
     },
     {
-      href: "/challenge",
-      label: "Challenge",
+      href: "/challenges",
+      label: "Challenges",
       icon: Target,
       active: pathname.startsWith("/challenge"),
     },
@@ -38,6 +38,12 @@ export function Navigation() {
       label: "Usage",
       icon: BarChart3,
       active: pathname.startsWith("/usage"),
+    },
+    {
+      href: "/admin",
+      label: "Admin",
+      icon: Shield,
+      active: pathname.startsWith("/admin"),
     },
   ];
 
