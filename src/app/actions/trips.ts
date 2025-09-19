@@ -4,6 +4,7 @@ import { Trip, TripFilm, TripGear, Gear, TripSchema, tripSchema } from "@/lib/ut
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
+import { reduceFilmCount } from "./films";
 
 interface CreateTripResponse {
   success: boolean;
@@ -633,6 +634,18 @@ export async function updateTripStatus(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const supabase = await createClient();
+    
+    // If marking trip as completed, consume the films first
+    if (status === 'completed') {
+      const consumeResult = await consumeTripFilms(tripId);
+      if (!consumeResult.success) {
+        return {
+          success: false,
+          error: `Failed to consume films: ${consumeResult.error}`,
+        };
+      }
+    }
+
     const { error } = await supabase
       .from("trips")
       .update({ status })
@@ -643,12 +656,135 @@ export async function updateTripStatus(
     }
 
     revalidatePath("/trips");
+    revalidatePath("/films");
     return { success: true };
   } catch (error) {
     console.error("Error updating trip status:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update trip status",
+    };
+  }
+}
+
+export async function consumePastTripFilms(): Promise<{ success: boolean; consumed: number; error?: string }> {
+  try {
+    const supabase = await createClient();
+    
+    // Get all past trips that are not completed
+    const today = new Date();
+    const bufferDate = new Date(today);
+    bufferDate.setDate(today.getDate() - 1); // 1 day buffer
+    
+    const { data: pastTrips, error: tripsError } = await supabase
+      .from("trips")
+      .select("id, title, end_date")
+      .neq("status", "completed")
+      .lt("end_date", bufferDate.toISOString().split('T')[0]);
+
+    if (tripsError) {
+      return { success: false, consumed: 0, error: "Failed to fetch past trips" };
+    }
+
+    if (!pastTrips || pastTrips.length === 0) {
+      return { success: true, consumed: 0 }; // No past trips to process
+    }
+
+    let totalConsumed = 0;
+
+    // Process each past trip
+    for (const trip of pastTrips) {
+      const consumeResult = await consumeTripFilms(trip.id);
+      if (consumeResult.success) {
+        // Update trip status to completed
+        await supabase
+          .from("trips")
+          .update({ status: "completed" })
+          .eq("id", trip.id);
+        totalConsumed++;
+      }
+    }
+
+    revalidatePath("/trips");
+    revalidatePath("/films");
+    return { success: true, consumed: totalConsumed };
+  } catch (error) {
+    console.error("Error consuming past trip films:", error);
+    return {
+      success: false,
+      consumed: 0,
+      error: error instanceof Error ? error.message : "Failed to consume past trip films",
+    };
+  }
+}
+
+async function consumeTripFilms(tripId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    
+    // Get trip details
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("title")
+      .eq("id", tripId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
+    // Get all films reserved for this trip
+    const { data: tripFilms, error: filmsError } = await supabase
+      .from("trip_films")
+      .select("film_id, quantity")
+      .eq("trip_id", tripId);
+
+    if (filmsError) {
+      return { success: false, error: "Failed to fetch trip films" };
+    }
+
+    if (!tripFilms || tripFilms.length === 0) {
+      return { success: true }; // No films to consume
+    }
+
+    // Check if films have already been consumed for this trip
+    const { data: existingUsage, error: usageError } = await supabase
+      .from("film_usage")
+      .select("film_id")
+      .like("usage_note", `%Trip: ${trip.title}%`);
+
+    if (usageError) {
+      return { success: false, error: "Failed to check existing usage" };
+    }
+
+    const alreadyConsumedFilmIds = new Set(existingUsage?.map(usage => usage.film_id) || []);
+
+    // Consume each film that hasn't already been consumed
+    for (const tripFilm of tripFilms) {
+      if (alreadyConsumedFilmIds.has(tripFilm.film_id)) {
+        continue; // Skip films already consumed for this trip
+      }
+
+      const result = await reduceFilmCount(
+        tripFilm.film_id,
+        tripFilm.quantity,
+        `Trip: ${trip.title} (completed)`
+      );
+
+      if (result.error) {
+        return { 
+          success: false, 
+          error: `Failed to consume film: ${result.error}` 
+        };
+      }
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error consuming trip films:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to consume trip films",
     };
   }
 }

@@ -1,5 +1,8 @@
--- Refresh the films_with_availability view to include new bulk film columns
--- The view needs to be recreated after adding new columns to the films table
+-- Fix film availability calculation to properly handle trip film consumption
+-- The system should now:
+-- 1. Reserve films for non-completed trips (upcoming, ongoing, past)
+-- 2. Films are consumed (count reduced) when trips are completed
+-- 3. Only non-completed trips affect availability
 
 DROP VIEW IF EXISTS films_with_availability;
 
@@ -18,7 +21,8 @@ LEFT JOIN (
     JOIN trips t ON tf.trip_id = t.id
     WHERE t.status != 'completed'
     GROUP BY film_id
-) reserved ON f.id = reserved.film_id;
+) reserved ON f.id = reserved.film_id
+WHERE f.deleted_at IS NULL; -- Exclude soft-deleted films
 
 -- Grant permissions on the view
 GRANT SELECT ON films_with_availability TO authenticated;
