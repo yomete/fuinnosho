@@ -3,9 +3,11 @@
 import { type Film } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Camera, Clock, Package, Film as FilmIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Camera, Clock, Package, Film as FilmIcon, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { EmptyState } from "@/components/empty-state";
+import Link from "next/link";
 
 interface FilmInventoryGridProps {
   films: Film[];
@@ -64,6 +66,14 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
               <div className="flex items-center gap-2">
                 <Package className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Count: {film.count}</span>
+              </div>
+              <div className="pt-2">
+                <Button variant="outline" size="sm" asChild className="w-full">
+                  <Link href={`/film/${film.id}`} className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Details
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>

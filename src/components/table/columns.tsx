@@ -13,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, History } from "lucide-react";
+import { MoreHorizontal, Edit, History, Eye } from "lucide-react";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 const ActionsCell = ({ row }: { row: { original: Film } }) => {
@@ -81,6 +82,12 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem asChild>
+            <Link href={`/film/${film.id}`} className="flex items-center">
+              <Eye className="mr-2 h-4 w-4" />
+              View Details
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(event) => {
               event.preventDefault();

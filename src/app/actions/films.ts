@@ -1,6 +1,12 @@
 "use server";
 
-import { Film, FilmUsage } from "@/lib/utils";
+import { Film, FilmUsage, Trip } from "@/lib/utils";
+
+interface TripFilmReservation {
+  quantity: number;
+  created_at: string;
+  trips: Pick<Trip, 'id' | 'title' | 'description' | 'start_date' | 'end_date' | 'status'> | null;
+}
 import { createClient } from "@/lib/supabase/server";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
@@ -159,6 +165,76 @@ export async function getFilmById(id: string): Promise<Film | null> {
   } catch (error) {
     console.error("Error fetching film by ID:", error);
     return null;
+  }
+}
+
+export async function getFilmWithDetails(id: string): Promise<{
+  film: Film | null;
+  usage: FilmUsage[] | null;
+  trips: TripFilmReservation[] | null;
+  error: string | null;
+}> {
+  try {
+    const supabase = await createClient();
+
+    // Get the film
+    const { data: film, error: filmError } = await supabase
+      .from("films")
+      .select("*")
+      .eq("id", id)
+      .is("deleted_at", null)
+      .single();
+
+    if (filmError) {
+      throw filmError;
+    }
+
+    // Get usage history
+    const { data: usage, error: usageError } = await supabase
+      .from("film_usage")
+      .select("*")
+      .eq("film_id", id)
+      .order("created_at", { ascending: false });
+
+    if (usageError) {
+      console.warn("Error fetching usage history:", usageError);
+    }
+
+    // Get trips that this film is reserved for
+    const { data: trips, error: tripsError } = await supabase
+      .from("trip_films")
+      .select(`
+        quantity,
+        created_at,
+        trips!inner(
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          status
+        )
+      `)
+      .eq("film_id", id);
+
+    if (tripsError) {
+      console.warn("Error fetching trips:", tripsError);
+    }
+
+    return {
+      film,
+      usage: usage || [],
+      trips: (trips || []) as unknown as TripFilmReservation[],
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error fetching film details:", error);
+    return {
+      film: null,
+      usage: null,
+      trips: null,
+      error: error instanceof Error ? error.message : "Failed to fetch film details",
+    };
   }
 }
 

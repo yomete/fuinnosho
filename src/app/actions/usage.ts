@@ -295,6 +295,35 @@ export async function getShootingOnlyUsageData(): Promise<{
   }
 }
 
+export async function getFilmsUsedInLastMonth(): Promise<{
+  data: UsageData[] | null;
+  error: string | null;
+}> {
+  try {
+    const { data: allUsage, error } = await getShootingOnlyUsageData();
+
+    if (error || !allUsage) {
+      return { data: null, error };
+    }
+
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    // Filter to last month and group by film
+    const recentUsage = allUsage.filter(usage =>
+      new Date(usage.created_at) >= oneMonthAgo
+    );
+
+    return { data: recentUsage, error: null };
+  } catch (error) {
+    console.error("Error fetching recent film usage:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Failed to fetch recent film usage",
+    };
+  }
+}
+
 export async function getBulkFilmStats(): Promise<{
   data: BulkFilmStats | null;
   error: string | null;
