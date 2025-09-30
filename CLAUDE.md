@@ -66,6 +66,16 @@ After updating the MCP server:
 - **Build Output**: `/dist/mcp-server.js`
 - **Documentation**: `/README-MCP.md`
 
+## Database Migrations
+
+**NEVER run database migrations via CLI commands** (e.g., `npx supabase db push`, `psql`, etc.). The user will handle running migrations manually when ready.
+
+When creating a new migration:
+1. Create the migration file in `supabase/migrations/` with proper naming format: `<timestamp>_description.sql`
+2. Update the relevant TypeScript interfaces and schemas
+3. Inform the user that a migration file has been created
+4. Let the user run the migration themselves
+
 ## GitHub
 
 When committing file changes, please don't add yourself as a contributor in the commit message. Just describe the changes made.

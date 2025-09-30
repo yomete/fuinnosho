@@ -497,6 +497,50 @@ export async function getFilmUsageHistory(filmId: string): Promise<{
   }
 }
 
+export async function finishBulkRoll(filmId: string) {
+  const supabase = await createClient();
+
+  const { data: film, error: filmError } = await supabase
+    .from("films")
+    .select("bulk_quantity, bulk_rolls_used, is_bulk_film")
+    .eq("id", filmId)
+    .single();
+
+  if (filmError || !film) {
+    return { error: "Film not found" };
+  }
+
+  if (!film.is_bulk_film) {
+    return { error: "This is not a bulk film" };
+  }
+
+  const currentRollsUsed = film.bulk_rolls_used || 0;
+  const totalRolls = film.bulk_quantity || 0;
+
+  if (currentRollsUsed >= totalRolls) {
+    return { error: "All bulk rolls have been used" };
+  }
+
+  const newRollsUsed = currentRollsUsed + 1;
+
+  const { error: updateError } = await supabase
+    .from("films")
+    .update({ bulk_rolls_used: newRollsUsed })
+    .eq("id", filmId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  revalidatePath("/films");
+  revalidatePath(`/film/${filmId}`);
+  return {
+    success: true,
+    bulk_rolls_used: newRollsUsed,
+    bulk_rolls_remaining: totalRolls - newRollsUsed
+  };
+}
+
 export async function syncFilms() {
   try {
     const supabase = await createClient();

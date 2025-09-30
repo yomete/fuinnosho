@@ -58,6 +58,7 @@ interface Film {
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
   bulk_quantity?: number;
+  bulk_rolls_used?: number;
   calculated_rolls?: number;
   bulk_remaining_exposures?: number;
   spooled_cassettes?: number;

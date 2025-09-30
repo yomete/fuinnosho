@@ -27,6 +27,7 @@ export interface Film {
   is_bulk_film?: boolean;
   bulk_length_meters?: number;
   bulk_quantity?: number;
+  bulk_rolls_used?: number;
   calculated_rolls?: number;
   bulk_remaining_exposures?: number;
   spooled_cassettes?: number;
@@ -113,6 +114,7 @@ export const filmSchema = z.object({
   is_bulk_film: z.boolean().optional(),
   bulk_length_meters: z.number().positive().optional(),
   bulk_quantity: z.number().positive().optional(),
+  bulk_rolls_used: z.number().nonnegative().optional(),
   calculated_rolls: z.number().optional(),
   bulk_remaining_exposures: z.number().nonnegative().optional(),
   spooled_cassettes: z.number().nonnegative().optional(),

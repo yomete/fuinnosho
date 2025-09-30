@@ -18,6 +18,7 @@ import {
   getTripStatusColor,
 } from "@/lib/utils";
 import { format } from "date-fns";
+import { FinishBulkRollButton } from "@/components/films/finish-bulk-roll-button";
 
 interface FilmDetailPageProps {
   params: Promise<{ filmId: string }>;
@@ -167,6 +168,25 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
                       <p>{film.spooled_cassettes}</p>
                     </div>
                   </div>
+                  {film.bulk_quantity && film.bulk_quantity > 1 && (
+                    <div className="mt-4 p-3 border rounded-lg bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Bulk Rolls Progress</p>
+                          <p className="text-sm text-muted-foreground">
+                            Roll {(film.bulk_rolls_used || 0) + 1} of {film.bulk_quantity}
+                            {film.bulk_rolls_used ? ` (${film.bulk_rolls_used} completed)` : ''}
+                          </p>
+                        </div>
+                        <FinishBulkRollButton
+                          filmId={film.id}
+                          currentRoll={(film.bulk_rolls_used || 0) + 1}
+                          totalRolls={film.bulk_quantity}
+                          bulkRollsUsed={film.bulk_rolls_used || 0}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
