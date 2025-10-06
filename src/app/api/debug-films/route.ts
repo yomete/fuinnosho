@@ -31,12 +31,19 @@ export async function GET() {
     }
 
     // Aggregate film counts
-    const filmCounts = new Map<string, { film: any; totalQuantity: number; trips: string[] }>();
+    interface FilmData {
+      id: string;
+      name: string;
+      brand: string;
+      type: string;
+    }
+    const filmCounts = new Map<string, { film: FilmData; totalQuantity: number; trips: string[] }>();
 
     trips?.forEach((trip) => {
-      trip.trip_films?.forEach((tf: any) => {
-        if (tf.films) {
-          const filmId = tf.films.id;
+      trip.trip_films?.forEach((tf) => {
+        if (tf.films && !Array.isArray(tf.films)) {
+          const film = tf.films as FilmData;
+          const filmId = film.id;
           const quantity = tf.quantity || 1;
 
           if (filmCounts.has(filmId)) {
@@ -45,7 +52,7 @@ export async function GET() {
             existing.trips.push(trip.title);
           } else {
             filmCounts.set(filmId, {
-              film: tf.films,
+              film: film,
               totalQuantity: quantity,
               trips: [trip.title],
             });

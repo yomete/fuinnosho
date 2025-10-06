@@ -66,7 +66,7 @@ export async function getFilmsFromCompletedTrips(
     const filmsMap = new Map<string, Film & { totalQuantity: number; trips: Array<{ id: string; title: string; quantity: number }> }>();
 
     completedTrips.forEach((trip) => {
-      trip.trip_films?.forEach((tf: any) => {
+      trip.trip_films?.forEach((tf) => {
         if (tf.films) {
           const film = tf.films as unknown as Film;
           const quantity = tf.quantity || 1;

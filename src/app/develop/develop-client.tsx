@@ -169,7 +169,7 @@ export default function DevelopClient({ colorDevelopmentEnabled }: DevelopClient
     }
   }, [selectedRecipe, recipes, form, append, fields.length]);
 
-  const handleFilmToggle = (filmId: string, maxQuantity: number) => {
+  const handleFilmToggle = (filmId: string) => {
     setSelectedFilms((prev) => {
       const isSelected = prev.includes(filmId);
       if (isSelected) {
@@ -379,7 +379,7 @@ export default function DevelopClient({ colorDevelopmentEnabled }: DevelopClient
                               <div className="flex items-center space-x-3">
                                 <Checkbox
                                   checked={isSelected}
-                                  onCheckedChange={() => handleFilmToggle(film.id, maxQuantity)}
+                                  onCheckedChange={() => handleFilmToggle(film.id)}
                                 />
                                 <div className="flex-1">
                                   <div className="font-medium">{film.name}</div>

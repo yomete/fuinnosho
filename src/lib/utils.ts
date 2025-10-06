@@ -45,7 +45,7 @@ export interface FilmUsage {
   quantity: number;
   usage_note: string;
   created_at: string;
-  usage_type?: 'spool' | 'shoot';
+  usage_type?: 'spool' | 'shoot' | 'add';
   exposures_used?: number;
 }
 
