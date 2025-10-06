@@ -25,15 +25,6 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
   // Sync local state when film prop changes
   useEffect(() => {
     setFilmData(film);
-    // Debug logging - remove after fixing
-    if (film.is_bulk_film) {
-      console.log("ActionsCell film data:", {
-        name: film.name,
-        bulk_remaining_exposures: film.bulk_remaining_exposures,
-        calculated_rolls: film.calculated_rolls,
-        spooled_cassettes: film.spooled_cassettes,
-      });
-    }
   }, [film]);
 
   const handleSpoolingComplete = (

@@ -19,6 +19,7 @@ import {
 } from "@/lib/utils";
 import { format } from "date-fns";
 import { FinishBulkRollButton } from "@/components/films/finish-bulk-roll-button";
+import { AddRollsDialog } from "@/components/films/add-rolls-dialog";
 
 interface FilmDetailPageProps {
   params: Promise<{ filmId: string }>;
@@ -33,7 +34,14 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
   }
 
   // Calculate statistics
-  const totalUsed = usage?.reduce((sum, u) => sum + u.quantity, 0) || 0;
+  const totalAdded =
+    usage
+      ?.filter((u) => u.usage_type === "add")
+      .reduce((sum, u) => sum + u.quantity, 0) || 0;
+  const totalUsed =
+    usage
+      ?.filter((u) => u.usage_type !== "add")
+      .reduce((sum, u) => sum + u.quantity, 0) || 0;
   const totalSpooled =
     usage
       ?.filter((u) => u.usage_type === "spool")
@@ -65,6 +73,7 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
           <h1 className="text-3xl font-bold">{film.name}</h1>
           <p className="text-lg text-muted-foreground">{film.brand}</p>
         </div>
+        <AddRollsDialog filmId={film.id} filmName={film.name} />
       </div>
 
       {/* Main Film Details */}
@@ -236,6 +245,12 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
+              {totalAdded > 0 && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Added</p>
+                  <p className="text-2xl font-bold text-green-600">+{totalAdded}</p>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-muted-foreground">Total Used</p>
                 <p className="text-2xl font-bold">{totalUsed}</p>
@@ -343,12 +358,18 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
                     <div className="flex items-center gap-2">
                       <Badge
                         variant={
-                          usageEvent.usage_type === "spool"
+                          usageEvent.usage_type === "add"
+                            ? "outline"
+                            : usageEvent.usage_type === "spool"
                             ? "secondary"
                             : "default"
                         }
                       >
-                        {usageEvent.usage_type === "spool" ? "Spooled" : "Shot"}
+                        {usageEvent.usage_type === "add"
+                          ? "Added"
+                          : usageEvent.usage_type === "spool"
+                          ? "Spooled"
+                          : "Shot"}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
                         {format(
@@ -362,7 +383,9 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{usageEvent.quantity}</p>
+                    <p className={`font-medium ${usageEvent.usage_type === "add" ? "text-green-600" : ""}`}>
+                      {usageEvent.usage_type === "add" ? "+" : ""}{usageEvent.quantity}
+                    </p>
                     {usageEvent.exposures_used && (
                       <p className="text-sm text-muted-foreground">
                         {usageEvent.exposures_used} exposures

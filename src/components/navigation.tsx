@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Film, MapPin, Camera, BarChart3, Target, Shield } from "lucide-react";
+import { Film, MapPin, Camera, BarChart3, Target, Shield, Beaker, FlaskConical } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ export function Navigation() {
       href: "/films",
       label: "Films",
       icon: Film,
-      active: pathname.startsWith("/films"),
+      active: pathname.startsWith("/films") || pathname === "/film",
     },
     {
       href: "/gear",
@@ -26,6 +26,18 @@ export function Navigation() {
       label: "Trips",
       icon: MapPin,
       active: pathname.startsWith("/trips"),
+    },
+    {
+      href: "/chemistry",
+      label: "Chemistry",
+      icon: Beaker,
+      active: pathname.startsWith("/chemistry"),
+    },
+    {
+      href: "/develop",
+      label: "Develop",
+      icon: FlaskConical,
+      active: pathname.startsWith("/develop"),
     },
     {
       href: "/challenges",

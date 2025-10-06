@@ -178,6 +178,54 @@ interface ChallengeFilmRoll {
   updated_at: string;
 }
 
+interface ChemistryInventory {
+  id: string;
+  user_id: string;
+  name: string;
+  brand?: string;
+  chemistry_type: 'developer' | 'stop_bath' | 'fixer' | 'bleach' | 'hypo_clear' | 'wetting_agent' | 'pre_wash' | 'other';
+  process_type: 'black_white' | 'color';
+  volume_ml: number;
+  original_volume_ml: number;
+  purchase_date?: string;
+  expiry_date?: string;
+  opened_date?: string;
+  cost?: number;
+  storage_location?: string;
+  notes?: string;
+  max_reuses: number;
+  times_used: number;
+  total_volume_processed_ml: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DevelopmentRecipe {
+  id: string;
+  user_id: string;
+  name: string;
+  film_type?: string;
+  developer_id: string;
+  dilution_ratio?: string;
+  temperature_celsius?: number;
+  development_time_minutes?: number;
+  agitation_pattern?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DevelopmentSession {
+  id: string;
+  user_id: string;
+  session_date: string;
+  process_type: 'black_white' | 'color';
+  temperature_celsius?: number;
+  notes?: string;
+  total_cost: number;
+  created_at: string;
+}
+
 class FilmInventoryMCPServer {
   private server: Server;
   private supabase: any;
@@ -1305,6 +1353,188 @@ class FilmInventoryMCPServer {
             required: ["prompt_id"],
           },
         },
+        // Chemistry Inventory Tools
+        {
+          name: "list_chemistry",
+          description: "List all chemistry inventory items or filter by process type",
+          inputSchema: {
+            type: "object",
+            properties: {
+              process_type: {
+                type: "string",
+                enum: ["black_white", "color"],
+                description: "Filter by process type (optional)",
+              },
+            },
+          },
+        },
+        {
+          name: "create_chemistry",
+          description: "Add new chemistry to inventory",
+          inputSchema: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Chemistry name (e.g., Rodinal, HC-110)" },
+              brand: { type: "string", description: "Brand name (optional)" },
+              chemistry_type: {
+                type: "string",
+                enum: ["developer", "stop_bath", "fixer", "bleach", "hypo_clear", "wetting_agent", "pre_wash", "other"],
+                description: "Type of chemistry",
+              },
+              process_type: {
+                type: "string",
+                enum: ["black_white", "color"],
+                description: "Black & white or color process",
+              },
+              volume_ml: { type: "number", description: "Current volume in ml" },
+              original_volume_ml: { type: "number", description: "Original bottle volume in ml" },
+              purchase_date: { type: "string", description: "Purchase date (YYYY-MM-DD) (optional)" },
+              expiry_date: { type: "string", description: "Expiry date (YYYY-MM-DD) (optional)" },
+              cost: { type: "number", description: "Cost in dollars (optional)" },
+              storage_location: { type: "string", description: "Where chemistry is stored (optional)" },
+              max_reuses: { type: "number", description: "Maximum number of times chemistry can be reused", default: 1 },
+              notes: { type: "string", description: "Additional notes (optional)" },
+            },
+            required: ["name", "chemistry_type", "process_type", "volume_ml", "original_volume_ml"],
+          },
+        },
+        {
+          name: "edit_chemistry",
+          description: "Update existing chemistry in inventory",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Chemistry ID" },
+              name: { type: "string" },
+              brand: { type: "string" },
+              volume_ml: { type: "number" },
+              opened_date: { type: "string", description: "Date chemistry was opened (YYYY-MM-DD)" },
+              times_used: { type: "number" },
+              notes: { type: "string" },
+            },
+            required: ["id"],
+          },
+        },
+        {
+          name: "delete_chemistry",
+          description: "Delete chemistry from inventory",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Chemistry ID to delete" },
+            },
+            required: ["id"],
+          },
+        },
+        // Development Recipe Tools
+        {
+          name: "list_recipes",
+          description: "List all saved development recipes",
+          inputSchema: {
+            type: "object",
+            properties: {},
+          },
+        },
+        {
+          name: "create_recipe",
+          description: "Create a new development recipe",
+          inputSchema: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Recipe name" },
+              film_type: { type: "string", description: "Film type (e.g., HP5+) (optional)" },
+              developer_id: { type: "string", description: "ID of developer chemistry to use" },
+              dilution_ratio: { type: "string", description: "Dilution ratio (e.g., 1+50) (optional)" },
+              temperature_celsius: { type: "number", description: "Development temperature in Celsius (optional)" },
+              development_time_minutes: { type: "number", description: "Development time in minutes (optional)" },
+              agitation_pattern: { type: "string", description: "Agitation pattern description (optional)" },
+              notes: { type: "string", description: "Additional notes (optional)" },
+            },
+            required: ["name", "developer_id"],
+          },
+        },
+        {
+          name: "delete_recipe",
+          description: "Delete a development recipe",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Recipe ID to delete" },
+            },
+            required: ["id"],
+          },
+        },
+        // Development Session Tools
+        {
+          name: "list_development_sessions",
+          description: "List all development sessions",
+          inputSchema: {
+            type: "object",
+            properties: {
+              process_type: {
+                type: "string",
+                enum: ["black_white", "color"],
+                description: "Filter by process type (optional)",
+              },
+            },
+          },
+        },
+        {
+          name: "create_development_session",
+          description: "Create a new development session for films from completed trips",
+          inputSchema: {
+            type: "object",
+            properties: {
+              session_date: { type: "string", description: "Session date (YYYY-MM-DD)" },
+              process_type: {
+                type: "string",
+                enum: ["black_white", "color"],
+                description: "Process type",
+              },
+              temperature_celsius: { type: "number", description: "Development temperature (optional)" },
+              notes: { type: "string", description: "Session notes (optional)" },
+              film_ids: {
+                type: "array",
+                items: { type: "string" },
+                description: "Array of film IDs to develop",
+              },
+              film_quantities: {
+                type: "object",
+                description: "Map of film IDs to quantities (optional)",
+              },
+              chemistry_usage: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    chemistry_id: { type: "string" },
+                    volume_used_ml: { type: "number" },
+                    dilution_ratio: { type: "string" },
+                    development_time_minutes: { type: "number" },
+                    notes: { type: "string" },
+                  },
+                  required: ["chemistry_id", "volume_used_ml"],
+                },
+                description: "Array of chemistry usage records",
+              },
+            },
+            required: ["session_date", "process_type", "film_ids", "chemistry_usage"],
+          },
+        },
+        {
+          name: "get_films_from_completed_trips",
+          description: "Get films from completed trips that are ready for development",
+          inputSchema: {
+            type: "object",
+            properties: {
+              process_type: {
+                type: "string",
+                enum: ["black_white", "color"],
+                description: "Filter by process type (optional)",
+              },
+            },
+          },
+        },
       ],
     }));
 
@@ -1446,6 +1676,39 @@ class FilmInventoryMCPServer {
 
               case "get_progress_for_prompt":
                 return await this.getProgressForPrompt(args);
+
+              // Chemistry Inventory Tools
+              case "list_chemistry":
+                return await this.listChemistry(args);
+
+              case "create_chemistry":
+                return await this.createChemistry(args);
+
+              case "edit_chemistry":
+                return await this.editChemistry(args);
+
+              case "delete_chemistry":
+                return await this.deleteChemistry(args);
+
+              // Development Recipe Tools
+              case "list_recipes":
+                return await this.listRecipes(args);
+
+              case "create_recipe":
+                return await this.createRecipe(args);
+
+              case "delete_recipe":
+                return await this.deleteRecipe(args);
+
+              // Development Session Tools
+              case "list_development_sessions":
+                return await this.listDevelopmentSessions(args);
+
+              case "create_development_session":
+                return await this.createDevelopmentSession(args);
+
+              case "get_films_from_completed_trips":
+                return await this.getFilmsFromCompletedTrips(args);
 
               default:
                 throw new Error(`Unknown tool: ${name}`);
@@ -3916,6 +4179,457 @@ class FilmInventoryMCPServer {
         {
           type: "text",
           text: JSON.stringify(data || null, null, 2),
+        },
+      ],
+    };
+  }
+
+  async listChemistry(args: any) {
+    const { process_type } = args;
+    console.error(`🧪 Listing chemistry inventory${process_type ? ` for ${process_type}` : ''}`);
+
+    let query = this.supabase
+      .from('chemistry_inventory')
+      .select('*')
+      .eq('user_id', this.userId)
+      .order('created_at', { ascending: false });
+
+    if (process_type) {
+      query = query.eq('process_type', process_type);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching chemistry:', error);
+      throw new Error('Failed to fetch chemistry inventory');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async createChemistry(args: any) {
+    console.error('🧪 Creating chemistry:', args);
+
+    const chemistryData = {
+      user_id: this.userId,
+      name: args.name,
+      brand: args.brand,
+      type: args.type,
+      process_type: args.process_type,
+      capacity_ml: args.capacity_ml,
+      remaining_ml: args.remaining_ml || args.capacity_ml,
+      dilution: args.dilution,
+      reusable: args.reusable || false,
+      expiry_date: args.expiry_date,
+      notes: args.notes,
+    };
+
+    const { data, error } = await this.supabase
+      .from('chemistry_inventory')
+      .insert(chemistryData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating chemistry:', error);
+      throw new Error('Failed to create chemistry');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async editChemistry(args: any) {
+    const { chemistry_id, ...updates } = args;
+    console.error(`🧪 Editing chemistry ${chemistry_id}`);
+
+    const updateData: any = {};
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.brand !== undefined) updateData.brand = updates.brand;
+    if (updates.type !== undefined) updateData.type = updates.type;
+    if (updates.process_type !== undefined) updateData.process_type = updates.process_type;
+    if (updates.capacity_ml !== undefined) updateData.capacity_ml = updates.capacity_ml;
+    if (updates.remaining_ml !== undefined) updateData.remaining_ml = updates.remaining_ml;
+    if (updates.dilution !== undefined) updateData.dilution = updates.dilution;
+    if (updates.reusable !== undefined) updateData.reusable = updates.reusable;
+    if (updates.expiry_date !== undefined) updateData.expiry_date = updates.expiry_date;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+
+    const { data, error } = await this.supabase
+      .from('chemistry_inventory')
+      .update(updateData)
+      .eq('id', chemistry_id)
+      .eq('user_id', this.userId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating chemistry:', error);
+      throw new Error('Failed to update chemistry');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async deleteChemistry(args: any) {
+    const { chemistry_id } = args;
+    console.error(`🧪 Deleting chemistry ${chemistry_id}`);
+
+    const { error } = await this.supabase
+      .from('chemistry_inventory')
+      .delete()
+      .eq('id', chemistry_id)
+      .eq('user_id', this.userId);
+
+    if (error) {
+      console.error('Error deleting chemistry:', error);
+      throw new Error('Failed to delete chemistry');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ success: true, deleted_id: chemistry_id }, null, 2),
+        },
+      ],
+    };
+  }
+
+  async listRecipes(args: any) {
+    console.error('📖 Listing development recipes');
+
+    const { data, error } = await this.supabase
+      .from('development_recipes')
+      .select(`
+        *,
+        developer:chemistry_inventory(id, name, brand)
+      `)
+      .eq('user_id', this.userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching recipes:', error);
+      throw new Error('Failed to fetch development recipes');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async createRecipe(args: any) {
+    console.error('📖 Creating development recipe:', args);
+
+    const recipeData = {
+      user_id: this.userId,
+      name: args.name,
+      process_type: args.process_type,
+      developer_id: args.developer_id,
+      fixer_id: args.fixer_id,
+      stop_bath_id: args.stop_bath_id,
+      temperature_c: args.temperature_c,
+      dev_time_minutes: args.dev_time_minutes,
+      stop_time_seconds: args.stop_time_seconds,
+      fix_time_minutes: args.fix_time_minutes,
+      notes: args.notes,
+    };
+
+    const { data, error } = await this.supabase
+      .from('development_recipes')
+      .insert(recipeData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating recipe:', error);
+      throw new Error('Failed to create development recipe');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async deleteRecipe(args: any) {
+    const { recipe_id } = args;
+    console.error(`📖 Deleting recipe ${recipe_id}`);
+
+    const { error } = await this.supabase
+      .from('development_recipes')
+      .delete()
+      .eq('id', recipe_id)
+      .eq('user_id', this.userId);
+
+    if (error) {
+      console.error('Error deleting recipe:', error);
+      throw new Error('Failed to delete development recipe');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({ success: true, deleted_id: recipe_id }, null, 2),
+        },
+      ],
+    };
+  }
+
+  async listDevelopmentSessions(args: any) {
+    console.error('📸 Listing development sessions');
+
+    const { data, error } = await this.supabase
+      .from('development_sessions')
+      .select(`
+        *,
+        recipe:development_recipes(
+          name,
+          process_type,
+          developer:chemistry_inventory(name, brand)
+        ),
+        session_films(
+          film_id,
+          quantity,
+          film:films(name, brand, format, iso)
+        ),
+        session_chemistry_usage(
+          chemistry_id,
+          volume_used_ml,
+          chemistry:chemistry_inventory(name, brand, type)
+        )
+      `)
+      .eq('user_id', this.userId)
+      .order('session_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching development sessions:', error);
+      throw new Error('Failed to fetch development sessions');
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(data, null, 2),
+        },
+      ],
+    };
+  }
+
+  async createDevelopmentSession(args: any) {
+    console.error('📸 Creating development session:', args);
+
+    // Create the session
+    const sessionData = {
+      user_id: this.userId,
+      recipe_id: args.recipe_id || null,
+      session_date: args.session_date || new Date().toISOString(),
+      notes: args.notes,
+      cost: args.cost || 0,
+    };
+
+    const { data: session, error: sessionError } = await this.supabase
+      .from('development_sessions')
+      .insert(sessionData)
+      .select()
+      .single();
+
+    if (sessionError) {
+      console.error('Error creating session:', sessionError);
+      throw new Error('Failed to create development session');
+    }
+
+    // Add films to session
+    if (args.film_quantities && args.film_quantities.length > 0) {
+      const sessionFilms = args.film_quantities.map((fq: any) => ({
+        session_id: session.id,
+        film_id: fq.film_id,
+        quantity: fq.quantity,
+      }));
+
+      const { error: filmsError } = await this.supabase
+        .from('session_films')
+        .insert(sessionFilms);
+
+      if (filmsError) {
+        console.error('Error adding films to session:', filmsError);
+        throw new Error('Failed to add films to session');
+      }
+    }
+
+    // Add chemistry usage and update remaining volumes
+    if (args.chemistry_usage && args.chemistry_usage.length > 0) {
+      const usageRecords = args.chemistry_usage.map((cu: any) => ({
+        session_id: session.id,
+        chemistry_id: cu.chemistry_id,
+        volume_used_ml: cu.volume_used_ml,
+      }));
+
+      const { error: usageError } = await this.supabase
+        .from('session_chemistry_usage')
+        .insert(usageRecords);
+
+      if (usageError) {
+        console.error('Error recording chemistry usage:', usageError);
+        throw new Error('Failed to record chemistry usage');
+      }
+
+      // Update chemistry remaining volumes
+      for (const cu of args.chemistry_usage) {
+        const { error: updateError } = await this.supabase.rpc(
+          'decrement_chemistry_volume',
+          {
+            chem_id: cu.chemistry_id,
+            volume_to_subtract: cu.volume_used_ml,
+          }
+        );
+
+        if (updateError) {
+          console.error('Error updating chemistry volume:', updateError);
+          // Continue with other updates even if one fails
+        }
+      }
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(session, null, 2),
+        },
+      ],
+    };
+  }
+
+  async getFilmsFromCompletedTrips(args: any) {
+    const { process_type } = args;
+    console.error(`📸 Getting films from completed trips${process_type ? ` for ${process_type}` : ''}`);
+
+    // Get all trip_films from completed trips
+    let query = this.supabase
+      .from('trip_films')
+      .select(`
+        film_id,
+        quantity,
+        films!inner(
+          id,
+          name,
+          brand,
+          format,
+          iso,
+          type,
+          count
+        ),
+        trips!inner(
+          id,
+          title,
+          status
+        )
+      `)
+      .eq('trips.status', 'completed')
+      .eq('trips.user_id', this.userId);
+
+    // Filter by process type if specified
+    if (process_type) {
+      if (process_type === 'black_white') {
+        query = query.eq('films.type', 'Black & White');
+      } else if (process_type === 'color') {
+        query = query.in('films.type', ['Color Negative', 'Color Positive']);
+      }
+    }
+
+    const { data: tripFilms, error } = await query;
+
+    if (error) {
+      console.error('Error fetching films from completed trips:', error);
+      throw new Error('Failed to fetch films from completed trips');
+    }
+
+    // Get already developed films
+    const { data: developedSessions } = await this.supabase
+      .from('session_films')
+      .select('film_id, quantity');
+
+    const developedQuantities = new Map<string, number>();
+    developedSessions?.forEach((sf: any) => {
+      const current = developedQuantities.get(sf.film_id) || 0;
+      developedQuantities.set(sf.film_id, current + sf.quantity);
+    });
+
+    // Aggregate films by film_id
+    const filmsMap = new Map<string, any>();
+    tripFilms?.forEach((tf: any) => {
+      const filmId = tf.film_id;
+      if (!filmsMap.has(filmId)) {
+        filmsMap.set(filmId, {
+          id: tf.films.id,
+          name: tf.films.name,
+          brand: tf.films.brand,
+          format: tf.films.format,
+          iso: tf.films.iso,
+          type: tf.films.type,
+          totalQuantity: 0,
+          trips: [],
+        });
+      }
+      const film = filmsMap.get(filmId);
+      film.totalQuantity += tf.quantity;
+      film.trips.push({
+        trip_id: tf.trips.id,
+        trip_title: tf.trips.title,
+        quantity: tf.quantity,
+      });
+    });
+
+    // Subtract developed quantities and filter
+    const films = Array.from(filmsMap.values())
+      .map(film => {
+        const developedQty = developedQuantities.get(film.id) || 0;
+        const remainingQty = film.totalQuantity - developedQty;
+        return {
+          ...film,
+          count: remainingQty,
+        };
+      })
+      .filter(film => film.count > 0);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify(films, null, 2),
         },
       ],
     };

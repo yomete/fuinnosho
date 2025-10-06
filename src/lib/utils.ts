@@ -35,6 +35,8 @@ export interface Film {
   total_count?: number;
   reserved_quantity?: number;
   available_count?: number;
+  // Optional trip info for development workflow
+  trips?: Array<{ id: string; title: string; quantity: number }>;
 }
 
 export interface FilmUsage {
@@ -391,3 +393,200 @@ export const challengeProgressSchema = z.object({
 
 export type ChallengeSchema = z.infer<typeof challengeSchema>;
 export type ChallengeProgressSchema = z.infer<typeof challengeProgressSchema>;
+
+// Chemistry and Development-related interfaces
+export type ChemistryType = 'developer' | 'stop_bath' | 'fixer' | 'bleach' | 'hypo_clear' | 'wetting_agent' | 'pre_wash' | 'other';
+export type ProcessType = 'black_white' | 'color';
+
+export interface ChemistryInventory {
+  id: string;
+  user_id: string;
+  name: string;
+  brand?: string;
+  chemistry_type: ChemistryType;
+  process_type: ProcessType;
+  volume_ml: number;
+  original_volume_ml: number;
+  purchase_date?: string;
+  expiry_date?: string;
+  opened_date?: string;
+  cost?: number;
+  storage_location?: string;
+  notes?: string;
+  max_reuses: number;
+  times_used: number;
+  total_volume_processed_ml: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DevelopmentRecipe {
+  id: string;
+  user_id: string;
+  name: string;
+  film_type?: string;
+  developer_id: string;
+  dilution_ratio?: string;
+  temperature_celsius?: number;
+  development_time_minutes?: number;
+  agitation_pattern?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  // For joins
+  developer?: ChemistryInventory;
+}
+
+export interface DevelopmentSession {
+  id: string;
+  user_id: string;
+  session_date: string;
+  process_type: ProcessType;
+  temperature_celsius?: number;
+  notes?: string;
+  total_cost: number;
+  created_at: string;
+  // For joins
+  session_films?: SessionFilm[];
+  session_chemistry_usage?: SessionChemistryUsage[];
+}
+
+export interface SessionFilm {
+  id: string;
+  session_id: string;
+  film_id: string;
+  quantity: number;
+  created_at: string;
+  // For joins
+  film?: Film;
+}
+
+export interface SessionChemistryUsage {
+  id: string;
+  session_id: string;
+  chemistry_id: string;
+  volume_used_ml: number;
+  dilution_ratio?: string;
+  development_time_minutes?: number;
+  notes?: string;
+  created_at: string;
+  // For joins
+  chemistry?: ChemistryInventory;
+}
+
+// Chemistry schemas
+export const chemistryInventorySchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  brand: z.string().optional(),
+  chemistry_type: z.enum(['developer', 'stop_bath', 'fixer', 'bleach', 'hypo_clear', 'wetting_agent', 'pre_wash', 'other']),
+  process_type: z.enum(['black_white', 'color']),
+  volume_ml: z.number().nonnegative("Volume must be positive"),
+  original_volume_ml: z.number().positive("Original volume must be positive"),
+  purchase_date: z.string().transform(val => val === "" ? undefined : val).optional(),
+  expiry_date: z.string().transform(val => val === "" ? undefined : val).optional(),
+  opened_date: z.string().transform(val => val === "" ? undefined : val).optional(),
+  cost: z.number().nonnegative().optional(),
+  storage_location: z.string().optional(),
+  notes: z.string().optional(),
+  max_reuses: z.number().positive().default(1),
+  times_used: z.number().nonnegative().default(0),
+  total_volume_processed_ml: z.number().nonnegative().default(0),
+});
+
+export const developmentRecipeSchema = z.object({
+  name: z.string().min(1, "Recipe name is required"),
+  film_type: z.string().optional(),
+  developer_id: z.string().min(1, "Developer is required"),
+  dilution_ratio: z.string().optional(),
+  temperature_celsius: z.number().positive().optional(),
+  development_time_minutes: z.number().positive().optional(),
+  agitation_pattern: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const developmentSessionSchema = z.object({
+  session_date: z.string().min(1, "Session date is required"),
+  process_type: z.enum(['black_white', 'color']),
+  temperature_celsius: z.number().positive().optional(),
+  notes: z.string().optional(),
+  film_ids: z.array(z.string()).min(1, "At least one film must be selected"),
+  film_quantities: z.record(z.number().positive()).optional(),
+  chemistry_usage: z.array(z.object({
+    chemistry_id: z.string(),
+    volume_used_ml: z.number().positive(),
+    dilution_ratio: z.string().optional(),
+    development_time_minutes: z.number().positive().optional(),
+    notes: z.string().optional(),
+  })).min(1, "At least one chemistry must be used"),
+});
+
+export type ChemistryInventorySchema = z.infer<typeof chemistryInventorySchema>;
+export type DevelopmentRecipeSchema = z.infer<typeof developmentRecipeSchema>;
+export type DevelopmentSessionSchema = z.infer<typeof developmentSessionSchema>;
+
+// Chemistry type options for forms
+export const chemistryTypes = [
+  { value: 'developer', label: 'Developer' },
+  { value: 'stop_bath', label: 'Stop Bath' },
+  { value: 'fixer', label: 'Fixer' },
+  { value: 'bleach', label: 'Bleach' },
+  { value: 'hypo_clear', label: 'Hypo Clear' },
+  { value: 'wetting_agent', label: 'Wetting Agent' },
+  { value: 'pre_wash', label: 'Pre-Wash' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+export const processTypes = [
+  { value: 'black_white', label: 'Black & White' },
+  { value: 'color', label: 'Color' },
+] as const;
+
+// Chemistry utility functions
+export function getChemistryTypeColor(type: ChemistryType): string {
+  switch (type) {
+    case 'developer':
+      return 'text-purple-600 bg-purple-50';
+    case 'stop_bath':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'fixer':
+      return 'text-blue-600 bg-blue-50';
+    case 'bleach':
+      return 'text-orange-600 bg-orange-50';
+    case 'hypo_clear':
+      return 'text-cyan-600 bg-cyan-50';
+    case 'wetting_agent':
+      return 'text-green-600 bg-green-50';
+    case 'pre_wash':
+      return 'text-teal-600 bg-teal-50';
+    default:
+      return 'text-gray-600 bg-gray-50';
+  }
+}
+
+export function getVolumePercentage(current: number, original: number): number {
+  if (original === 0) return 0;
+  return Math.round((current / original) * 100);
+}
+
+export function getVolumeStatusColor(percentage: number): string {
+  if (percentage > 50) return 'bg-green-500';
+  if (percentage > 20) return 'bg-yellow-500';
+  return 'bg-red-500';
+}
+
+export function isChemistryExpiringSoon(expiryDate?: string): 'expired' | 'warning' | 'ok' {
+  if (!expiryDate) return 'ok';
+
+  const expiry = new Date(expiryDate);
+  const now = new Date();
+  const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysUntilExpiry < 0) return 'expired';
+  if (daysUntilExpiry <= 7) return 'warning';
+  if (daysUntilExpiry <= 30) return 'warning';
+  return 'ok';
+}
+
+export function canReuseChemistry(chemistry: ChemistryInventory): boolean {
+  return chemistry.times_used < chemistry.max_reuses;
+}

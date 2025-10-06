@@ -567,3 +567,71 @@ export async function syncFilms() {
     };
   }
 }
+
+// Add rolls to existing film inventory
+export async function addRollsToFilm(
+  filmId: string,
+  quantity: number,
+  notes?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    if (quantity <= 0) {
+      throw new Error("Quantity must be positive");
+    }
+
+    // Create usage record for the addition
+    const { error: usageError } = await supabase
+      .from("film_usage")
+      .insert({
+        film_id: filmId,
+        quantity: quantity,
+        usage_type: 'add',
+        usage_note: notes || `Added ${quantity} roll${quantity > 1 ? 's' : ''}`,
+        created_at: new Date().toISOString(),
+      });
+
+    if (usageError) {
+      throw usageError;
+    }
+
+    // Update the film count
+    const { data: currentFilm, error: fetchError } = await supabase
+      .from("films")
+      .select("count")
+      .eq("id", filmId)
+      .single();
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    const newCount = (currentFilm.count || 0) + quantity;
+
+    const { error: updateError } = await supabase
+      .from("films")
+      .update({ count: newCount })
+      .eq("id", filmId);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    revalidatePath("/films");
+    revalidatePath(`/films/${filmId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding rolls to film:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add rolls",
+    };
+  }
+}
