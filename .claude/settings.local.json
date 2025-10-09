@@ -45,7 +45,11 @@
       "Bash(docker stop:*)",
       "Bash(docker rm:*)",
       "Bash(docker compose:*)",
-      "Bash(docker port:*)"
+      "Bash(docker port:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then grep -q FILM_API_SECRET .env.local)",
+      "Bash(else echo \"No .env.local file\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "additionalDirectories": [
