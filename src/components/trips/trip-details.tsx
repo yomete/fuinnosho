@@ -127,9 +127,10 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const [isoFilter, setIsoFilter] = useState<string>("all");
 
   const loadTripData = useCallback(async () => {
-    const [filmsResult, gearResult] = await Promise.all([
+    const [filmsResult, gearResult, availableFilmsResult] = await Promise.all([
       getTripWithFilms(trip.id),
       getTripWithGear(trip.id),
+      getFilmsWithAvailability(),
     ]);
 
     if (filmsResult.films) {
@@ -140,13 +141,21 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       setTripGear(gearResult.gear);
     }
 
+    // Load available films - only show films with actual availability
+    if (availableFilmsResult.data) {
+      const filmsToShow = availableFilmsResult.data.filter((film) => film.available_count > 0);
+      setAvailableFilms(filmsToShow);
+    }
+
     setIsLoading(false);
   }, [trip.id]);
 
   const loadAvailableFilms = useCallback(async () => {
     const result = await getFilmsWithAvailability();
     if (result.data) {
-      setAvailableFilms(result.data.filter((film) => film.available_count > 0));
+      // Only show films with actual availability
+      const filmsToShow = result.data.filter((film) => film.available_count > 0);
+      setAvailableFilms(filmsToShow);
     }
   }, []);
 
@@ -163,8 +172,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
   useEffect(() => {
     loadTripData();
-    loadAvailableFilms();
-  }, [loadTripData, loadAvailableFilms]);
+  }, [loadTripData]);
 
   useEffect(() => {
     loadAvailableGear();
@@ -174,11 +182,10 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     if (!selectedFilmId || quantity < 1) return;
 
     const selectedFilm = availableFilms.find((f) => f.id === selectedFilmId);
+
     if (!selectedFilm || quantity > selectedFilm.available_count) {
       alert(
-        `Cannot add ${quantity} films. Only ${
-          selectedFilm?.available_count || 0
-        } available.`
+        `Cannot add ${quantity} films. Only ${selectedFilm?.available_count || 0} available.`
       );
       return;
     }
@@ -446,11 +453,18 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                       <SelectValue placeholder="Select a film" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableFilms.map((film) => (
-                        <SelectItem key={film.id} value={film.id}>
-                          {film.name} ({film.available_count} available)
-                        </SelectItem>
-                      ))}
+                      {availableFilms.map((film) => {
+                        const expiryDate = film.expiration_date
+                          ? new Date(film.expiration_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                          : '';
+                        return (
+                          <SelectItem key={film.id} value={film.id}>
+                            {film.name}
+                            {expiryDate && ` • Exp: ${expiryDate}`}
+                            {' '}({film.available_count} available)
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <div className="flex items-center gap-1">
@@ -459,9 +473,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                       min="1"
                       max={
                         selectedFilmId
-                          ? availableFilms.find(
-                              (f) => f.id === selectedFilmId
-                            )?.available_count || 1
+                          ? availableFilms.find((f) => f.id === selectedFilmId)?.available_count || 1
                           : 1
                       }
                       value={quantity}

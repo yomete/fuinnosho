@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // Authenticate request via query parameter
@@ -32,8 +32,10 @@ const RESOURCE_MAP: Record<string, string> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { resource: string; id: string } }
+  { params }: { params: Promise<{ resource: string; id: string }> }
 ) {
+  const { resource, id } = await params;
+
   try {
     // Authenticate
     if (!authenticate(request)) {
@@ -43,8 +45,6 @@ export async function GET(
       );
     }
 
-    const resource = params.resource;
-    const id = params.id;
     const tableName = RESOURCE_MAP[resource];
 
     if (!tableName) {
@@ -57,7 +57,7 @@ export async function GET(
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // For films, get with related data
     if (resource === "films") {

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 // Authenticate request via query parameter
@@ -32,8 +32,10 @@ const RESOURCE_MAP: Record<string, string> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { resource: string } }
+  { params }: { params: Promise<{ resource: string }> }
 ) {
+  const { resource } = await params;
+
   try {
     // Authenticate
     if (!authenticate(request)) {
@@ -43,7 +45,6 @@ export async function GET(
       );
     }
 
-    const resource = params.resource;
     const tableName = RESOURCE_MAP[resource];
 
     if (!tableName) {
@@ -56,7 +57,7 @@ export async function GET(
       );
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Build query with optional filters
     let query = supabase.from(tableName).select("*");
