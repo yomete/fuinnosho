@@ -57,6 +57,7 @@ export async function editFilm(
       .eq("id", id)
       .single();
 
+    revalidatePath("/films");
     return { success: true, film: updatedFilm };
   } catch (error) {
     console.error("Error editing film:", error);
@@ -245,7 +246,7 @@ export async function deleteFilm(id: string): Promise<{
 }> {
   try {
     const supabase = await createClient();
-    
+
     // Soft delete: set deleted_at timestamp instead of hard delete
     const { error } = await supabase
       .from("films")
@@ -256,6 +257,7 @@ export async function deleteFilm(id: string): Promise<{
       throw error;
     }
 
+    revalidatePath("/films");
     return { success: true, message: "Film moved to trash" };
   } catch (error) {
     console.error("Error deleting film:", error);
@@ -362,11 +364,17 @@ export async function reduceFilmCount(
 ) {
   const supabase = await createClient();
 
+  // Debug: Check if user is authenticated
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  console.log("Current user:", user?.id, "Error:", userError);
+
   const { data: film, error: filmError } = await supabase
     .from("films")
-    .select("count, is_bulk_film, spooled_cassettes")
+    .select("count, is_bulk_film, spooled_cassettes, user_id")
     .eq("id", filmId)
     .single();
+
+  console.log("Film data:", film, "Film error:", filmError);
 
   if (filmError || !film) {
     return { error: "Film not found" };
@@ -397,7 +405,8 @@ export async function reduceFilmCount(
   });
 
   if (usageError) {
-    return { error: "Failed to record usage" };
+    console.error("Usage error:", usageError);
+    return { error: `Failed to record usage: ${usageError.message}` };
   }
 
   revalidatePath("/films");

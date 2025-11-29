@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Camera, Trash2, Edit } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { EditGear } from "./edit-gear-form";
@@ -22,18 +21,8 @@ interface GearTableProps {
 }
 
 export function GearTable({ gear }: GearTableProps) {
-  const [searchTerm, setSearchTerm] = useState("");
   const [editingGear, setEditingGear] = useState<Gear | null>(null);
   const [deletingGear, setDeletingGear] = useState<Gear | null>(null);
-
-  const filteredGear = gear.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.model && item.model.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
 
   const formatPrice = (price?: number) => {
     if (!price) return "-";
@@ -52,8 +41,8 @@ export function GearTable({ gear }: GearTableProps) {
     return (
       <EmptyState
         icon={Camera}
-        title="No gear yet"
-        description="Add your first piece of photography equipment to get started"
+        title="No gear found"
+        description="Try adjusting your filters or search terms"
       />
     );
   }
@@ -61,16 +50,6 @@ export function GearTable({ gear }: GearTableProps) {
   return (
     <>
       <div className="space-y-4">
-        {/* Search */}
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Search gear..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-
         {/* Table */}
         <div className="rounded-md border">
           <Table>
@@ -87,7 +66,7 @@ export function GearTable({ gear }: GearTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredGear.map((item) => (
+              {gear.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -132,12 +111,6 @@ export function GearTable({ gear }: GearTableProps) {
             </TableBody>
           </Table>
         </div>
-
-        {filteredGear.length === 0 && searchTerm && (
-          <div className="text-center py-8 text-muted-foreground">
-            No gear found matching &quot;{searchTerm}&quot;
-          </div>
-        )}
       </div>
 
       {/* Edit Dialog */}

@@ -89,6 +89,9 @@ export function EditFilm({ film }: EditFilmProps) {
     const result = await deleteFilm(film.id);
     if (result.success) {
       toast.success(result.message || "Film deleted successfully");
+      setIsOpen(false);
+    } else {
+      toast.error(result.error?.message || "Failed to delete film");
     }
   }
 
