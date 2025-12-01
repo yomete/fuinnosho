@@ -12,6 +12,12 @@ import {
 import { columns } from "./columns";
 import { type Film } from "@/lib/utils";
 import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
+import {
+  groupFilms,
+  applyExpansionState,
+  type TableRow as FilmTableRow,
+  isFilmGroup,
+} from "@/lib/film-grouping";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
@@ -52,6 +58,29 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // Consolidation state
+  const [enableConsolidation, setEnableConsolidation] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("filmTableConsolidation");
+      return saved !== null ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
+
+  const [expansionState, setExpansionState] = useState<Map<string, boolean>>(
+    new Map()
+  );
+
+  // Save consolidation preference
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "filmTableConsolidation",
+        JSON.stringify(enableConsolidation)
+      );
+    }
+  }, [enableConsolidation]);
 
   // Sync URL params on column filter changes (existing functionality)
   useEffect(() => {
@@ -95,6 +124,26 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     return result;
   }, [films, filterState.hideZeroQuantity]);
 
+  // Group and expand films based on consolidation settings
+  const tableData: FilmTableRow[] = useMemo(() => {
+    // First group the films if consolidation is enabled
+    const grouped = groupFilms(filteredFilms, {
+      enableGrouping: enableConsolidation,
+    });
+
+    // Then apply expansion state
+    return applyExpansionState(grouped, expansionState);
+  }, [filteredFilms, enableConsolidation, expansionState]);
+
+  // Toggle expansion for a group
+  const toggleExpansion = useCallback((groupKey: string) => {
+    setExpansionState((prev) => {
+      const next = new Map(prev);
+      next.set(groupKey, !prev.get(groupKey));
+      return next;
+    });
+  }, []);
+
   // Update table column filters when filter state changes
   useEffect(() => {
     const newColumnFilters: ColumnFiltersState = [];
@@ -136,7 +185,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   }, [filterState]);
 
   const table = useReactTable({
-    data: filteredFilms,
+    data: tableData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -146,6 +195,9 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     state: {
       sorting,
       columnFilters,
+    },
+    meta: {
+      toggleExpansion,
     },
   });
 
@@ -246,14 +298,18 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
 
   return (
     <div className="flex flex-col gap-4 p-2 sm:p-4">
-      <EnhancedFiltersV2
-        films={films}
-        filterState={filterState}
-        onFilterAction={handleFilterAction}
-        activeFilters={activeFilters}
-        onRemoveFilter={handleRemoveFilter}
-        onClearAllFilters={handleClearAllFilters}
-      />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1">
+          <EnhancedFiltersV2
+            films={films}
+            filterState={filterState}
+            onFilterAction={handleFilterAction}
+            activeFilters={activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+            onClearAllFilters={handleClearAllFilters}
+          />
+        </div>
+      </div>
       <div className="rounded-md border">
         <div className="overflow-x-auto">
           <Table className="min-w-[800px]">
@@ -289,21 +345,47 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                table.getRowModel().rows.map((row, index) => {
+                  const rowData: FilmTableRow = row.original;
+                  const isGroup = isFilmGroup(rowData);
+
+                  // Check if this is a child row (previous row was a group that's expanded)
+                  const prevRow = index > 0 ? table.getRowModel().rows[index - 1]?.original : null;
+                  const isChildRow = !isGroup && prevRow && isFilmGroup(prevRow) && prevRow.isExpanded;
+
+                  return (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                      className={cn(
+                        isGroup && "bg-muted/30 hover:bg-muted/40 cursor-pointer",
+                        isChildRow && "bg-background"
+                      )}
+                      onClick={
+                        isGroup
+                          ? () => toggleExpansion(rowData.groupKey)
+                          : undefined
+                      }
+                    >
+                      {row.getVisibleCells().map((cell, cellIndex) => {
+                        // Add indentation to child rows, but not the first cell (expander)
+                        const shouldIndent = isChildRow && cellIndex === 1;
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(shouldIndent && "pl-12")}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })
               ) : (
                 <TableRow>
                   <TableCell

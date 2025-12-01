@@ -22,6 +22,9 @@ interface ReduceCountDialogProps {
   filmName: string;
   currentCount?: number;
   onCountUpdated?: (newCount: number) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: React.ReactNode;
 }
 
 export function ReduceCountDialog({
@@ -29,8 +32,15 @@ export function ReduceCountDialog({
   filmName,
   currentCount = 0,
   onCountUpdated,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  trigger,
 }: ReduceCountDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use controlled open state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange !== undefined ? controlledOnOpenChange : setInternalOpen;
   const [quantity, setQuantity] = useState(1);
   const [usageNote, setUsageNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,12 +63,16 @@ export function ReduceCountDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <MinusCircle className="h-4 w-4 mr-1" />
-          Use Film
-        </Button>
-      </DialogTrigger>
+      {trigger !== undefined ? (
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            <MinusCircle className="h-4 w-4 mr-1" />
+            Use Film
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Record Film Usage</DialogTitle>

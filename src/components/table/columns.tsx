@@ -6,6 +6,7 @@ import { EditFilm } from "@/components/film-form/edit-form";
 import { ReduceCountDialog } from "@/components/films/reduce-count-dialog";
 import { UsageHistoryDialog } from "@/components/films/usage-history-dialog";
 import { SpoolBulkDialog } from "@/components/films/spool-bulk-dialog";
+import { SelectFilmFromGroupDialog } from "@/components/films/select-film-from-group-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,20 +14,50 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, History, Eye } from "lucide-react";
+import {
+  MoreHorizontal,
+  Edit,
+  History,
+  Eye,
+  ChevronRight,
+  ChevronDown,
+  MinusCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { type TableRow, isFilmGroup } from "@/lib/film-grouping";
 
-const ActionsCell = ({ row }: { row: { original: Film } }) => {
-  const film = row.original;
+const ActionsCell = ({ row, table }: { row: any; table: any }) => {
+  const rowData: TableRow = row.original;
+  const isGroup = isFilmGroup(rowData);
+
+  // Always call hooks in the same order (Rules of Hooks)
+  const [selectDialogOpen, setSelectDialogOpen] = useState(false);
+  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
+  const [reduceDialogOpen, setReduceDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [filmData, setFilmData] = useState(film);
+  const [filmData, setFilmData] = useState(isGroup ? ({} as Film) : (rowData as Film));
 
   // Sync local state when film prop changes
   useEffect(() => {
-    setFilmData(film);
-  }, [film]);
+    if (!isGroup) {
+      setFilmData(rowData as Film);
+    }
+  }, [rowData, isGroup]);
 
+  // Handlers for grouped films
+  const handleFilmSelected = (film: Film) => {
+    setSelectedFilm(film);
+    // Open reduce dialog after selection dialog is confirmed to close
+    setTimeout(() => setReduceDialogOpen(true), 150);
+  };
+
+  const handleGroupCountUpdated = () => {
+    setReduceDialogOpen(false);
+    setSelectedFilm(null);
+  };
+
+  // Handlers for individual films
   const handleSpoolingComplete = (
     remainingExposures: number,
     spooledCassettes: number
@@ -43,13 +74,54 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
     setFilmData((prev) => ({
       ...prev,
       count: newCount,
-      spooled_cassettes: film.is_bulk_film ? newCount : prev.spooled_cassettes,
+      spooled_cassettes: filmData.is_bulk_film ? newCount : prev.spooled_cassettes,
     }));
   };
 
+  // Render for FilmGroup
+  if (isGroup) {
+    const filmGroup = rowData;
+
+    return (
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent row click from toggling expansion
+            setSelectDialogOpen(true);
+          }}
+        >
+          <MinusCircle className="h-4 w-4 mr-1" />
+          Use Film
+        </Button>
+
+        <SelectFilmFromGroupDialog
+          filmGroup={filmGroup}
+          open={selectDialogOpen}
+          onOpenChange={setSelectDialogOpen}
+          onFilmSelected={handleFilmSelected}
+        />
+
+        {selectedFilm && (
+          <ReduceCountDialog
+            filmId={selectedFilm.id}
+            filmName={selectedFilm.name}
+            currentCount={selectedFilm.count || 0}
+            onCountUpdated={handleGroupCountUpdated}
+            open={reduceDialogOpen}
+            onOpenChange={setReduceDialogOpen}
+            trigger={<span style={{ display: "none" }} />}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Render for individual Film
   return (
     <div className="flex items-center gap-2">
-      {film.is_bulk_film && (
+      {filmData.is_bulk_film && (
         <SpoolBulkDialog
           filmId={filmData.id}
           filmName={filmData.name}
@@ -74,7 +146,7 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem asChild>
-            <Link href={`/film/${film.id}`} className="flex items-center">
+            <Link href={`/film/${filmData.id}`} className="flex items-center">
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </Link>
@@ -86,7 +158,7 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
               // Small delay to ensure dropdown closes before dialog opens
               setTimeout(() => {
                 const editButton = document.querySelector(
-                  `[data-edit-film="${film.id}"] button`
+                  `[data-edit-film="${filmData.id}"] button`
                 );
                 if (editButton) {
                   (editButton as HTMLElement).click();
@@ -103,7 +175,7 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
               setDropdownOpen(false);
               setTimeout(() => {
                 const historyButton = document.querySelector(
-                  `[data-history-film="${film.id}"] button`
+                  `[data-history-film="${filmData.id}"] button`
                 );
                 if (historyButton) {
                   (historyButton as HTMLElement).click();
@@ -118,14 +190,14 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
       </DropdownMenu>
       {/* Hidden dialog triggers with data attributes */}
       <div style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
-        <div data-edit-film={film.id}>
-          <EditFilm film={film} />
+        <div data-edit-film={filmData.id}>
+          <EditFilm film={filmData} />
         </div>
-        <div data-history-film={film.id}>
+        <div data-history-film={filmData.id}>
           <UsageHistoryDialog
-            filmId={film.id}
-            filmName={film.name}
-            currentCount={film.count}
+            filmId={filmData.id}
+            filmName={filmData.name}
+            currentCount={filmData.count}
           />
         </div>
       </div>
@@ -133,7 +205,34 @@ const ActionsCell = ({ row }: { row: { original: Film } }) => {
   );
 };
 
-export const columns: ColumnDef<Film>[] = [
+export const columns: ColumnDef<TableRow>[] = [
+  {
+    id: "expander",
+    header: "",
+    cell: ({ row, table }) => {
+      const rowData: TableRow = row.original;
+      if (isFilmGroup(rowData)) {
+        const filmGroup = rowData;
+        const toggleExpansion = (table.options.meta as any)?.toggleExpansion;
+
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => toggleExpansion?.(filmGroup.groupKey)}
+          >
+            {filmGroup.isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        );
+      }
+      return null;
+    },
+  },
   {
     accessorKey: "name",
     header: "Name",
@@ -227,12 +326,22 @@ export const columns: ColumnDef<Film>[] = [
     accessorKey: "count",
     header: "Bulk Status / Count",
     cell: ({ row }) => {
-      const film = row.original;
+      const rowData: TableRow = row.original;
+
+      // For FilmGroup, show total count
+      if (isFilmGroup(rowData)) {
+        return (
+          <div className="text-center">
+            <span className="font-medium">{rowData.count || 0}</span>
+            <div className="text-xs text-muted-foreground">rolls</div>
+          </div>
+        );
+      }
+
+      const film = rowData as Film;
       if (film.is_bulk_film) {
         const remainingExposures = film.bulk_remaining_exposures || 0;
         const spooledCassettes = film.spooled_cassettes || 0;
-        // const totalExposures =
-        //   (film.calculated_rolls || 0) * (film.format === "120" ? 12 : 36);
 
         return (
           <div className="text-center space-y-0.5">
@@ -265,7 +374,30 @@ export const columns: ColumnDef<Film>[] = [
     accessorKey: "available_count",
     header: "Available for Shooting",
     cell: ({ row }) => {
-      const film = row.original;
+      const rowData: TableRow = row.original;
+
+      // For FilmGroup, show total available
+      if (isFilmGroup(rowData)) {
+        const available = rowData.available_count ?? 0;
+        const isLow = available <= 2 && available > 0;
+        const isEmpty = available === 0;
+
+        return (
+          <span
+            className={`font-medium ${
+              isEmpty
+                ? "text-red-600"
+                : isLow
+                ? "text-yellow-600"
+                : "text-green-600"
+            }`}
+          >
+            {available}
+          </span>
+        );
+      }
+
+      const film = rowData as Film;
 
       if (film.is_bulk_film) {
         // For bulk films, available = spooled cassettes - reserved
@@ -315,6 +447,6 @@ export const columns: ColumnDef<Film>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => <ActionsCell row={row} />,
+    cell: ({ row, table }) => <ActionsCell row={row} table={table} />,
   },
 ];
