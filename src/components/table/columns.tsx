@@ -27,7 +27,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { type TableRow, isFilmGroup } from "@/lib/film-grouping";
 
-const ActionsCell = ({ row, table }: { row: any; table: any }) => {
+const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
   const rowData: TableRow = row.original;
   const isGroup = isFilmGroup(rowData);
 
@@ -213,7 +213,9 @@ export const columns: ColumnDef<TableRow>[] = [
       const rowData: TableRow = row.original;
       if (isFilmGroup(rowData)) {
         const filmGroup = rowData;
-        const toggleExpansion = (table.options.meta as any)?.toggleExpansion;
+        const toggleExpansion = (
+          table.options.meta as { toggleExpansion?: (groupKey: string) => void }
+        )?.toggleExpansion;
 
         return (
           <Button
@@ -447,6 +449,6 @@ export const columns: ColumnDef<TableRow>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row, table }) => <ActionsCell row={row} table={table} />,
+    cell: ({ row }) => <ActionsCell row={row} />,
   },
 ];

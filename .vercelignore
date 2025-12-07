@@ -1,0 +1,13 @@
+# Exclude build artifacts
+dist/
+
+# Exclude MCP server files (not needed for Next.js deployment)
+mcp-server*.ts
+mcp-server*.js
+mcp-diagnostic*.js
+test-mcp-*.js
+
+# Exclude workspace packages that aren't part of the main app
+sdk-node/
+backend-go/
+

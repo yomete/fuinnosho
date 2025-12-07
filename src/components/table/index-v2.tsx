@@ -60,7 +60,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Consolidation state
-  const [enableConsolidation, setEnableConsolidation] = useState(() => {
+  const [enableConsolidation] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("filmTableConsolidation");
       return saved !== null ? JSON.parse(saved) : true;
