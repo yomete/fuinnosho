@@ -49,7 +49,10 @@
       "Bash(if [ -f .env.local ])",
       "Bash(then grep -q FILM_API_SECRET .env.local)",
       "Bash(else echo \"No .env.local file\")",
-      "Bash(fi)"
+      "Bash(fi)",
+      "Bash(if [ -f /Users/yomi/Documents/batcave/fuinnosho/.env.local ])",
+      "Bash(then grep -q \"FILM_API_SECRET\" /Users/yomi/Documents/batcave/fuinnosho/.env.local)",
+      "Bash(openssl rand:*)"
     ],
     "deny": [],
     "additionalDirectories": [

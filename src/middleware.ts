@@ -22,8 +22,6 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  console.log("isProtectedRoute", isProtectedRoute);
-
   // Auth routes (login/register)
   const authRoutes = [
     "/login",
@@ -36,10 +34,9 @@ export async function middleware(request: NextRequest) {
   );
 
   // Redirect if accessing protected route without session
-  // temp commenting out
-  // if (isProtectedRoute && !user) {
-  //   return NextResponse.redirect(new URL("/login", request.url));
-  // }
+  if (isProtectedRoute && !user) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
 
   // Redirect if accessing auth routes with session
   if (isAuthRoute && user) {

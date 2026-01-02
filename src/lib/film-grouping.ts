@@ -52,7 +52,7 @@ export function isFilmGroup(row: TableRow): row is FilmGroup {
  * Creates a unique grouping key from a film's identifying properties
  */
 export function createGroupKey(film: Film): string {
-  return `${film.name}|${film.brand}|${film.format}|${film.iso}|${film.type}`;
+  return `${film.name}|${film.brand}|${film.format}|${film.iso}|${film.type}|${film.is_ecn ?? false}`;
 }
 
 /**
