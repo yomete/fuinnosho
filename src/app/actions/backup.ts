@@ -9,10 +9,6 @@ export interface BackupData {
   trips: Record<string, unknown>[]
   trip_films: Record<string, unknown>[]
   trip_gear: Record<string, unknown>[]
-  challenges: Record<string, unknown>[]
-  challenge_prompts: Record<string, unknown>[]
-  challenge_progress: Record<string, unknown>[]
-  challenge_film_rolls: Record<string, unknown>[]
   metadata: {
     exportedAt: string
     exportedBy: string
@@ -22,7 +18,7 @@ export interface BackupData {
 
 export async function generateFullBackup(): Promise<BackupData> {
   const supabase = await createClient()
-  
+
   // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (userError || !user) {
@@ -38,18 +34,14 @@ export async function generateFullBackup(): Promise<BackupData> {
     gear,
     trips,
     tripFilms,
-    tripGear,
-    challenges,
-    challengePrompts,
-    challengeProgress,
-    challengeFilmRolls
+    tripGear
   ] = await Promise.all([
     // Films (including soft-deleted)
     supabase
       .from('films')
       .select('*')
       .eq('user_id', user.id),
-    
+
     // Film Usage
     supabase
       .from('film_usage')
@@ -58,19 +50,19 @@ export async function generateFullBackup(): Promise<BackupData> {
         films!inner(user_id)
       `)
       .eq('films.user_id', user.id),
-    
+
     // Gear
     supabase
       .from('gear')
       .select('*')
       .eq('user_id', user.id),
-    
+
     // Trips
     supabase
       .from('trips')
       .select('*')
       .eq('user_id', user.id),
-    
+
     // Trip Films
     supabase
       .from('trip_films')
@@ -79,7 +71,7 @@ export async function generateFullBackup(): Promise<BackupData> {
         trips!inner(user_id)
       `)
       .eq('trips.user_id', user.id),
-    
+
     // Trip Gear
     supabase
       .from('trip_gear')
@@ -87,34 +79,7 @@ export async function generateFullBackup(): Promise<BackupData> {
         *,
         trips!inner(user_id)
       `)
-      .eq('trips.user_id', user.id),
-    
-    // Challenges
-    supabase
-      .from('challenges')
-      .select('*')
-      .eq('user_id', user.id),
-    
-    // Challenge Prompts (for user's challenges)
-    supabase
-      .from('challenge_prompts')
-      .select(`
-        *,
-        challenges!inner(user_id)
-      `)
-      .eq('challenges.user_id', user.id),
-    
-    // Challenge Progress
-    supabase
-      .from('challenge_progress')
-      .select('*')
-      .eq('user_id', user.id),
-    
-    // Challenge Film Rolls
-    supabase
-      .from('challenge_film_rolls')
-      .select('*')
-      .eq('user_id', user.id)
+      .eq('trips.user_id', user.id)
   ])
 
   // Check for errors
@@ -124,11 +89,7 @@ export async function generateFullBackup(): Promise<BackupData> {
     gear.error,
     trips.error,
     tripFilms.error,
-    tripGear.error,
-    challenges.error,
-    challengePrompts.error,
-    challengeProgress.error,
-    challengeFilmRolls.error
+    tripGear.error
   ].filter(Boolean)
 
   if (errors.length > 0) {
@@ -143,11 +104,7 @@ export async function generateFullBackup(): Promise<BackupData> {
     gear.data?.length || 0,
     trips.data?.length || 0,
     tripFilms.data?.length || 0,
-    tripGear.data?.length || 0,
-    challenges.data?.length || 0,
-    challengePrompts.data?.length || 0,
-    challengeProgress.data?.length || 0,
-    challengeFilmRolls.data?.length || 0
+    tripGear.data?.length || 0
   ].reduce((sum, count) => sum + count, 0)
 
   console.log('✅ Backup completed:', {
@@ -155,7 +112,6 @@ export async function generateFullBackup(): Promise<BackupData> {
     film_usage: filmUsage.data?.length || 0,
     gear: gear.data?.length || 0,
     trips: trips.data?.length || 0,
-    challenges: challenges.data?.length || 0,
     totalRecords
   })
 
@@ -166,10 +122,6 @@ export async function generateFullBackup(): Promise<BackupData> {
     trips: trips.data || [],
     trip_films: tripFilms.data || [],
     trip_gear: tripGear.data || [],
-    challenges: challenges.data || [],
-    challenge_prompts: challengePrompts.data || [],
-    challenge_progress: challengeProgress.data || [],
-    challenge_film_rolls: challengeFilmRolls.data || [],
     metadata: {
       exportedAt: new Date().toISOString(),
       exportedBy: user.email || user.id,
@@ -180,7 +132,7 @@ export async function generateFullBackup(): Promise<BackupData> {
 
 export async function generateTableBackup(tableName: string): Promise<Record<string, unknown>[]> {
   const supabase = await createClient()
-  
+
   // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (userError || !user) {
@@ -209,24 +161,12 @@ export async function generateTableBackup(tableName: string): Promise<Record<str
     case 'trip_gear':
       query = supabase.from('trip_gear').select('*, trips!inner(user_id)').eq('trips.user_id', user.id)
       break
-    case 'challenges':
-      query = supabase.from('challenges').select('*').eq('user_id', user.id)
-      break
-    case 'challenge_prompts':
-      query = supabase.from('challenge_prompts').select('*, challenges!inner(user_id)').eq('challenges.user_id', user.id)
-      break
-    case 'challenge_progress':
-      query = supabase.from('challenge_progress').select('*').eq('user_id', user.id)
-      break
-    case 'challenge_film_rolls':
-      query = supabase.from('challenge_film_rolls').select('*').eq('user_id', user.id)
-      break
     default:
       throw new Error(`Unknown table: ${tableName}`)
   }
 
   const { data, error } = await query
-  
+
   if (error) {
     console.error(`Error backing up ${tableName}:`, error)
     throw new Error(`Failed to backup ${tableName}: ${error.message}`)
@@ -238,7 +178,7 @@ export async function generateTableBackup(tableName: string): Promise<Record<str
 
 export async function getBackupStats() {
   const supabase = await createClient()
-  
+
   // Get current user
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   if (userError || !user) {
@@ -252,22 +192,14 @@ export async function getBackupStats() {
     gearCount,
     tripsCount,
     tripFilmsCount,
-    tripGearCount,
-    challengesCount,
-    challengePromptsCount,
-    challengeProgressCount,
-    challengeFilmRollsCount
+    tripGearCount
   ] = await Promise.all([
     supabase.from('films').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('film_usage').select('*, films!inner(user_id)', { count: 'exact', head: true }).eq('films.user_id', user.id),
     supabase.from('gear').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('trips').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
     supabase.from('trip_films').select('*, trips!inner(user_id)', { count: 'exact', head: true }).eq('trips.user_id', user.id),
-    supabase.from('trip_gear').select('*, trips!inner(user_id)', { count: 'exact', head: true }).eq('trips.user_id', user.id),
-    supabase.from('challenges').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('challenge_prompts').select('*, challenges!inner(user_id)', { count: 'exact', head: true }).eq('challenges.user_id', user.id),
-    supabase.from('challenge_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('challenge_film_rolls').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    supabase.from('trip_gear').select('*, trips!inner(user_id)', { count: 'exact', head: true }).eq('trips.user_id', user.id)
   ])
 
   return {
@@ -277,21 +209,13 @@ export async function getBackupStats() {
     trips: tripsCount.count || 0,
     trip_films: tripFilmsCount.count || 0,
     trip_gear: tripGearCount.count || 0,
-    challenges: challengesCount.count || 0,
-    challenge_prompts: challengePromptsCount.count || 0,
-    challenge_progress: challengeProgressCount.count || 0,
-    challenge_film_rolls: challengeFilmRollsCount.count || 0,
     total: [
       filmsCount.count,
       filmUsageCount.count,
       gearCount.count,
       tripsCount.count,
       tripFilmsCount.count,
-      tripGearCount.count,
-      challengesCount.count,
-      challengePromptsCount.count,
-      challengeProgressCount.count,
-      challengeFilmRollsCount.count
+      tripGearCount.count
     ].reduce((sum: number, count) => sum + (count || 0), 0)
   }
 }

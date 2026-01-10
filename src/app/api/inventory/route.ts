@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
       filmsResult,
       gearResult,
       tripsResult,
-      challengesResult,
       chemistryResult,
       recipesResult,
       developmentSessionsResult,
@@ -39,7 +38,6 @@ export async function GET(request: NextRequest) {
       supabase.from("films").select("*").is("deleted_at", null).order("created_at", { ascending: false }),
       supabase.from("gear").select("*").order("created_at", { ascending: false }),
       supabase.from("trips").select("*").order("created_at", { ascending: false }),
-      supabase.from("challenges").select("*").order("created_at", { ascending: false }),
       supabase.from("chemistry_inventory").select("*").order("created_at", { ascending: false }),
       supabase.from("development_recipes").select("*").order("created_at", { ascending: false }),
       supabase.from("development_sessions").select("*").order("created_at", { ascending: false }),
@@ -49,7 +47,6 @@ export async function GET(request: NextRequest) {
     if (filmsResult.error) throw filmsResult.error;
     if (gearResult.error) throw gearResult.error;
     if (tripsResult.error) throw tripsResult.error;
-    if (challengesResult.error) throw challengesResult.error;
     if (chemistryResult.error) throw chemistryResult.error;
     if (recipesResult.error) throw recipesResult.error;
     if (developmentSessionsResult.error) throw developmentSessionsResult.error;
@@ -58,7 +55,6 @@ export async function GET(request: NextRequest) {
       films: filmsResult.data,
       gear: gearResult.data,
       trips: tripsResult.data,
-      challenges: challengesResult.data,
       chemistry: chemistryResult.data,
       recipes: recipesResult.data,
       development_sessions: developmentSessionsResult.data,
@@ -68,7 +64,6 @@ export async function GET(request: NextRequest) {
           films: filmsResult.data?.length || 0,
           gear: gearResult.data?.length || 0,
           trips: tripsResult.data?.length || 0,
-          challenges: challengesResult.data?.length || 0,
           chemistry: chemistryResult.data?.length || 0,
           recipes: recipesResult.data?.length || 0,
           development_sessions: developmentSessionsResult.data?.length || 0,

@@ -52,7 +52,8 @@
       "Bash(fi)",
       "Bash(if [ -f /Users/yomi/Documents/batcave/fuinnosho/.env.local ])",
       "Bash(then grep -q \"FILM_API_SECRET\" /Users/yomi/Documents/batcave/fuinnosho/.env.local)",
-      "Bash(openssl rand:*)"
+      "Bash(openssl rand:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "additionalDirectories": [

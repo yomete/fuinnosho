@@ -50,17 +50,8 @@ import {
   Filter,
   SortAsc,
   SortDesc,
-  BookOpen,
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/spinner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ShotLogger } from "@/components/shots/shot-logger";
 
 interface TripDetailsProps {
   trip: Trip;
@@ -640,33 +631,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex items-center gap-1.5"
-                            >
-                              <BookOpen className="h-3.5 w-3.5" />
-                              Log Shots
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-4xl">
-                            <DialogHeader>
-                              <DialogTitle>
-                                Shot Logger: {film.name}
-                              </DialogTitle>
-                            </DialogHeader>
-                            <ShotLogger
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              tripFilm={film as any}
-                              gear={tripGear}
-                            />
-                          </DialogContent>
-                        </Dialog>
-
-                        <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1">
                           {editingFilmId === film.id ? (
                             <>
                               <Button
@@ -707,7 +672,6 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                               </Button>
                             </>
                           )}
-                        </div>
                       </div>
                     </div>
                   ))}

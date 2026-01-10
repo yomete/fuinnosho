@@ -16,12 +16,10 @@ import {
   Film,
   Camera,
   MapPin,
-  Target,
   BarChart3,
   Archive,
   FileText,
   Loader2,
-  CheckCircle,
   AlertCircle,
 } from "lucide-react";
 import { generateFullBackup, generateTableBackup } from "@/app/actions/backup";
@@ -35,10 +33,6 @@ interface BackupDashboardProps {
     trips: number;
     trip_films: number;
     trip_gear: number;
-    challenges: number;
-    challenge_prompts: number;
-    challenge_progress: number;
-    challenge_film_rolls: number;
     total: number;
   };
   user: User;
@@ -85,20 +79,6 @@ export function BackupDashboard({ stats, user }: BackupDashboardProps) {
       description: "Photography trips",
       icon: MapPin,
       count: stats.trips,
-    },
-    {
-      key: "challenges",
-      name: "Challenges",
-      description: "Photography challenges",
-      icon: Target,
-      count: stats.challenges,
-    },
-    {
-      key: "challenge_progress",
-      name: "Challenge Progress",
-      description: "Progress tracking",
-      icon: CheckCircle,
-      count: stats.challenge_progress,
     },
   ];
 

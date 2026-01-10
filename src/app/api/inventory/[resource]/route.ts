@@ -19,13 +19,10 @@ const RESOURCE_MAP: Record<string, string> = {
   films: "films",
   gear: "gear",
   trips: "trips",
-  challenges: "challenges",
   chemistry: "chemistry_inventory",
   recipes: "development_recipes",
   sessions: "development_sessions",
   "film-usage": "film_usage",
-  "challenge-prompts": "challenge_prompts",
-  "challenge-progress": "challenge_progress",
   "trip-films": "trip_films",
   "trip-gear": "trip_gear",
 };
