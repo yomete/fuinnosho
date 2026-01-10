@@ -25,6 +25,23 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { createClient } from "@supabase/supabase-js";
+// Format dimensions for exposure calculations
+const formatDimensions = {
+    "35mm": { rollLength: 36, bulkLengthPerRoll: 1.65 },
+    "120": { rollLength: 12, bulkLengthPerRoll: 0.8 },
+    "4x5": { sheetsPerBox: 10, bulkLengthPerRoll: 0 },
+};
+// Get exposures per roll/sheet for a given format
+function getExposuresPerRoll(format) {
+    const formatInfo = formatDimensions[format];
+    if (!formatInfo)
+        return 36; // default fallback for unknown formats
+    if (formatInfo.rollLength !== undefined)
+        return formatInfo.rollLength;
+    if (formatInfo.sheetsPerBox !== undefined)
+        return formatInfo.sheetsPerBox;
+    return 36;
+}
 class FilmInventoryMCPServer {
     constructor() {
         // Log server startup
@@ -1564,10 +1581,15 @@ class FilmInventoryMCPServer {
         }
         if (is_bulk_film && bulk_length_meters) {
             filmData.bulk_length_meters = bulk_length_meters;
-            // Calculate number of rolls from bulk length (assuming 36 exposures per roll = ~1.5m)
+            // Calculate number of rolls from bulk length using format-specific values
+            const formatInfo = formatDimensions[format];
+            const bulkLengthPerRoll = formatInfo?.bulkLengthPerRoll || 1.5;
             filmData.bulk_quantity = count;
-            filmData.calculated_rolls = Math.floor(bulk_length_meters / 1.5);
+            filmData.calculated_rolls = Math.floor(bulk_length_meters / bulkLengthPerRoll);
             filmData.count = filmData.calculated_rolls;
+            // Calculate initial exposures based on format
+            filmData.bulk_remaining_exposures = filmData.calculated_rolls * getExposuresPerRoll(format);
+            filmData.spooled_cassettes = 0;
         }
         const { data: film, error } = await this.supabase
             .from("films")

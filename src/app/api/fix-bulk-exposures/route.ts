@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getExposuresPerRoll } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function POST() {
@@ -22,15 +23,7 @@ export async function POST() {
       // Only update if bulk_remaining_exposures is null/undefined
       if (film.bulk_remaining_exposures === null || film.bulk_remaining_exposures === undefined) {
         // Calculate exposures based on format and calculated_rolls
-        let exposuresPerRoll;
-        if (film.format === '35mm') {
-          exposuresPerRoll = 36;
-        } else if (film.format === '120') {
-          exposuresPerRoll = 12;
-        } else {
-          exposuresPerRoll = 36; // default
-        }
-
+        const exposuresPerRoll = getExposuresPerRoll(film.format);
         const totalExposures = (film.calculated_rolls || 0) * exposuresPerRoll;
 
         const { error: updateError } = await supabase

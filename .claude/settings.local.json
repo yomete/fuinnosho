@@ -53,7 +53,13 @@
       "Bash(if [ -f /Users/yomi/Documents/batcave/fuinnosho/.env.local ])",
       "Bash(then grep -q \"FILM_API_SECRET\" /Users/yomi/Documents/batcave/fuinnosho/.env.local)",
       "Bash(openssl rand:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(npm test:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm exec next build:*)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -1,6 +1,6 @@
 "use server";
 
-import { Film, FilmUsage, Trip } from "@/lib/utils";
+import { Film, FilmUsage, Trip, getExposuresPerRoll } from "@/lib/utils";
 
 interface TripFilmReservation {
   quantity: number;
@@ -98,10 +98,10 @@ export async function createFilm(
       bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
       bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
       calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
-      bulk_remaining_exposures: validatedData.is_bulk_film ? 
-        (validatedData.bulk_remaining_exposures !== undefined ? Number(validatedData.bulk_remaining_exposures) : 
+      bulk_remaining_exposures: validatedData.is_bulk_film ?
+        (validatedData.bulk_remaining_exposures !== undefined ? Number(validatedData.bulk_remaining_exposures) :
           // Calculate initial exposures from bulk film length and format
-          Number(validatedData.calculated_rolls || 0) * (validatedData.format === '120' ? 12 : 36)) : undefined,
+          Number(validatedData.calculated_rolls || 0) * getExposuresPerRoll(validatedData.format)) : undefined,
       spooled_cassettes: validatedData.is_bulk_film ? (validatedData.spooled_cassettes !== undefined ? Number(validatedData.spooled_cassettes) : 0) : undefined,
     };
 
@@ -361,7 +361,8 @@ export async function logout() {
 export async function reduceFilmCount(
   filmId: string,
   quantity: number,
-  usageNote: string
+  usageNote: string,
+  tripId?: string
 ) {
   const supabase = await createClient();
 
@@ -403,6 +404,7 @@ export async function reduceFilmCount(
     quantity,
     usage_note: usageNote,
     usage_type: 'shoot', // This is for shooting/using spooled cassettes
+    ...(tripId && { trip_id: tripId }),
   });
 
   if (usageError) {

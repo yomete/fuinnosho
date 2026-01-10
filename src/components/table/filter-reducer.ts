@@ -7,11 +7,11 @@ function toggleInArray<T>(array: T[], item: T): T[] {
     : [...array, item];
 }
 
-// Initial filter state
+// Initial filter state - always returns consistent values for SSR hydration
 export function createInitialFilterState(uniqueIsos: number[]): FilterState {
   const minIso = Math.min(...uniqueIsos);
   const maxIso = Math.max(...uniqueIsos);
-  
+
   return {
     name: "",
     brands: [],
@@ -23,13 +23,7 @@ export function createInitialFilterState(uniqueIsos: number[]): FilterState {
     notTypes: [],
     notFormats: [],
     notIsos: [],
-    hideZeroQuantity: (() => {
-      if (typeof window !== "undefined") {
-        const saved = localStorage.getItem("hideZeroQuantityFilms");
-        return saved === "true";
-      }
-      return false;
-    })(),
+    hideZeroQuantity: false, // Always false initially, synced from localStorage via useEffect
     expandedSections: {
       brands: false,
       types: false,

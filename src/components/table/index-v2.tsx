@@ -59,14 +59,8 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Consolidation state
-  const [enableConsolidation] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("filmTableConsolidation");
-      return saved !== null ? JSON.parse(saved) : true;
-    }
-    return true;
-  });
+  // Consolidation state - always start with true for SSR, sync from localStorage after hydration
+  const [enableConsolidation, setEnableConsolidation] = useState(true);
 
   const [expansionState, setExpansionState] = useState<Map<string, boolean>>(
     new Map()
@@ -82,10 +76,26 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
   }, [enableConsolidation]);
 
+  // Sync localStorage preferences after hydration to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Sync hideZeroQuantity
+      const savedHideZero = localStorage.getItem("hideZeroQuantityFilms");
+      if (savedHideZero === "true") {
+        dispatch({ type: "TOGGLE_HIDE_ZERO", value: true });
+      }
+      // Sync consolidation
+      const savedConsolidation = localStorage.getItem("filmTableConsolidation");
+      if (savedConsolidation !== null) {
+        setEnableConsolidation(JSON.parse(savedConsolidation));
+      }
+    }
+  }, []);
+
   // Sync URL params on column filter changes (existing functionality)
   useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    
+    const params = new URLSearchParams();
+
     columnFilters.forEach((filter) => {
       if (filter.value !== undefined && filter.value !== "") {
         if (Array.isArray(filter.value)) {
@@ -93,18 +103,21 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
         } else {
           params.set(filter.id, String(filter.value));
         }
-      } else {
-        params.delete(filter.id);
       }
     });
 
-    const timeoutId = setTimeout(() => {
-      const search = params.toString();
-      const query = search ? `?${search}` : "";
-      router.replace(`${pathname}${query}`, { scroll: false });
-    }, 300);
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
 
-    return () => clearTimeout(timeoutId);
+    // Only update URL if the query actually changed to avoid infinite loops
+    if (newQuery !== currentQuery) {
+      const timeoutId = setTimeout(() => {
+        const query = newQuery ? `?${newQuery}` : pathname;
+        router.replace(query, { scroll: false });
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
   }, [columnFilters, pathname, router, searchParams]);
 
   // Apply filters to data based on current filter state

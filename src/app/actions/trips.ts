@@ -747,11 +747,11 @@ async function consumeTripFilms(tripId: string): Promise<{ success: boolean; err
       return { success: true }; // No films to consume
     }
 
-    // Check if films have already been consumed for this trip
+    // Check if films have already been consumed for this trip using trip_id
     const { data: existingUsage, error: usageError } = await supabase
       .from("film_usage")
       .select("film_id")
-      .like("usage_note", `%Trip: ${trip.title}%`);
+      .eq("trip_id", tripId);
 
     if (usageError) {
       return { success: false, error: "Failed to check existing usage" };
@@ -768,7 +768,8 @@ async function consumeTripFilms(tripId: string): Promise<{ success: boolean; err
       const result = await reduceFilmCount(
         tripFilm.film_id,
         tripFilm.quantity,
-        `Trip: ${trip.title} (completed)`
+        `Trip: ${trip.title} (completed)`,
+        tripId
       );
 
       if (result.error) {

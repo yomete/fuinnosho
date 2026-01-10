@@ -47,6 +47,7 @@ export interface FilmUsage {
   created_at: string;
   usage_type?: 'spool' | 'shoot' | 'add';
   exposures_used?: number;
+  trip_id?: string;
 }
 
 export interface Trip {
@@ -100,6 +101,15 @@ export const formatDimensions = {
   "120": { width: 60, height: 60, unit: "mm", rollLength: 12, bulkLengthPerRoll: 0.8 },
   "4x5": { width: 102, height: 127, unit: "mm", sheetsPerBox: 10, bulkLengthPerRoll: 0 },
 };
+
+// Get exposures per roll/sheet for a given format
+export function getExposuresPerRoll(format: string): number {
+  const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
+  if (!formatInfo) return 36; // default fallback for unknown formats
+  if ('rollLength' in formatInfo) return formatInfo.rollLength;
+  if ('sheetsPerBox' in formatInfo) return formatInfo.sheetsPerBox;
+  return 36;
+}
 
 export const filmSchema = z.object({
   name: z.string().min(1),
