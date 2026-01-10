@@ -79,10 +79,10 @@ export function UsageAnalytics() {
           {[...Array(2)].map((_, i) => (
             <Card key={i}>
               <CardHeader className="animate-pulse">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-[#2a2420] rounded w-3/4"></div>
               </CardHeader>
               <CardContent className="animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-8 bg-[#2a2420] rounded w-1/2"></div>
               </CardContent>
             </Card>
           ))}
@@ -96,30 +96,30 @@ export function UsageAnalytics() {
       {/* Films Used in Past Month */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Film className="h-5 w-5" />
+          <CardTitle className="flex items-center gap-2 text-[#e8e4e0]">
+            <Film className="h-5 w-5 text-amber-500/80" />
             Films Used in Past Month
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-[#8a8078]">
             Film consumption over the last 30 days
           </CardDescription>
         </CardHeader>
         <CardContent>
           {recentFilms.length === 0 ? (
-            <p className="text-muted-foreground">No films used in the past month</p>
+            <p className="text-[#8a8078]">No films used in the past month</p>
           ) : (
             <div className="space-y-3">
               {recentFilms.map((film, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 border border-[#2a2420] rounded-lg bg-[#1a1614]/30">
                   <div>
-                    <div className="font-medium">{film.filmName}</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="font-medium text-[#e8e4e0]">{film.filmName}</div>
+                    <div className="text-sm text-[#8a8078]">
                       {film.quantity} roll{film.quantity !== 1 ? 's' : ''}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{film.developmentType}</Badge>
-                    <span className="text-sm font-medium">€{film.developmentCost.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-[#e8e4e0]">{'\u20AC'}{film.developmentCost.toFixed(2)}</span>
                   </div>
                 </div>
               ))}
@@ -133,37 +133,37 @@ export function UsageAnalytics() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-[#e8e4e0]">
+                <Calendar className="h-5 w-5 text-amber-500/80" />
                 Predicted Usage - Next Month
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-[#8a8078]">
                 Based on planned trips and usage patterns
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Expected rolls:</span>
-                  <span className="font-bold">{predictions.monthlyForecast.expected}</span>
+                  <span className="text-sm text-[#8a8078]">Expected rolls:</span>
+                  <span className="font-bold text-[#e8e4e0]">{predictions.monthlyForecast.expected}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Range:</span>
-                  <span className="text-sm">
+                  <span className="text-sm text-[#8a8078]">Range:</span>
+                  <span className="text-sm text-[#e8e4e0]">
                     {predictions.monthlyForecast.conservative} - {predictions.monthlyForecast.optimistic}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Trend:</span>
+                  <span className="text-sm text-[#8a8078]">Trend:</span>
                   <div className="flex items-center gap-1">
                     {predictions.monthlyForecast.trend === 'increasing' ? (
-                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <TrendingUp className="h-4 w-4 text-emerald-500" />
                     ) : predictions.monthlyForecast.trend === 'decreasing' ? (
-                      <TrendingUp className="h-4 w-4 text-red-600 rotate-180" />
+                      <TrendingUp className="h-4 w-4 text-red-400 rotate-180" />
                     ) : (
-                      <div className="h-4 w-4 bg-blue-600 rounded-full" />
+                      <div className="h-4 w-4 bg-amber-500/50 rounded-full" />
                     )}
-                    <span className="text-sm capitalize">{predictions.monthlyForecast.trend}</span>
+                    <span className="text-sm text-[#e8e4e0] capitalize">{predictions.monthlyForecast.trend}</span>
                   </div>
                 </div>
               </div>
@@ -172,24 +172,24 @@ export function UsageAnalytics() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
+              <CardTitle className="flex items-center gap-2 text-[#e8e4e0]">
+                <DollarSign className="h-5 w-5 text-amber-500/80" />
                 Predicted Development Cost
               </CardTitle>
-              <CardDescription>
-                B&W: Home dev • C41: €6 • ECN: €9
+              <CardDescription className="text-[#8a8078]">
+                B&W: Home dev {'\u2022'} C41: {'\u20AC'}6 {'\u2022'} ECN: {'\u20AC'}9
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Expected cost:</span>
-                  <span className="font-bold text-2xl">€{predictions.monthlyForecast.developmentCost.expected.toFixed(0)}</span>
+                  <span className="text-sm text-[#8a8078]">Expected cost:</span>
+                  <span className="font-bold text-2xl text-[#e8e4e0]">{'\u20AC'}{predictions.monthlyForecast.developmentCost.expected.toFixed(0)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Range:</span>
-                  <span className="text-sm">
-                    €{predictions.monthlyForecast.developmentCost.min.toFixed(0)} - €{predictions.monthlyForecast.developmentCost.max.toFixed(0)}
+                  <span className="text-sm text-[#8a8078]">Range:</span>
+                  <span className="text-sm text-[#e8e4e0]">
+                    {'\u20AC'}{predictions.monthlyForecast.developmentCost.min.toFixed(0)} - {'\u20AC'}{predictions.monthlyForecast.developmentCost.max.toFixed(0)}
                   </span>
                 </div>
               </div>
@@ -201,8 +201,8 @@ export function UsageAnalytics() {
       {/* Trip Usage Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Trip Usage & Costs</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-[#e8e4e0]">Trip Usage & Costs</CardTitle>
+          <CardDescription className="text-[#8a8078]">
             Film usage and development costs broken down by photography trips
           </CardDescription>
         </CardHeader>

@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "sonner";
 import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
 import { Analytics } from "@vercel/analytics/react";
-import { SyncButton } from "@/components/sync-button";
 import { Navigation } from "@/components/navigation";
 
 const geistSans = Geist({
@@ -36,15 +34,26 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen relative`}
       >
         <Providers>
+          {/* Ambient background effects */}
+          <div className="ambient-bg" />
+          <div className="vignette" />
+          <div className="film-grain" />
           <Navigation />
-          <div className="fixed flex items-center gap-2 top-4 right-4 z-50">
-            <SyncButton />
+          <div className="fixed top-6 right-6 z-50">
             <NavUserIconWrapper />
-            <ThemeToggle />
           </div>
-          <main className="pb-16 px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20">{children}</main>
+          <main className="relative z-10 pb-16 px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24">{children}</main>
           {/* <Footer /> */}
-          <Toaster />
+          <Toaster
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: '#1a1614',
+                border: '1px solid #2a2420',
+                color: '#e8e4e0',
+              },
+            }}
+          />
           <Analytics />
         </Providers>
       </body>

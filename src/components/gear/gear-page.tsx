@@ -22,8 +22,10 @@ async function GearContent() {
 
       <div className="flex items-center justify-between mb-4 sm:mb-8 px-2 sm:px-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Gear</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#e8e4e0]" style={{ fontFamily: 'Georgia, serif' }}>
+            Gear
+          </h1>
+          <p className="text-sm sm:text-base text-[#8a8078]">
             Manage your photography equipment collection
           </p>
         </div>
@@ -44,13 +46,13 @@ async function GearContent() {
           </TabsContent>
 
           <TabsContent value="by-type">
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-[#8a8078]">
               Type breakdown coming soon
             </div>
           </TabsContent>
 
           <TabsContent value="condition">
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-[#8a8078]">
               Condition analysis coming soon
             </div>
           </TabsContent>

@@ -32,18 +32,27 @@ export function GearGrid({ gear }: GearGridProps) {
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
         {gear.map((item) => (
-          <Card key={item.id} className="hover:shadow-md transition-shadow">
+          <Card
+            key={item.id}
+            className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10 border-[#2a2420] hover:border-[#3a3430] hover:-translate-y-1 transition-all duration-300"
+          >
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between text-lg">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{getGearTypeIcon(item.type)}</span>
-                  <span className="truncate">{item.name}</span>
+                  <span
+                    className="truncate text-[#e8e4e0]"
+                    style={{ fontFamily: 'Georgia, serif' }}
+                  >
+                    {item.name}
+                  </span>
                 </div>
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setEditingGear(item)}
+                    className="text-[#8a8078] hover:text-[#e8e4e0]"
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
@@ -51,6 +60,7 @@ export function GearGrid({ gear }: GearGridProps) {
                     variant="ghost"
                     size="sm"
                     onClick={() => setDeletingGear(item)}
+                    className="text-[#8a8078] hover:text-red-400"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -59,26 +69,26 @@ export function GearGrid({ gear }: GearGridProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Brand</span>
-                <span className="font-medium">{item.brand}</span>
+                <span className="text-sm text-[#8a8078]">Brand</span>
+                <span className="font-medium text-[#e8e4e0]">{item.brand}</span>
               </div>
-              
+
               {item.model && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Model</span>
-                  <span className="font-medium">{item.model}</span>
+                  <span className="text-sm text-[#8a8078]">Model</span>
+                  <span className="font-medium text-[#e8e4e0]">{item.model}</span>
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Type</span>
+                <span className="text-sm text-[#8a8078]">Type</span>
                 <Badge variant="outline" className="capitalize">
                   {item.type}
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Condition</span>
+                <span className="text-sm text-[#8a8078]">Condition</span>
                 <Badge className={getConditionColor(item.condition)}>
                   {item.condition}
                 </Badge>
@@ -86,14 +96,16 @@ export function GearGrid({ gear }: GearGridProps) {
 
               {item.purchase_price && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Value</span>
-                  <span className="font-medium">€{item.purchase_price.toFixed(2)}</span>
+                  <span className="text-sm text-[#8a8078]">Value</span>
+                  <span className="font-medium text-[#e8e4e0] font-variant-numeric tabular-nums">
+                    {'\u20AC'}{item.purchase_price.toFixed(2)}
+                  </span>
                 </div>
               )}
 
               {item.notes && (
-                <div className="mt-3 pt-3 border-t">
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                <div className="mt-3 pt-3 border-t border-[#2a2420]">
+                  <p className="text-sm text-[#8a8078] line-clamp-2">
                     {item.notes}
                   </p>
                 </div>

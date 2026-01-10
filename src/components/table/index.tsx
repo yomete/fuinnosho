@@ -277,7 +277,7 @@ const DataTable = ({ films }: { films: Film[] }) => {
         onRemoveFilter={handleRemoveFilter}
         onClearAllFilters={clearAllFilters}
       />
-      <div className="rounded-md border">
+      <div className="rounded-xl border border-[#2a2420] bg-[#1a1614]/30">
         <div className="overflow-x-auto">
           <Table className="min-w-[800px]">
             <TableHeader>

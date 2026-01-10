@@ -49,7 +49,10 @@ export function TripsPage({ trips }: TripsPageProps) {
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-8">
       <div className="flex justify-end p-2 sm:p-4">
-        <Button onClick={() => setShowNewForm(true)}>
+        <Button
+          onClick={() => setShowNewForm(true)}
+          className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Trip
         </Button>
@@ -57,8 +60,8 @@ export function TripsPage({ trips }: TripsPageProps) {
 
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold">Trips</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold text-[#e8e4e0]">Trips</h1>
+          <p className="text-[#8a8078]">
             Manage your photo trips and film reservations
           </p>
         </div>
@@ -72,7 +75,10 @@ export function TripsPage({ trips }: TripsPageProps) {
             description="Create your first trip to start managing your film reservations"
           />
           <div className="text-center">
-            <Button onClick={() => setShowNewForm(true)}>
+            <Button
+              onClick={() => setShowNewForm(true)}
+              className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Your First Trip
             </Button>

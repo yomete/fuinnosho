@@ -551,33 +551,6 @@ export async function finishBulkRoll(filmId: string) {
   };
 }
 
-export async function syncFilms() {
-  try {
-    const supabase = await createClient();
-
-    // Get all films from Supabase
-    const { data: cloudFilms, error: fetchError } = await supabase
-      .from("films")
-      .select("*");
-
-    if (fetchError) {
-      throw new Error("Failed to fetch films from cloud");
-    }
-
-    // Return the cloud films to be handled by the client
-    return {
-      success: true,
-      films: cloudFilms || [],
-    };
-  } catch (error) {
-    console.error("Error syncing films:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to sync films",
-    };
-  }
-}
-
 // Add rolls to existing film inventory
 export async function addRollsToFilm(
   filmId: string,

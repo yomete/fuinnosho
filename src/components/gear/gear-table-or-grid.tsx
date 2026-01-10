@@ -16,7 +16,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
   const [view, setView] = useState<"table" | "grid">("table");
 
   // Extract unique prices for initial state
-  const uniquePrices = useMemo(() => 
+  const uniquePrices = useMemo(() =>
     gear
       .map((item) => item.purchase_price)
       .filter((price): price is number => price !== undefined),
@@ -41,12 +41,12 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
       // Search
       if (filterState.search) {
         const searchLower = filterState.search.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
           item.name.toLowerCase().includes(searchLower) ||
           item.brand.toLowerCase().includes(searchLower) ||
           item.type.toLowerCase().includes(searchLower) ||
           (item.model && item.model.toLowerCase().includes(searchLower));
-        
+
         if (!matchesSearch) return false;
       }
 
@@ -90,33 +90,33 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
     const filters: { column: string; value: string; isNot: boolean }[] = [];
 
     // Add regular filters
-    filterState.brands.forEach((brand: string) => 
+    filterState.brands.forEach((brand: string) =>
       filters.push({ column: "brand", value: brand, isNot: false })
     );
-    filterState.types.forEach((type: string) => 
+    filterState.types.forEach((type: string) =>
       filters.push({ column: "type", value: type, isNot: false })
     );
-    filterState.conditions.forEach((condition: string) => 
+    filterState.conditions.forEach((condition: string) =>
       filters.push({ column: "condition", value: condition, isNot: false })
     );
 
     // Add NOT filters
-    filterState.notBrands.forEach((brand: string) => 
+    filterState.notBrands.forEach((brand: string) =>
       filters.push({ column: "brand", value: brand, isNot: true })
     );
-    filterState.notTypes.forEach((type: string) => 
+    filterState.notTypes.forEach((type: string) =>
       filters.push({ column: "type", value: type, isNot: true })
     );
-    filterState.notConditions.forEach((condition: string) => 
+    filterState.notConditions.forEach((condition: string) =>
       filters.push({ column: "condition", value: condition, isNot: true })
     );
 
     // Add price range filter if active
     if (filterState.priceRange[0] > minPrice || filterState.priceRange[1] < maxPrice) {
-      filters.push({ 
-        column: "price", 
-        value: `€${filterState.priceRange[0]} - €${filterState.priceRange[1]}`, 
-        isNot: false 
+      filters.push({
+        column: "price",
+        value: `\u20AC${filterState.priceRange[0]} - \u20AC${filterState.priceRange[1]}`,
+        isNot: false
       });
     }
 
@@ -187,11 +187,11 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
       />
 
       <div className="flex justify-end px-4">
-        <div className="inline-flex rounded-lg border bg-background p-1">
+        <div className="inline-flex rounded-lg border border-[#2a2420] bg-[#1a1614]/50 p-1">
           <Button
             variant="ghost"
             size="sm"
-            className={`px-3 ${view === "table" ? "bg-muted" : ""}`}
+            className={`px-3 ${view === "table" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
             onClick={() => setView("table")}
           >
             <TableIcon className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={`px-3 ${view === "grid" ? "bg-muted" : ""}`}
+            className={`px-3 ${view === "grid" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
             onClick={() => setView("grid")}
           >
             <GridIcon className="h-4 w-4" />

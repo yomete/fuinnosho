@@ -56,7 +56,7 @@ export interface FilterState {
 }
 
 // Action types for filter updates
-export type FilterAction = 
+export type FilterAction =
   | { type: 'SET_NAME'; value: string }
   | { type: 'TOGGLE_BRAND'; brand: string; isNot: boolean }
   | { type: 'TOGGLE_TYPE'; filmType: string; isNot: boolean }
@@ -86,19 +86,19 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
   onClearAllFilters,
 }: EnhancedFiltersV2Props) {
   // Get unique values for filter options (memoized)
-  const uniqueBrands = useMemo(() => 
+  const uniqueBrands = useMemo(() =>
     Array.from(new Set(films.map((film) => film.brand))).sort(),
     [films]
   );
-  const uniqueTypes = useMemo(() => 
+  const uniqueTypes = useMemo(() =>
     Array.from(new Set(films.map((film) => film.type))).sort(),
     [films]
   );
-  const uniqueFormats = useMemo(() => 
+  const uniqueFormats = useMemo(() =>
     Array.from(new Set(films.map((film) => film.format))).sort(),
     [films]
   );
-  const uniqueIsos = useMemo(() => 
+  const uniqueIsos = useMemo(() =>
     Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
     [films]
   );
@@ -113,7 +113,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
       {/* Search and Filter Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6a6460]" />
           <Input
             placeholder="Search films..."
             value={filterState.name}
@@ -127,7 +127,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 gap-1 whitespace-nowrap"
+              className="h-9 gap-1 whitespace-nowrap border-[#2a2420] bg-[#1a1614]/80 text-[#e8e4e0] hover:bg-[#2a2420] hover:text-[#e8e4e0]"
             >
               <Filter className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Advanced Filters</span>
@@ -143,39 +143,39 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-80 p-0"
+            className="w-80 p-0 border-[#2a2420] bg-[#1a1614]"
             align="end"
             side="bottom"
             sideOffset={5}
           >
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium">Filter Options</h4>
+                <h4 className="font-medium text-[#e8e4e0]">Filter Options</h4>
                 {activeFilters.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={onClearAllFilters}
-                    className="h-8 px-2"
+                    className="h-8 px-2 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#2a2420]"
                   >
                     <Eraser className="h-3.5 w-3.5 mr-1" />
                     Clear All
                   </Button>
                 )}
               </div>
-              
+
               {/* Hide Zero Quantity Filter */}
               <div className="flex items-center gap-2 mb-2">
                 <Checkbox
                   checked={filterState.hideZeroQuantity}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     onFilterAction({ type: 'TOGGLE_HIDE_ZERO', value: !!checked })
                   }
                   id="hide-zero-quantity-checkbox"
                 />
                 <Label
                   htmlFor="hide-zero-quantity-checkbox"
-                  className="text-sm"
+                  className="text-sm text-[#e8e4e0]"
                 >
                   Hide zero-quantity films
                 </Label>
@@ -186,8 +186,8 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                 open={filterState.expandedSections.brands}
                 onOpenChange={() => onFilterAction({ type: 'TOGGLE_SECTION', section: 'brands' })}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Brands</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Brands</Label>
                   <div className="flex items-center gap-2">
                     {(filterState.brands.length > 0 || filterState.notBrands.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -197,9 +197,9 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       </Badge>
                     )}
                     {filterState.expandedSections.brands ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -214,7 +214,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {filterState.notModes.brands
                         ? "Exclude selected brands"
                         : "Include selected brands"}
@@ -224,7 +224,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                     {uniqueBrands.map((brand) => (
                       <label
                         key={brand}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -232,11 +232,11 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                               ? filterState.notBrands.includes(brand)
                               : filterState.brands.includes(brand)
                           }
-                          onCheckedChange={() => 
-                            onFilterAction({ 
-                              type: 'TOGGLE_BRAND', 
-                              brand, 
-                              isNot: filterState.notModes.brands 
+                          onCheckedChange={() =>
+                            onFilterAction({
+                              type: 'TOGGLE_BRAND',
+                              brand,
+                              isNot: filterState.notModes.brands
                             })
                           }
                         />
@@ -252,8 +252,8 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                 open={filterState.expandedSections.types}
                 onOpenChange={() => onFilterAction({ type: 'TOGGLE_SECTION', section: 'types' })}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Types</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Types</Label>
                   <div className="flex items-center gap-2">
                     {(filterState.types.length > 0 || filterState.notTypes.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -263,9 +263,9 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       </Badge>
                     )}
                     {filterState.expandedSections.types ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -280,7 +280,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {filterState.notModes.types
                         ? "Exclude selected types"
                         : "Include selected types"}
@@ -290,7 +290,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                     {uniqueTypes.map((type) => (
                       <label
                         key={type}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -298,11 +298,11 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                               ? filterState.notTypes.includes(type)
                               : filterState.types.includes(type)
                           }
-                          onCheckedChange={() => 
-                            onFilterAction({ 
-                              type: 'TOGGLE_TYPE', 
-                              filmType: type, 
-                              isNot: filterState.notModes.types 
+                          onCheckedChange={() =>
+                            onFilterAction({
+                              type: 'TOGGLE_TYPE',
+                              filmType: type,
+                              isNot: filterState.notModes.types
                             })
                           }
                         />
@@ -318,8 +318,8 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                 open={filterState.expandedSections.formats}
                 onOpenChange={() => onFilterAction({ type: 'TOGGLE_SECTION', section: 'formats' })}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Formats</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Formats</Label>
                   <div className="flex items-center gap-2">
                     {(filterState.formats.length > 0 || filterState.notFormats.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -329,9 +329,9 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       </Badge>
                     )}
                     {filterState.expandedSections.formats ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -346,7 +346,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {filterState.notModes.formats
                         ? "Exclude selected formats"
                         : "Include selected formats"}
@@ -356,7 +356,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                     {uniqueFormats.map((format) => (
                       <label
                         key={format}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -364,11 +364,11 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                               ? filterState.notFormats.includes(format)
                               : filterState.formats.includes(format)
                           }
-                          onCheckedChange={() => 
-                            onFilterAction({ 
-                              type: 'TOGGLE_FORMAT', 
-                              format, 
-                              isNot: filterState.notModes.formats 
+                          onCheckedChange={() =>
+                            onFilterAction({
+                              type: 'TOGGLE_FORMAT',
+                              format,
+                              isNot: filterState.notModes.formats
                             })
                           }
                         />
@@ -384,8 +384,8 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                 open={filterState.expandedSections.isos}
                 onOpenChange={() => onFilterAction({ type: 'TOGGLE_SECTION', section: 'isos' })}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">ISO</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">ISO</Label>
                   <div className="flex items-center gap-2">
                     {(filterState.isos.length > 0 || filterState.notIsos.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -393,20 +393,20 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       </Badge>
                     )}
                     {filterState.expandedSections.isos ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-[#8a8078]">
                       Range: {filterState.isoRange[0]} - {filterState.isoRange[1]}
                     </Label>
                     <Slider
                       value={filterState.isoRange}
-                      onValueChange={(range) => 
+                      onValueChange={(range) =>
                         onFilterAction({ type: 'SET_ISO_RANGE', range: range as [number, number] })
                       }
                       max={maxIso}
@@ -425,7 +425,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {filterState.notModes.isos
                         ? "Exclude selected ISOs"
                         : "Include selected ISOs"}
@@ -435,7 +435,7 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                     {uniqueIsos.map((iso) => (
                       <label
                         key={iso}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -443,11 +443,11 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
                               ? filterState.notIsos.includes(iso)
                               : filterState.isos.includes(iso)
                           }
-                          onCheckedChange={() => 
-                            onFilterAction({ 
-                              type: 'TOGGLE_ISO', 
-                              iso, 
-                              isNot: filterState.notModes.isos 
+                          onCheckedChange={() =>
+                            onFilterAction({
+                              type: 'TOGGLE_ISO',
+                              iso,
+                              isNot: filterState.notModes.isos
                             })
                           }
                         />

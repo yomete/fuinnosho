@@ -12,7 +12,7 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
   // Calculate statistics
   const totalGear = gear.length;
   const totalValue = gear.reduce((sum, item) => sum + (item.purchase_price || 0), 0);
-  
+
   // Group by type
   const gearByType = gear.reduce((acc, item) => {
     acc[item.type] = (acc[item.type] || 0) + 1;
@@ -39,41 +39,52 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
     <div className="space-y-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Gear</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#8a8078]">Total Gear</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalGear}</div>
-            <p className="text-xs text-muted-foreground">
+            <div
+              className="text-2xl font-bold text-[#e8e4e0]"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              {totalGear}
+            </div>
+            <p className="text-xs text-[#8a8078]">
               items in collection
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#8a8078]">Total Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              €{totalValue.toFixed(2)}
+            <div
+              className="text-2xl font-bold text-[#e8e4e0] font-variant-numeric tabular-nums"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              {'\u20AC'}{totalValue.toFixed(2)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#8a8078]">
               estimated value
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Average Value</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#8a8078]">Average Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              €{totalGear > 0 ? (totalValue / totalGear).toFixed(2) : '0.00'}
+            <div
+              className="text-2xl font-bold text-[#e8e4e0] font-variant-numeric tabular-nums"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              {'\u20AC'}{totalGear > 0 ? (totalValue / totalGear).toFixed(2) : '0.00'}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#8a8078]">
               per item
             </p>
           </CardContent>
@@ -81,9 +92,14 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
       </div>
 
       {/* Breakdown by Type */}
-      <Card>
+      <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
         <CardHeader>
-          <CardTitle>Gear by Type</CardTitle>
+          <CardTitle
+            className="text-[#e8e4e0]"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            Gear by Type
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -100,9 +116,14 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
       </Card>
 
       {/* Breakdown by Condition */}
-      <Card>
+      <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
         <CardHeader>
-          <CardTitle>Gear by Condition</CardTitle>
+          <CardTitle
+            className="text-[#e8e4e0]"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            Gear by Condition
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -116,15 +137,20 @@ export function GearStatistics({ gear }: GearStatisticsProps) {
       </Card>
 
       {/* Top Brands */}
-      <Card>
+      <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10">
         <CardHeader>
-          <CardTitle>Top Brands</CardTitle>
+          <CardTitle
+            className="text-[#e8e4e0]"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            Top Brands
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {topBrands.map(([brand, count]) => (
               <div key={brand} className="flex items-center justify-between">
-                <span className="font-medium">{brand}</span>
+                <span className="font-medium text-[#e8e4e0]">{brand}</span>
                 <Badge variant="outline">{count} items</Badge>
               </div>
             ))}

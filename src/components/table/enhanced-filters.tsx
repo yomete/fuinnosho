@@ -88,19 +88,19 @@ const EnhancedFiltersComponent = function EnhancedFilters({
   });
 
   // Get unique values for filter options (memoized)
-  const uniqueBrands = useMemo(() => 
+  const uniqueBrands = useMemo(() =>
     Array.from(new Set(films.map((film) => film.brand))).sort(),
     [films]
   );
-  const uniqueTypes = useMemo(() => 
+  const uniqueTypes = useMemo(() =>
     Array.from(new Set(films.map((film) => film.type))).sort(),
     [films]
   );
-  const uniqueFormats = useMemo(() => 
+  const uniqueFormats = useMemo(() =>
     Array.from(new Set(films.map((film) => film.format))).sort(),
     [films]
   );
-  const uniqueIsos = useMemo(() => 
+  const uniqueIsos = useMemo(() =>
     Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
     [films]
   );
@@ -113,7 +113,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
   // Use ref to avoid including onFiltersChange in dependency array
   const onFiltersChangeRef = useRef(onFiltersChange);
   onFiltersChangeRef.current = onFiltersChange;
-  
+
   // Track if this is the initial mount to prevent calling onFiltersChange on mount
   const isInitialMount = useRef(true);
   const prevFiltersRef = useRef({
@@ -167,7 +167,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
 
     // Only call onFiltersChange if filters actually changed
     const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(currentFilters);
-    
+
     if (!filtersChanged) return;
 
     const timeoutId = setTimeout(() => {
@@ -310,7 +310,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
       {/* Search and Filter Controls */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
         <div className="relative flex-1 max-w-full sm:max-w-sm">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6a6460]" />
           <Input
             placeholder="Search films..."
             value={nameFilter}
@@ -324,7 +324,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
             <Button
               variant="outline"
               size="sm"
-              className="h-9 gap-1 whitespace-nowrap"
+              className="h-9 gap-1 whitespace-nowrap border-[#2a2420] bg-[#1a1614]/80 text-[#e8e4e0] hover:bg-[#2a2420] hover:text-[#e8e4e0]"
             >
               <Filter className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Advanced Filters</span>
@@ -340,20 +340,20 @@ const EnhancedFiltersComponent = function EnhancedFilters({
             </Button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-80 p-0"
+            className="w-80 p-0 border-[#2a2420] bg-[#1a1614]"
             align="end"
             side="bottom"
             sideOffset={5}
           >
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="font-medium">Filter Options</h4>
+                <h4 className="font-medium text-[#e8e4e0]">Filter Options</h4>
                 {activeFilters.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={clearAllFilters}
-                    className="h-8 px-2"
+                    className="h-8 px-2 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#2a2420]"
                   >
                     <Eraser className="h-3.5 w-3.5 mr-1" />
                     Clear All
@@ -369,7 +369,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                 />
                 <Label
                   htmlFor="hide-zero-quantity-checkbox"
-                  className="text-sm"
+                  className="text-sm text-[#e8e4e0]"
                 >
                   Hide zero-quantity films
                 </Label>
@@ -379,8 +379,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                 open={expandedSections.brands}
                 onOpenChange={() => toggleSection("brands")}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Brands</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Brands</Label>
                   <div className="flex items-center gap-2">
                     {(selectedBrands.length > 0 || notBrands.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -390,9 +390,9 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       </Badge>
                     )}
                     {expandedSections.brands ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -407,7 +407,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {notModes.brands
                         ? "Exclude selected brands"
                         : "Include selected brands"}
@@ -417,7 +417,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                     {uniqueBrands.map((brand) => (
                       <label
                         key={brand}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -439,8 +439,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                 open={expandedSections.types}
                 onOpenChange={() => toggleSection("types")}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Types</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Types</Label>
                   <div className="flex items-center gap-2">
                     {(selectedTypes.length > 0 || notTypes.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -450,9 +450,9 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       </Badge>
                     )}
                     {expandedSections.types ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -467,7 +467,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {notModes.types
                         ? "Exclude selected types"
                         : "Include selected types"}
@@ -477,7 +477,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                     {uniqueTypes.map((type) => (
                       <label
                         key={type}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -499,8 +499,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                 open={expandedSections.formats}
                 onOpenChange={() => toggleSection("formats")}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">Formats</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">Formats</Label>
                   <div className="flex items-center gap-2">
                     {(selectedFormats.length > 0 || notFormats.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -510,9 +510,9 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       </Badge>
                     )}
                     {expandedSections.formats ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
@@ -527,7 +527,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {notModes.formats
                         ? "Exclude selected formats"
                         : "Include selected formats"}
@@ -537,7 +537,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                     {uniqueFormats.map((format) => (
                       <label
                         key={format}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={
@@ -559,8 +559,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                 open={expandedSections.isos}
                 onOpenChange={() => toggleSection("isos")}
               >
-                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted rounded">
-                  <Label className="font-medium">ISO</Label>
+                <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-[#2a2420] rounded">
+                  <Label className="font-medium text-[#e8e4e0]">ISO</Label>
                   <div className="flex items-center gap-2">
                     {(selectedIsos.length > 0 || notIsos.length > 0) && (
                       <Badge variant="outline" className="h-5 px-2">
@@ -568,15 +568,15 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       </Badge>
                     )}
                     {expandedSections.isos ? (
-                      <ChevronUp className="h-4 w-4" />
+                      <ChevronUp className="h-4 w-4 text-[#8a8078]" />
                     ) : (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-4 w-4 text-[#8a8078]" />
                     )}
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4 pt-2">
                   <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label className="text-xs text-[#8a8078]">
                       Range: {isoRange[0]} - {isoRange[1]}
                     </Label>
                     <Slider
@@ -598,7 +598,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                       <Minus className="h-3 w-3" />
                       NOT
                     </Button>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[#8a8078]">
                       {notModes.isos
                         ? "Exclude selected ISOs"
                         : "Include selected ISOs"}
@@ -608,7 +608,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                     {uniqueIsos.map((iso) => (
                       <label
                         key={iso}
-                        className="flex items-center space-x-2 text-sm"
+                        className="flex items-center space-x-2 text-sm text-[#e8e4e0]"
                       >
                         <Checkbox
                           checked={

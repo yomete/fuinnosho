@@ -351,13 +351,13 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           {onBack ? (
-            <Button variant="ghost" onClick={onBack} className="mb-4">
+            <Button variant="ghost" onClick={onBack} className="mb-4 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Trips
             </Button>
           ) : (
             <Link href="/trips">
-              <Button variant="ghost" className="mb-4">
+              <Button variant="ghost" className="mb-4 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Trips
               </Button>
@@ -366,8 +366,8 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{trip.title}</h1>
-              <div className="flex items-center gap-4 text-muted-foreground">
+              <h1 className="text-3xl font-bold mb-2 text-[#e8e4e0]">{trip.title}</h1>
+              <div className="flex items-center gap-4 text-[#8a8078]">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   {formatTripDateRange(trip.start_date, trip.end_date)}
@@ -379,7 +379,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               </div>
             </div>
 
-            <Button variant="destructive" size="sm" onClick={handleDeleteTrip}>
+            <Button variant="destructive" size="sm" onClick={handleDeleteTrip} className="bg-[#8b2942] hover:bg-[#a33352] text-[#e8e4e0]">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Trip
             </Button>
@@ -387,24 +387,24 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
         </div>
 
         <div className="grid gap-6">
-          <Card>
+          <Card className="bg-[#2a2825] border-[#3d3a36]">
             <CardHeader>
-              <CardTitle>Description</CardTitle>
+              <CardTitle className="text-[#e8e4e0]">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">{trip.description}</p>
+              <p className="text-[#8a8078]">{trip.description}</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#2a2825] border-[#3d3a36]">
             <CardHeader>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <CardTitle>Reserved Films</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-[#e8e4e0]">Reserved Films</CardTitle>
+                  <CardDescription className="text-[#8a8078]">
                     Films you&apos;ve reserved for this trip
                     {tripFilms.length > 0 && (
-                      <span className="ml-2 font-medium text-foreground">
+                      <span className="ml-2 font-medium text-[#e8e4e0]">
                         {isoFilter !== "all" &&
                         getFilteredAndSortedFilms().length !==
                           tripFilms.length ? (
@@ -440,16 +440,16 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     value={selectedFilmId}
                     onValueChange={setSelectedFilmId}
                   >
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
                       <SelectValue placeholder="Select a film" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
                       {availableFilms.map((film) => {
                         const expiryDate = film.expiration_date
                           ? new Date(film.expiration_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
                           : '';
                         return (
-                          <SelectItem key={film.id} value={film.id}>
+                          <SelectItem key={film.id} value={film.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
                             {film.name}
                             {expiryDate && ` • Exp: ${expiryDate}`}
                             {' '}({film.available_count} available)
@@ -473,7 +473,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           Math.max(1, parseInt(e.target.value) || 1)
                         )
                       }
-                      className="w-16"
+                      className="w-16 bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]"
                       placeholder="Qty"
                     />
                   </div>
@@ -481,6 +481,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     onClick={handleAddFilm}
                     disabled={!selectedFilmId || isAddingFilm || quantity < 1}
                     size="sm"
+                    className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add {quantity > 1 ? `${quantity} Films` : "Film"}
@@ -490,7 +491,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
             </CardHeader>
             <CardContent>
               {tripFilms.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-[#8a8078]">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No films reserved for this trip yet</p>
                   <p className="text-sm mt-2">
@@ -500,17 +501,17 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               ) : (
                 <>
                   {/* Sort and Filter Controls */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 p-3 bg-[#1e1c1a] rounded-lg border border-[#3d3a36]">
                     <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <Filter className="h-4 w-4 text-[#8a8078]" />
                       <Select value={isoFilter} onValueChange={setIsoFilter}>
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
                           <SelectValue placeholder="Filter ISO" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All ISOs</SelectItem>
+                        <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
+                          <SelectItem value="all" className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">All ISOs</SelectItem>
                           {getUniqueISOs().map((iso) => (
-                            <SelectItem key={iso} value={iso.toString()}>
+                            <SelectItem key={iso} value={iso.toString()} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
                               ISO {iso}
                             </SelectItem>
                           ))}
@@ -521,7 +522,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                           variant="ghost"
                           size="sm"
                           onClick={() => setIsoFilter("all")}
-                          className="h-8 px-2"
+                          className="h-8 px-2 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -529,14 +530,14 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-1">
-                      <span className="text-sm text-muted-foreground mr-2">
+                      <span className="text-sm text-[#8a8078] mr-2">
                         Sort by:
                       </span>
                       <Button
                         variant={sortBy === "name" ? "secondary" : "ghost"}
                         size="sm"
                         onClick={() => toggleSort("name")}
-                        className="flex items-center gap-1"
+                        className={`flex items-center gap-1 ${sortBy === "name" ? "bg-[#3d3a36] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"}`}
                       >
                         Name
                         {sortBy === "name" &&
@@ -550,7 +551,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         variant={sortBy === "iso" ? "secondary" : "ghost"}
                         size="sm"
                         onClick={() => toggleSort("iso")}
-                        className="flex items-center gap-1"
+                        className={`flex items-center gap-1 ${sortBy === "iso" ? "bg-[#3d3a36] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"}`}
                       >
                         ISO
                         {sortBy === "iso" &&
@@ -564,7 +565,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         variant={sortBy === "brand" ? "secondary" : "ghost"}
                         size="sm"
                         onClick={() => toggleSort("brand")}
-                        className="flex items-center gap-1"
+                        className={`flex items-center gap-1 ${sortBy === "brand" ? "bg-[#3d3a36] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"}`}
                       >
                         Brand
                         {sortBy === "brand" &&
@@ -578,7 +579,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         variant={sortBy === "quantity" ? "secondary" : "ghost"}
                         size="sm"
                         onClick={() => toggleSort("quantity")}
-                        className="flex items-center gap-1"
+                        className={`flex items-center gap-1 ${sortBy === "quantity" ? "bg-[#3d3a36] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"}`}
                       >
                         Quantity
                         {sortBy === "quantity" &&
@@ -598,12 +599,12 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   {getFilteredAndSortedFilms().map((film) => (
                     <div
                       key={film.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
                     >
                       <div className="flex items-center gap-3">
                         <div>
-                          <p className="font-medium">{film.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-[#e8e4e0]">{film.name}</p>
+                          <p className="text-sm text-[#8a8078]">
                             {film.brand} • {film.format} • ISO {film.iso}
                           </p>
                         </div>
@@ -618,14 +619,14 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                                   Math.max(1, parseInt(e.target.value) || 1)
                                 )
                               }
-                              className="w-16"
+                              className="w-16 bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]"
                             />
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-[#8a8078]">
                               reserved
                             </span>
                           </div>
                         ) : (
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="border-[#5c5955] text-[#8a8078]">
                             {film.reserved_quantity} reserved
                           </Badge>
                         )}
@@ -638,6 +639,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleSaveQuantity(film.id)}
+                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                               >
                                 Save
                               </Button>
@@ -645,6 +647,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={handleCancelEdit}
+                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                               >
                                 Cancel
                               </Button>
@@ -660,6 +663,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                                     film.reserved_quantity
                                   )
                                 }
+                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -667,6 +671,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleRemoveFilm(film.id)}
+                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -680,12 +685,12 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-[#2a2825] border-[#3d3a36]">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Reserved Gear</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-[#e8e4e0]">Reserved Gear</CardTitle>
+                  <CardDescription className="text-[#8a8078]">
                     Photography gear you&apos;ve reserved for this trip
                   </CardDescription>
                 </div>
@@ -694,12 +699,12 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     value={selectedGearId}
                     onValueChange={setSelectedGearId}
                   >
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
                       <SelectValue placeholder="Select gear" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
                       {availableGear.map((gear) => (
-                        <SelectItem key={gear.id} value={gear.id}>
+                        <SelectItem key={gear.id} value={gear.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
                           {getGearTypeIcon(gear.type)} {gear.brand}{" "}
                           {gear.name}
                         </SelectItem>
@@ -710,6 +715,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                     onClick={handleAddGear}
                     disabled={!selectedGearId || isAddingGear}
                     size="sm"
+                    className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Gear
@@ -719,7 +725,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
             </CardHeader>
             <CardContent>
               {tripGear.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-[#8a8078]">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No gear reserved for this trip yet</p>
                   <p className="text-sm mt-2">
@@ -731,15 +737,15 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   {tripGear.map((gear) => (
                     <div
                       key={gear.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
                           {getGearTypeIcon(gear.type)}
                         </span>
                         <div>
-                          <p className="font-medium">{gear.name}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="font-medium text-[#e8e4e0]">{gear.name}</p>
+                          <p className="text-sm text-[#8a8078]">
                             {gear.brand} • {gear.type}
                             {gear.model ? ` • ${gear.model}` : ""}
                           </p>
@@ -750,6 +756,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveGear(gear.id)}
+                        className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
                       >
                         <X className="h-4 w-4" />
                       </Button>

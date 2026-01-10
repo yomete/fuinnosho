@@ -18,17 +18,18 @@ interface NavUserIconProps {
   } | null;
 }
 
+// Darkroom-friendly muted colors
 const COLORS = [
-  "#FF6B6B", // red
-  "#4ECDC4", // teal
-  "#45B7D1", // blue
-  "#96CEB4", // green
-  "#FFEEAD", // yellow
-  "#D4A5A5", // pink
-  "#9B59B6", // purple
-  "#3498DB", // bright blue
-  "#E67E22", // orange
-  "#1ABC9C", // turquoise
+  "#d4a574", // warm amber
+  "#8a8078", // muted zinc
+  "#4ade80", // emerald
+  "#FFD700", // kodak yellow
+  "#00A550", // fuji green
+  "#E63946", // ilford red
+  "#a78bfa", // soft purple
+  "#60a5fa", // soft blue
+  "#f97316", // orange
+  "#14b8a6", // teal
 ];
 
 function getColorFromString(str: string): string {
@@ -65,7 +66,7 @@ const NavUserIcon = ({ user }: NavUserIconProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isLoggingOut}>
         <div
-          className="w-6 h-6 bg-gray-200 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-background hover:ring-muted-foreground transition-all disabled:opacity-50"
+          className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#0d0b0a] hover:ring-amber-600/50 transition-all disabled:opacity-50 border border-[#2a2420]"
           style={{ backgroundColor }}
         />
       </DropdownMenuTrigger>

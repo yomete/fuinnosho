@@ -13,7 +13,7 @@ export function Navigation() {
       href: "/films",
       label: "Films",
       icon: Film,
-      active: pathname.startsWith("/films") || pathname === "/film",
+      active: pathname.startsWith("/films") || pathname.startsWith("/film"),
     },
     {
       href: "/gear",
@@ -54,8 +54,8 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="fixed top-4 left-4 z-50">
-      <div className="flex items-center space-x-1 bg-background border rounded-lg p-1 shadow-sm">
+    <nav className="fixed top-6 left-6 z-50">
+      <div className="flex items-center gap-1 bg-[#1a1614]/90 backdrop-blur-md border border-[#2a2420] rounded-full p-1.5 shadow-2xl shadow-black/50">
         {links.map((link) => {
           const Icon = link.icon;
           return (
@@ -63,10 +63,10 @@ export function Navigation() {
               key={link.href}
               href={link.href}
               className={cn(
-                "flex items-center space-x-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors",
+                "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-sm font-medium transition-all duration-300",
                 link.active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  ? "bg-gradient-to-r from-amber-600/90 to-orange-700/90 text-white shadow-lg shadow-amber-900/30"
+                  : "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#2a2420]/50"
               )}
             >
               <Icon className="h-4 w-4" />
