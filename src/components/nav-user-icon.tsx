@@ -65,13 +65,18 @@ const NavUserIcon = ({ user }: NavUserIconProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={isLoggingOut}>
-        <div
+        <button
+          type="button"
+          aria-label="User menu"
           className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#0d0b0a] hover:ring-amber-600/50 transition-all disabled:opacity-50 border border-[#2a2420]"
           style={{ backgroundColor }}
         />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40 mt-4">
-        <DropdownMenuItem className="cursor-pointer flex items-center gap-2 py-3">
+        <DropdownMenuItem
+          className="cursor-pointer flex items-center gap-2 py-3"
+          onClick={() => router.push("/settings")}
+        >
           <Settings className="h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

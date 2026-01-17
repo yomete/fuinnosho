@@ -87,7 +87,7 @@ export function FilmFormFields({
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter film name" {...field} />
+                      <Input placeholder="Enter film name…" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -104,7 +104,7 @@ export function FilmFormFields({
                       <BrandAutocomplete
                         value={field.value}
                         onValueChange={field.onChange}
-                        placeholder="Enter brand name"
+                        placeholder="Enter brand name…"
                       />
                     </FormControl>
                     <FormMessage />
@@ -120,6 +120,8 @@ export function FilmFormFields({
                     <FormLabel>ISO</FormLabel>
                     <FormControl>
                       <Input
+                        type="number"
+                        inputMode="numeric"
                         {...field}
                         onChange={(e) => {
                           const value = e.target.value
@@ -280,7 +282,7 @@ export function FilmFormFields({
                           <FormLabel>Number of Bulk Rolls</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="How many bulk rolls?"
+                              placeholder="How many bulk rolls?…"
                               type="number"
                               min="1"
                               {...field}
@@ -307,7 +309,7 @@ export function FilmFormFields({
                           <FormLabel>Length per Bulk (meters)</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Length in meters"
+                              placeholder="Length in meters…"
                               type="number"
                               step="0.1"
                               {...field}
@@ -328,7 +330,7 @@ export function FilmFormFields({
                   </div>
                   
                   <div className="space-y-2 p-4 bg-green-50 rounded-lg">
-                    <label className="text-sm font-medium text-green-800">Total Calculated Rolls</label>
+                    <p className="text-sm font-medium text-green-800">Total Calculated Rolls</p>
                     <div className="text-3xl font-bold text-green-600">
                       {calculatedRolls} rolls
                     </div>
@@ -348,7 +350,7 @@ export function FilmFormFields({
                       <FormLabel>Quantity</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="Enter quantity"
+                          placeholder="Enter quantity…"
                           type="number"
                           {...field}
                           value={field.value ?? ""}
@@ -374,7 +376,7 @@ export function FilmFormFields({
                     <FormLabel>Price</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Enter price"
+                        placeholder="Enter price…"
                         type="number"
                         step="0.01"
                         {...field}
@@ -400,7 +402,7 @@ export function FilmFormFields({
                     <FormLabel>Notes</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Add any additional notes"
+                        placeholder="Add any additional notes…"
                         className="min-h-[120px]"
                         {...field}
                       />
@@ -418,7 +420,7 @@ export function FilmFormFields({
                     <FormLabel>Editing Notes</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Add editing tips for this film stock"
+                        placeholder="Add editing tips for this film stock…"
                         className="min-h-[120px]"
                         {...field}
                       />

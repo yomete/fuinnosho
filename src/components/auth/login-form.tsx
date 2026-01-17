@@ -61,7 +61,6 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-sm space-y-6">
-      <button></button>
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">Login</h1>
         <p className="text-sm text-muted-foreground">
@@ -86,6 +85,8 @@ export function LoginForm() {
                   <FormItem>
                     <FormControl>
                       <Input
+                        type="email"
+                        autoComplete="email"
                         placeholder="john@doe.com"
                         className="h-12 bg-muted/50 border-0"
                         {...field}
@@ -106,6 +107,7 @@ export function LoginForm() {
                     <FormControl>
                       <Input
                         type="password"
+                        autoComplete="current-password"
                         placeholder="••••••••"
                         className="h-12 bg-muted/50 border-0"
                         {...field}
@@ -118,7 +120,8 @@ export function LoginForm() {
             </div>
           </div>
           <Button type="submit" className="w-full h-12" disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Login"}
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Login
           </Button>
         </form>
       </Form>

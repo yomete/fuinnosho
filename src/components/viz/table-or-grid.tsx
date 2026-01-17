@@ -44,33 +44,11 @@ const TableOrGrid = ({ films }: { films: Film[] }) => {
         </div>
       </div>
 
-      {view === "grid" && (
-        <div
-          className={`
-        transition-all duration-300 ease-in-out
-        ${
-          view === "grid"
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-4"
-        }
-      `}
-        >
-          <FilmInventoryGrid films={films} />
-        </div>
-      )}
-      {view === "table" && (
-        <div
-          className={`
-        transition-all duration-300 ease-in-out
-        ${
-          view === "table"
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-4"
-        }
-      `}
-        >
-          <FilmsTableV2 films={films} />
-        </div>
+      {/* Use ternary for conditional rendering - avoids rendering both components (rendering-conditional-render) */}
+      {view === "grid" ? (
+        <FilmInventoryGrid films={films} />
+      ) : (
+        <FilmsTableV2 films={films} />
       )}
     </div>
   );

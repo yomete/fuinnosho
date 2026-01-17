@@ -59,7 +59,13 @@
       "Bash(pnpm vitest:*)",
       "Bash(npm test:*)",
       "Bash(pnpm exec tsc:*)",
-      "Bash(pnpm exec next build:*)"
+      "Bash(pnpm exec next build:*)",
+      "Bash(curl:*)",
+      "Skill(dev-browser)",
+      "Skill(dev-browser:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm next lint:*)",
+      "Bash(npx next lint:*)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import { Trip, formatTripDateRange, formatTripDuration, getTripStatusColor } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,32 +14,16 @@ import { Calendar, MapPin, Film } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
 
-interface TripGridProps {
-  trips: Trip[];
+interface TripCardProps {
+  trip: Trip;
   onTripEdit: (trip: Trip) => void;
   onTripComplete: (trip: Trip) => void;
 }
 
-export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
-  const upcomingTrips = trips.filter((trip) => trip.status === 'upcoming');
-  const pastTrips = trips.filter((trip) => trip.status === 'past');
-  const completedTrips = trips.filter((trip) => trip.status === 'completed');
-
-  if (trips.length === 0) {
-    return (
-      <EmptyState
-        icon={Calendar}
-        title="No trips yet"
-        description="Create your first trip to start managing your film reservations"
-      />
-    );
-  }
-
-  const renderTripCard = (trip: Trip) => (
-    <Card
-      key={trip.id}
-      className="cursor-pointer hover:shadow-md transition-shadow"
-    >
+// Memoized card component to prevent re-renders when other cards change (rerender-memo)
+const TripCard = memo(function TripCard({ trip, onTripEdit, onTripComplete }: TripCardProps) {
+  return (
+    <Card className="cursor-pointer hover:shadow-md transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -93,6 +78,28 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
       </CardContent>
     </Card>
   );
+});
+
+interface TripGridProps {
+  trips: Trip[];
+  onTripEdit: (trip: Trip) => void;
+  onTripComplete: (trip: Trip) => void;
+}
+
+export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
+  const upcomingTrips = trips.filter((trip) => trip.status === 'upcoming');
+  const pastTrips = trips.filter((trip) => trip.status === 'past');
+  const completedTrips = trips.filter((trip) => trip.status === 'completed');
+
+  if (trips.length === 0) {
+    return (
+      <EmptyState
+        icon={Calendar}
+        title="No trips yet"
+        description="Create your first trip to start managing your film reservations"
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -100,7 +107,14 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
         <div>
           <h2 className="text-xl font-semibold mb-4">Upcoming Trips</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingTrips.map(renderTripCard)}
+            {upcomingTrips.map((trip) => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                onTripEdit={onTripEdit}
+                onTripComplete={onTripComplete}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -108,7 +122,14 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
         <div>
           <h2 className="text-xl font-semibold mb-4">Past Trips</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pastTrips.map(renderTripCard)}
+            {pastTrips.map((trip) => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                onTripEdit={onTripEdit}
+                onTripComplete={onTripComplete}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -116,7 +137,14 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
         <div>
           <h2 className="text-xl font-semibold mb-4">Completed Trips</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {completedTrips.map(renderTripCard)}
+            {completedTrips.map((trip) => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                onTripEdit={onTripEdit}
+                onTripComplete={onTripComplete}
+              />
+            ))}
           </div>
         </div>
       )}

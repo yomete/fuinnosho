@@ -97,6 +97,8 @@ export function RegisterForm() {
                   <FormItem>
                     <FormControl>
                       <Input
+                        type="email"
+                        autoComplete="email"
                         placeholder="john@doe.com"
                         className="h-12 bg-muted/50 border-0"
                         {...field}
@@ -117,6 +119,7 @@ export function RegisterForm() {
                     <FormControl>
                       <Input
                         type="password"
+                        autoComplete="new-password"
                         placeholder="••••••••"
                         className="h-12 bg-muted/50 border-0"
                         {...field}
@@ -139,6 +142,7 @@ export function RegisterForm() {
                     <FormControl>
                       <Input
                         type="password"
+                        autoComplete="new-password"
                         placeholder="••••••••"
                         className="h-12 bg-muted/50 border-0"
                         {...field}
@@ -151,11 +155,8 @@ export function RegisterForm() {
             </div>
           </div>
           <Button type="submit" className="w-full h-12" disabled={isLoading}>
-            {isLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              "Create account"
-            )}
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+            Create account
           </Button>
         </form>
       </Form>
