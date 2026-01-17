@@ -45,7 +45,7 @@ export interface FilmUsage {
   quantity: number;
   usage_note: string;
   created_at: string;
-  usage_type?: 'spool' | 'shoot' | 'add';
+  usage_type?: "spool" | "shoot" | "add";
   exposures_used?: number;
   trip_id?: string;
 }
@@ -75,12 +75,12 @@ export interface Gear {
   id: string;
   name: string;
   brand: string;
-  type: 'camera' | 'lens' | 'flash' | 'accessory' | 'tripod' | 'filter' | 'bag';
+  type: "camera" | "lens" | "flash" | "accessory" | "tripod" | "filter" | "bag";
   model?: string;
   serial_number?: string;
   purchase_date?: string;
   purchase_price?: number;
-  condition: 'excellent' | 'good' | 'fair' | 'poor';
+  condition: "excellent" | "good" | "fair" | "poor";
   notes?: string;
   camera_id?: string;
   created_at: string;
@@ -97,17 +97,35 @@ export interface TripGear {
 
 // Add format dimensions for storage calculations
 export const formatDimensions = {
-  "35mm": { width: 35, height: 24, unit: "mm", rollLength: 36, bulkLengthPerRoll: 1.65 },
-  "120": { width: 60, height: 60, unit: "mm", rollLength: 12, bulkLengthPerRoll: 0.8 },
-  "4x5": { width: 102, height: 127, unit: "mm", sheetsPerBox: 10, bulkLengthPerRoll: 0 },
+  "35mm": {
+    width: 35,
+    height: 24,
+    unit: "mm",
+    rollLength: 36,
+    bulkLengthPerRoll: 1.65,
+  },
+  "120": {
+    width: 60,
+    height: 60,
+    unit: "mm",
+    rollLength: 12,
+    bulkLengthPerRoll: 0.8,
+  },
+  "4x5": {
+    width: 102,
+    height: 127,
+    unit: "mm",
+    sheetsPerBox: 10,
+    bulkLengthPerRoll: 0,
+  },
 };
 
 // Get exposures per roll/sheet for a given format
 export function getExposuresPerRoll(format: string): number {
   const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
   if (!formatInfo) return 36; // default fallback for unknown formats
-  if ('rollLength' in formatInfo) return formatInfo.rollLength;
-  if ('sheetsPerBox' in formatInfo) return formatInfo.sheetsPerBox;
+  if ("rollLength" in formatInfo) return formatInfo.rollLength;
+  if ("sheetsPerBox" in formatInfo) return formatInfo.sheetsPerBox;
   return 36;
 }
 
@@ -134,151 +152,182 @@ export const filmSchema = z.object({
 
 export type FilmSchema = z.infer<typeof filmSchema>;
 
-export const tripSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  start_date: z.string().min(1),
-  end_date: z.string().min(1),
-}).refine((data) => {
-  const startDate = new Date(data.start_date);
-  const endDate = new Date(data.end_date);
-  return endDate >= startDate;
-}, {
-  message: "End date must be on or after start date",
-  path: ["end_date"],
-});
+export const tripSchema = z
+  .object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+    start_date: z.string().min(1),
+    end_date: z.string().min(1),
+  })
+  .refine(
+    (data) => {
+      const startDate = new Date(data.start_date);
+      const endDate = new Date(data.end_date);
+      return endDate >= startDate;
+    },
+    {
+      message: "End date must be on or after start date",
+      path: ["end_date"],
+    }
+  );
 
 export type TripSchema = z.infer<typeof tripSchema>;
 
 export const gearSchema = z.object({
   name: z.string().min(1, "Name is required"),
   brand: z.string().min(1, "Brand is required"),
-  type: z.enum(['camera', 'lens', 'flash', 'accessory', 'tripod', 'filter', 'bag'], {
-    required_error: "Type is required",
-  }),
-  model: z.string().transform(val => val === '' ? undefined : val).optional(),
-  serial_number: z.string().transform(val => val === '' ? undefined : val).optional(),
-  purchase_date: z.string().transform(val => val === '' ? undefined : val).optional(),
+  type: z.enum(
+    ["camera", "lens", "flash", "accessory", "tripod", "filter", "bag"],
+    {
+      required_error: "Type is required",
+    }
+  ),
+  model: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
+  serial_number: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
+  purchase_date: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
   purchase_price: z.number().positive().optional(),
-  condition: z.enum(['excellent', 'good', 'fair', 'poor'], {
+  condition: z.enum(["excellent", "good", "fair", "poor"], {
     required_error: "Condition is required",
   }),
-  notes: z.string().transform(val => val === '' ? undefined : val).optional(),
-  camera_id: z.string().transform(val => val === '' || val === 'none' ? undefined : val).optional(),
+  notes: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
+  camera_id: z
+    .string()
+    .transform((val) => (val === "" || val === "none" ? undefined : val))
+    .optional(),
 });
 
 export type GearSchema = z.infer<typeof gearSchema>;
 
 // Gear type options for forms and filters
 export const gearTypes = [
-  { value: 'camera', label: 'Camera' },
-  { value: 'lens', label: 'Lens' },
-  { value: 'flash', label: 'Flash' },
-  { value: 'accessory', label: 'Accessory' },
-  { value: 'tripod', label: 'Tripod' },
-  { value: 'filter', label: 'Filter' },
-  { value: 'bag', label: 'Bag' },
+  { value: "camera", label: "Camera" },
+  { value: "lens", label: "Lens" },
+  { value: "flash", label: "Flash" },
+  { value: "accessory", label: "Accessory" },
+  { value: "tripod", label: "Tripod" },
+  { value: "filter", label: "Filter" },
+  { value: "bag", label: "Bag" },
 ] as const;
 
 export const gearConditions = [
-  { value: 'excellent', label: 'Excellent' },
-  { value: 'good', label: 'Good' },
-  { value: 'fair', label: 'Fair' },
-  { value: 'poor', label: 'Poor' },
+  { value: "excellent", label: "Excellent" },
+  { value: "good", label: "Good" },
+  { value: "fair", label: "Fair" },
+  { value: "poor", label: "Poor" },
 ] as const;
 
 // Gear utility functions
 export function getConditionColor(condition: string): string {
   switch (condition) {
-    case 'excellent':
-      return 'text-green-600 bg-green-50';
-    case 'good':
-      return 'text-blue-600 bg-blue-50';
-    case 'fair':
-      return 'text-yellow-600 bg-yellow-50';
-    case 'poor':
-      return 'text-red-600 bg-red-50';
+    case "excellent":
+      return "text-green-600 bg-green-50";
+    case "good":
+      return "text-blue-600 bg-blue-50";
+    case "fair":
+      return "text-yellow-600 bg-yellow-50";
+    case "poor":
+      return "text-red-600 bg-red-50";
     default:
-      return 'text-gray-600 bg-gray-50';
+      return "text-gray-600 bg-gray-50";
   }
 }
 
-export function getTripStatusColor(status: 'upcoming' | 'ongoing' | 'past' | 'completed'): string {
+export function getTripStatusColor(
+  status: "upcoming" | "ongoing" | "past" | "completed"
+): string {
   switch (status) {
-    case 'upcoming':
-      return 'text-blue-600 bg-blue-50';
-    case 'ongoing':
-      return 'text-orange-600 bg-orange-50';
-    case 'past':
-      return 'text-gray-600 bg-gray-50';
-    case 'completed':
-      return 'text-green-600 bg-green-50';
+    case "upcoming":
+      return "text-blue-600 bg-blue-50";
+    case "ongoing":
+      return "text-orange-600 bg-orange-50";
+    case "past":
+      return "text-gray-600 bg-gray-50";
+    case "completed":
+      return "text-green-600 bg-green-50";
     default:
-      return 'text-gray-600 bg-gray-50';
+      return "text-gray-600 bg-gray-50";
   }
 }
 
 export function getGearTypeIcon(type: string): string {
   switch (type) {
-    case 'camera':
-      return '📷';
-    case 'lens':
-      return '🔍';
-    case 'flash':
-      return '⚡';
-    case 'accessory':
-      return '🔧';
-    case 'tripod':
-      return '📐';
-    case 'filter':
-      return '🌟';
-    case 'bag':
-      return '👜';
+    case "camera":
+      return "📷";
+    case "lens":
+      return "🔍";
+    case "flash":
+      return "⚡";
+    case "accessory":
+      return "🔧";
+    case "tripod":
+      return "📐";
+    case "filter":
+      return "🌟";
+    case "bag":
+      return "👜";
     default:
-      return '📦';
+      return "📦";
   }
 }
 
 // Bulk film calculation utilities
 export function calculateRollsFromBulkFilm(
-  bulkLengthMeters: number, 
+  bulkLengthMeters: number,
   format: string,
   bulkQuantity: number = 1
 ): number {
   const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
-  
+
   if (!formatInfo || formatInfo.bulkLengthPerRoll === 0) {
     return 0;
   }
-  
+
   // Add 10% waste factor and round down to whole rolls
   const wasteFactor = 0.9;
-  const rollsPerBulk = (bulkLengthMeters * wasteFactor) / formatInfo.bulkLengthPerRoll;
+  const rollsPerBulk =
+    (bulkLengthMeters * wasteFactor) / formatInfo.bulkLengthPerRoll;
   const totalRolls = Math.floor(rollsPerBulk) * bulkQuantity;
-  
+
   return totalRolls;
 }
 
 export function getBulkFilmInfo(format: string) {
   const formatInfo = formatDimensions[format as keyof typeof formatDimensions];
-  return formatInfo ? {
-    supportsBulk: formatInfo.bulkLengthPerRoll > 0,
-    lengthPerRoll: formatInfo.bulkLengthPerRoll,
-    format: format
-  } : null;
+  return formatInfo
+    ? {
+        supportsBulk: formatInfo.bulkLengthPerRoll > 0,
+        lengthPerRoll: formatInfo.bulkLengthPerRoll,
+        format: format,
+      }
+    : null;
 }
 
 // Date formatting utility
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
   const year = date.getFullYear();
   return `${day}.${month}.${year}`;
 }
 
 // Trip duration utilities
-export function calculateTripDuration(startDate: string, endDate: string): number {
+export function calculateTripDuration(
+  startDate: string,
+  endDate: string
+): number {
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -288,7 +337,7 @@ export function calculateTripDuration(startDate: string, endDate: string): numbe
 
 export function formatTripDuration(startDate: string, endDate: string): string {
   const duration = calculateTripDuration(startDate, endDate);
-  
+
   if (duration === 1) {
     return "1 day";
   } else if (duration < 7) {
@@ -296,7 +345,7 @@ export function formatTripDuration(startDate: string, endDate: string): string {
   } else {
     const weeks = Math.floor(duration / 7);
     const remainingDays = duration % 7;
-    
+
     if (remainingDays === 0) {
       return weeks === 1 ? "1 week" : `${weeks} weeks`;
     } else {
@@ -307,20 +356,31 @@ export function formatTripDuration(startDate: string, endDate: string): string {
   }
 }
 
-export function formatTripDateRange(startDate: string, endDate: string): string {
+export function formatTripDateRange(
+  startDate: string,
+  endDate: string
+): string {
   const start = formatDate(startDate);
   const end = formatDate(endDate);
-  
+
   if (startDate === endDate) {
     return start;
   }
-  
+
   return `${start} - ${end}`;
 }
 
 // Chemistry and Development-related interfaces
-export type ChemistryType = 'developer' | 'stop_bath' | 'fixer' | 'bleach' | 'hypo_clear' | 'wetting_agent' | 'pre_wash' | 'other';
-export type ProcessType = 'black_white' | 'color';
+export type ChemistryType =
+  | "developer"
+  | "stop_bath"
+  | "fixer"
+  | "bleach"
+  | "hypo_clear"
+  | "wetting_agent"
+  | "pre_wash"
+  | "other";
+export type ProcessType = "black_white" | "color";
 
 export interface ChemistryInventory {
   id: string;
@@ -402,13 +462,31 @@ export interface SessionChemistryUsage {
 export const chemistryInventorySchema = z.object({
   name: z.string().min(1, "Name is required"),
   brand: z.string().optional(),
-  chemistry_type: z.enum(['developer', 'stop_bath', 'fixer', 'bleach', 'hypo_clear', 'wetting_agent', 'pre_wash', 'other']),
-  process_type: z.enum(['black_white', 'color']),
+  chemistry_type: z.enum([
+    "developer",
+    "stop_bath",
+    "fixer",
+    "bleach",
+    "hypo_clear",
+    "wetting_agent",
+    "pre_wash",
+    "other",
+  ]),
+  process_type: z.enum(["black_white", "color"]),
   volume_ml: z.number().nonnegative("Volume must be positive"),
   original_volume_ml: z.number().positive("Original volume must be positive"),
-  purchase_date: z.string().transform(val => val === "" ? undefined : val).optional(),
-  expiry_date: z.string().transform(val => val === "" ? undefined : val).optional(),
-  opened_date: z.string().transform(val => val === "" ? undefined : val).optional(),
+  purchase_date: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
+  expiry_date: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
+  opened_date: z
+    .string()
+    .transform((val) => (val === "" ? undefined : val))
+    .optional(),
   cost: z.number().nonnegative().optional(),
   storage_location: z.string().optional(),
   notes: z.string().optional(),
@@ -430,18 +508,22 @@ export const developmentRecipeSchema = z.object({
 
 export const developmentSessionSchema = z.object({
   session_date: z.string().min(1, "Session date is required"),
-  process_type: z.enum(['black_white', 'color']),
+  process_type: z.enum(["black_white", "color"]),
   temperature_celsius: z.number().positive().optional(),
   notes: z.string().optional(),
   film_ids: z.array(z.string()).min(1, "At least one film must be selected"),
   film_quantities: z.record(z.number().positive()).optional(),
-  chemistry_usage: z.array(z.object({
-    chemistry_id: z.string(),
-    volume_used_ml: z.number().positive(),
-    dilution_ratio: z.string().optional(),
-    development_time_minutes: z.number().positive().optional(),
-    notes: z.string().optional(),
-  })).min(1, "At least one chemistry must be used"),
+  chemistry_usage: z
+    .array(
+      z.object({
+        chemistry_id: z.string(),
+        volume_used_ml: z.number().positive(),
+        dilution_ratio: z.string().optional(),
+        development_time_minutes: z.number().positive().optional(),
+        notes: z.string().optional(),
+      })
+    )
+    .min(1, "At least one chemistry must be used"),
 });
 
 export type ChemistryInventorySchema = z.infer<typeof chemistryInventorySchema>;
@@ -450,40 +532,40 @@ export type DevelopmentSessionSchema = z.infer<typeof developmentSessionSchema>;
 
 // Chemistry type options for forms
 export const chemistryTypes = [
-  { value: 'developer', label: 'Developer' },
-  { value: 'stop_bath', label: 'Stop Bath' },
-  { value: 'fixer', label: 'Fixer' },
-  { value: 'bleach', label: 'Bleach' },
-  { value: 'hypo_clear', label: 'Hypo Clear' },
-  { value: 'wetting_agent', label: 'Wetting Agent' },
-  { value: 'pre_wash', label: 'Pre-Wash' },
-  { value: 'other', label: 'Other' },
+  { value: "developer", label: "Developer" },
+  { value: "stop_bath", label: "Stop Bath" },
+  { value: "fixer", label: "Fixer" },
+  { value: "bleach", label: "Bleach" },
+  { value: "hypo_clear", label: "Hypo Clear" },
+  { value: "wetting_agent", label: "Wetting Agent" },
+  { value: "pre_wash", label: "Pre-Wash" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export const processTypes = [
-  { value: 'black_white', label: 'Black & White' },
-  { value: 'color', label: 'Color' },
+  { value: "black_white", label: "Black & White" },
+  { value: "color", label: "Color" },
 ] as const;
 
 // Chemistry utility functions
 export function getChemistryTypeColor(type: ChemistryType): string {
   switch (type) {
-    case 'developer':
-      return 'text-purple-600 bg-purple-50';
-    case 'stop_bath':
-      return 'text-yellow-600 bg-yellow-50';
-    case 'fixer':
-      return 'text-blue-600 bg-blue-50';
-    case 'bleach':
-      return 'text-orange-600 bg-orange-50';
-    case 'hypo_clear':
-      return 'text-cyan-600 bg-cyan-50';
-    case 'wetting_agent':
-      return 'text-green-600 bg-green-50';
-    case 'pre_wash':
-      return 'text-teal-600 bg-teal-50';
+    case "developer":
+      return "text-purple-600 bg-purple-50";
+    case "stop_bath":
+      return "text-yellow-600 bg-yellow-50";
+    case "fixer":
+      return "text-blue-600 bg-blue-50";
+    case "bleach":
+      return "text-orange-600 bg-orange-50";
+    case "hypo_clear":
+      return "text-cyan-600 bg-cyan-50";
+    case "wetting_agent":
+      return "text-green-600 bg-green-50";
+    case "pre_wash":
+      return "text-teal-600 bg-teal-50";
     default:
-      return 'text-gray-600 bg-gray-50';
+      return "text-gray-600 bg-gray-50";
   }
 }
 
@@ -493,22 +575,26 @@ export function getVolumePercentage(current: number, original: number): number {
 }
 
 export function getVolumeStatusColor(percentage: number): string {
-  if (percentage > 50) return 'bg-green-500';
-  if (percentage > 20) return 'bg-yellow-500';
-  return 'bg-red-500';
+  if (percentage > 50) return "bg-green-500";
+  if (percentage > 20) return "bg-yellow-500";
+  return "bg-red-500";
 }
 
-export function isChemistryExpiringSoon(expiryDate?: string): 'expired' | 'warning' | 'ok' {
-  if (!expiryDate) return 'ok';
+export function isChemistryExpiringSoon(
+  expiryDate?: string
+): "expired" | "warning" | "ok" {
+  if (!expiryDate) return "ok";
 
   const expiry = new Date(expiryDate);
   const now = new Date();
-  const daysUntilExpiry = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const daysUntilExpiry = Math.ceil(
+    (expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
 
-  if (daysUntilExpiry < 0) return 'expired';
-  if (daysUntilExpiry <= 7) return 'warning';
-  if (daysUntilExpiry <= 30) return 'warning';
-  return 'ok';
+  if (daysUntilExpiry < 0) return "expired";
+  if (daysUntilExpiry <= 7) return "warning";
+  if (daysUntilExpiry <= 30) return "warning";
+  return "ok";
 }
 
 export function canReuseChemistry(chemistry: ChemistryInventory): boolean {

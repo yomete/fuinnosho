@@ -54,18 +54,6 @@ Built with Next.js 15, TypeScript, Supabase, and Radix UI.
 - Pack gear for each trip
 - Auto-consume reserved films when trips complete
 
-### Chemistry & Development
-- Track chemistry inventory (developers, fixers, stop baths, etc.)
-- Log development sessions with temperature and timing
-- Save reusable development recipes
-- Monitor chemistry reuse counts and volumes
-
-### Analytics
-- Usage trends and patterns
-- Cost breakdowns
-- Expiration forecasts
-- Monthly consumption charts
-
 ## Tech Stack
 
 - **Framework**: Next.js 15 (App Router)
@@ -166,4 +154,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
 ---
 
-*Fuinnosho* - from Japanese, meaning "negative storage" or "film archive"
+*Fuinnosho* (封印書) - A reference to the [Scroll of Seals](https://naruto.fandom.com/wiki/Scroll_of_Seals) from Naruto. Film rolls resemble the scroll's visual design.

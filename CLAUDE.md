@@ -34,8 +34,6 @@ This document contains important guidelines and reminders for Claude when workin
 - **Film Management**: Any changes to film properties, fields, or functionality
 - **Trip Planning**: Updates to trip structures or film/gear reservations
 - **Gear Management**: Changes to gear properties or relationships
-- **Usage Tracking**: Modifications to usage logging or history
-- **Challenge Management**: Updates to challenge, prompt, or progress functionality
 
 ### Example Implementation:
 

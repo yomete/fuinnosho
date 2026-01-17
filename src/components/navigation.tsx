@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Film, MapPin, Camera } from "lucide-react";
+import { Film, MapPin, Camera, Target } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
