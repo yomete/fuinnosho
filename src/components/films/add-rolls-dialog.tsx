@@ -86,7 +86,7 @@ export function AddRollsDialog({ filmId, filmName }: AddRollsDialogProps) {
                 min="1"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Number of rolls to add"
+                placeholder="Number of rolls to add…"
                 required
               />
             </div>
@@ -97,7 +97,7 @@ export function AddRollsDialog({ filmId, filmName }: AddRollsDialogProps) {
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g., Purchased from B&H, Restocking from storage, etc."
+                placeholder="e.g., Purchased from B&H, Restocking from storage…"
                 rows={3}
               />
             </div>
@@ -113,7 +113,8 @@ export function AddRollsDialog({ filmId, filmName }: AddRollsDialogProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add Rolls"}
+              {isSubmitting && <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+              {isSubmitting ? "Adding…" : "Add Rolls"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,9 +1,0 @@
----
-description: 
-globs: 
----
-
-# Your rule content
-
-- Make sure to use `pnpm` to install packages.
-- when adding tailwind classes or shadcn components, make sure to cater for both light and dark mode.

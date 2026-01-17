@@ -87,7 +87,7 @@ export function UsageHistoryDialog({
         <div className="overflow-y-auto flex-1 pr-2">
           {isLoading ? (
             <div className="text-center py-8 text-muted-foreground">
-              Loading usage history...
+              Loading usage history…
             </div>
           ) : usageHistory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">

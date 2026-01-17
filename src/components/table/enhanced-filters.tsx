@@ -110,6 +110,16 @@ const EnhancedFiltersComponent = function EnhancedFilters({
     maxIso: Math.max(...uniqueIsos)
   }), [uniqueIsos]);
 
+  // Pre-compute Sets for O(1) lookups instead of O(n) .includes() calls (js-set-map-lookups)
+  const selectedBrandsSet = useMemo(() => new Set(selectedBrands), [selectedBrands]);
+  const selectedTypesSet = useMemo(() => new Set(selectedTypes), [selectedTypes]);
+  const selectedFormatsSet = useMemo(() => new Set(selectedFormats), [selectedFormats]);
+  const selectedIsosSet = useMemo(() => new Set(selectedIsos), [selectedIsos]);
+  const notBrandsSet = useMemo(() => new Set(notBrands), [notBrands]);
+  const notTypesSet = useMemo(() => new Set(notTypes), [notTypes]);
+  const notFormatsSet = useMemo(() => new Set(notFormats), [notFormats]);
+  const notIsosSet = useMemo(() => new Set(notIsos), [notIsos]);
+
   // Use ref to avoid including onFiltersChange in dependency array
   const onFiltersChangeRef = useRef(onFiltersChange);
   onFiltersChangeRef.current = onFiltersChange;
@@ -165,8 +175,29 @@ const EnhancedFiltersComponent = function EnhancedFilters({
       hideZeroQuantity,
     };
 
-    // Only call onFiltersChange if filters actually changed
-    const filtersChanged = JSON.stringify(prevFiltersRef.current) !== JSON.stringify(currentFilters);
+    // Only call onFiltersChange if filters actually changed (avoid expensive JSON.stringify)
+    const prev = prevFiltersRef.current;
+    const filtersChanged =
+      prev.name !== currentFilters.name ||
+      prev.hideZeroQuantity !== currentFilters.hideZeroQuantity ||
+      prev.isoRange[0] !== currentFilters.isoRange[0] ||
+      prev.isoRange[1] !== currentFilters.isoRange[1] ||
+      prev.brands.length !== currentFilters.brands.length ||
+      prev.types.length !== currentFilters.types.length ||
+      prev.formats.length !== currentFilters.formats.length ||
+      prev.isos.length !== currentFilters.isos.length ||
+      prev.notBrands.length !== currentFilters.notBrands.length ||
+      prev.notTypes.length !== currentFilters.notTypes.length ||
+      prev.notFormats.length !== currentFilters.notFormats.length ||
+      prev.notIsos.length !== currentFilters.notIsos.length ||
+      !prev.brands.every((b, i) => b === currentFilters.brands[i]) ||
+      !prev.types.every((t, i) => t === currentFilters.types[i]) ||
+      !prev.formats.every((f, i) => f === currentFilters.formats[i]) ||
+      !prev.isos.every((iso, i) => iso === currentFilters.isos[i]) ||
+      !prev.notBrands.every((b, i) => b === currentFilters.notBrands[i]) ||
+      !prev.notTypes.every((t, i) => t === currentFilters.notTypes[i]) ||
+      !prev.notFormats.every((f, i) => f === currentFilters.notFormats[i]) ||
+      !prev.notIsos.every((iso, i) => iso === currentFilters.notIsos[i]);
 
     if (!filtersChanged) return;
 
@@ -183,61 +214,54 @@ const EnhancedFiltersComponent = function EnhancedFilters({
     setNameFilter(value);
   }, []);
 
+  // Use functional setState to avoid stale closure issues and reduce dependencies (rerender-functional-setstate)
   const handleBrandToggle = useCallback((brand: string) => {
     if (notModes.brands) {
-      const newNotBrands = notBrands.includes(brand)
-        ? notBrands.filter((b) => b !== brand)
-        : [...notBrands, brand];
-      setNotBrands(newNotBrands);
+      setNotBrands((prev) =>
+        prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+      );
     } else {
-      const newBrands = selectedBrands.includes(brand)
-        ? selectedBrands.filter((b) => b !== brand)
-        : [...selectedBrands, brand];
-      setSelectedBrands(newBrands);
+      setSelectedBrands((prev) =>
+        prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
+      );
     }
-  }, [notModes.brands, notBrands, selectedBrands]);
+  }, [notModes.brands]);
 
   const handleTypeToggle = useCallback((type: string) => {
     if (notModes.types) {
-      const newNotTypes = notTypes.includes(type)
-        ? notTypes.filter((t) => t !== type)
-        : [...notTypes, type];
-      setNotTypes(newNotTypes);
+      setNotTypes((prev) =>
+        prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      );
     } else {
-      const newTypes = selectedTypes.includes(type)
-        ? selectedTypes.filter((t) => t !== type)
-        : [...selectedTypes, type];
-      setSelectedTypes(newTypes);
+      setSelectedTypes((prev) =>
+        prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+      );
     }
-  }, [notModes.types, notTypes, selectedTypes]);
+  }, [notModes.types]);
 
   const handleFormatToggle = useCallback((format: string) => {
     if (notModes.formats) {
-      const newNotFormats = notFormats.includes(format)
-        ? notFormats.filter((f) => f !== format)
-        : [...notFormats, format];
-      setNotFormats(newNotFormats);
+      setNotFormats((prev) =>
+        prev.includes(format) ? prev.filter((f) => f !== format) : [...prev, format]
+      );
     } else {
-      const newFormats = selectedFormats.includes(format)
-        ? selectedFormats.filter((f) => f !== format)
-        : [...selectedFormats, format];
-      setSelectedFormats(newFormats);
+      setSelectedFormats((prev) =>
+        prev.includes(format) ? prev.filter((f) => f !== format) : [...prev, format]
+      );
     }
-  }, [notModes.formats, notFormats, selectedFormats]);
+  }, [notModes.formats]);
 
   const handleIsoToggle = useCallback((iso: number) => {
     if (notModes.isos) {
-      const newNotIsos = notIsos.includes(iso)
-        ? notIsos.filter((i) => i !== iso)
-        : [...notIsos, iso];
-      setNotIsos(newNotIsos);
+      setNotIsos((prev) =>
+        prev.includes(iso) ? prev.filter((i) => i !== iso) : [...prev, iso]
+      );
     } else {
-      const newIsos = selectedIsos.includes(iso)
-        ? selectedIsos.filter((i) => i !== iso)
-        : [...selectedIsos, iso];
-      setSelectedIsos(newIsos);
+      setSelectedIsos((prev) =>
+        prev.includes(iso) ? prev.filter((i) => i !== iso) : [...prev, iso]
+      );
     }
-  }, [notModes.isos, notIsos, selectedIsos]);
+  }, [notModes.isos]);
 
   const handleIsoRangeChange = useCallback((range: [number, number]) => {
     setIsoRange(range);
@@ -312,7 +336,7 @@ const EnhancedFiltersComponent = function EnhancedFilters({
         <div className="relative flex-1 max-w-full sm:max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6a6460]" />
           <Input
-            placeholder="Search films..."
+            placeholder="Search films…"
             value={nameFilter}
             onChange={(e) => handleNameChange(e.target.value)}
             className="pl-10"
@@ -422,8 +446,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                         <Checkbox
                           checked={
                             notModes.brands
-                              ? notBrands.includes(brand)
-                              : selectedBrands.includes(brand)
+                              ? notBrandsSet.has(brand)
+                              : selectedBrandsSet.has(brand)
                           }
                           onCheckedChange={() => handleBrandToggle(brand)}
                         />
@@ -482,8 +506,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                         <Checkbox
                           checked={
                             notModes.types
-                              ? notTypes.includes(type)
-                              : selectedTypes.includes(type)
+                              ? notTypesSet.has(type)
+                              : selectedTypesSet.has(type)
                           }
                           onCheckedChange={() => handleTypeToggle(type)}
                         />
@@ -542,8 +566,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                         <Checkbox
                           checked={
                             notModes.formats
-                              ? notFormats.includes(format)
-                              : selectedFormats.includes(format)
+                              ? notFormatsSet.has(format)
+                              : selectedFormatsSet.has(format)
                           }
                           onCheckedChange={() => handleFormatToggle(format)}
                         />
@@ -613,8 +637,8 @@ const EnhancedFiltersComponent = function EnhancedFilters({
                         <Checkbox
                           checked={
                             notModes.isos
-                              ? notIsos.includes(iso)
-                              : selectedIsos.includes(iso)
+                              ? notIsosSet.has(iso)
+                              : selectedIsosSet.has(iso)
                           }
                           onCheckedChange={() => handleIsoToggle(iso)}
                         />

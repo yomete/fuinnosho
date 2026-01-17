@@ -89,7 +89,7 @@ export function NewTripForm({ onCancel }: NewTripFormProps) {
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="e.g. Japan Cherry Blossom Tour"
+                  placeholder="e.g., Japan Cherry Blossom Tour…"
                   required
                 />
               </div>
@@ -101,7 +101,7 @@ export function NewTripForm({ onCancel }: NewTripFormProps) {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Describe your trip, locations you'll visit, type of photography..."
+                  placeholder="Describe your trip, locations you'll visit, type of photography…"
                   rows={4}
                   required
                 />
@@ -136,7 +136,8 @@ export function NewTripForm({ onCancel }: NewTripFormProps) {
 
               <div className="flex gap-3 pt-4">
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Creating..." : "Create Trip"}
+                  {isLoading && <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />}
+                  {isLoading ? "Creating…" : "Create Trip"}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>
                   Cancel

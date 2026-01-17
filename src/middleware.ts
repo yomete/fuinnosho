@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protected routes that require authentication
-  const protectedRoutes = ["/profile", "/sync"];
+  const protectedRoutes = ["/profile", "/sync", "/settings"];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
@@ -51,6 +51,7 @@ export const config = {
     "/films/:path*",
     "/profile/:path*",
     "/sync/:path*",
+    "/settings/:path*",
     "/login",
     "/register",
     "/forgot-password",

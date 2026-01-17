@@ -3,9 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
-import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
-import { Analytics } from "@vercel/analytics/react";
-import { Navigation } from "@/components/navigation";
+import { AnalyticsWrapper } from "@/components/analytics-wrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,12 +36,7 @@ export default function RootLayout({
           <div className="ambient-bg" />
           <div className="vignette" />
           <div className="film-grain" />
-          <Navigation />
-          <div className="fixed top-6 right-6 z-50">
-            <NavUserIconWrapper />
-          </div>
-          <main className="relative z-10 pb-16 px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24">{children}</main>
-          {/* <Footer /> */}
+          {children}
           <Toaster
             theme="dark"
             toastOptions={{
@@ -54,7 +47,7 @@ export default function RootLayout({
               },
             }}
           />
-          <Analytics />
+          <AnalyticsWrapper />
         </Providers>
       </body>
     </html>
