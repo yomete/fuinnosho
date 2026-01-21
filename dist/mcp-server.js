@@ -61,6 +61,7 @@ class FilmInventoryMCPServer {
         // Initialize Supabase client
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
         if (!supabaseUrl || !supabaseKey) {
             console.warn("⚠️  Missing Supabase environment variables - running in TEST MODE");
             MCPMonitoring.warning("MCP Server starting in test mode", {
@@ -69,12 +70,46 @@ class FilmInventoryMCPServer {
             });
             this.supabase = null; // Test mode
         }
+        else if (serviceRoleKey) {
+            // Use service role key if available (bypasses RLS)
+            console.error("🔑 Using service role key for Supabase client");
+            this.supabase = createClient(supabaseUrl, serviceRoleKey, {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false,
+                    detectSessionInUrl: false,
+                },
+            });
+        }
         else {
+            // Fall back to anon key
+            console.error("🔓 Using anon key for Supabase client (RLS will apply)");
             this.supabase = createClient(supabaseUrl, supabaseKey);
         }
         // Set user ID for filtering (configured via environment variable)
         this.userId = process.env.MCP_USER_ID || "";
+        // If using service role key and no user ID configured, fetch it from existing data
+        if (serviceRoleKey && !this.userId) {
+            this.fetchDefaultUserId();
+        }
         this.setupToolHandlers();
+    }
+    async fetchDefaultUserId() {
+        try {
+            // Try to get user_id from an existing trip
+            const { data } = await this.supabase
+                .from("trips")
+                .select("user_id")
+                .limit(1)
+                .single();
+            if (data?.user_id) {
+                this.userId = data.user_id;
+                console.error(`📋 Found default user_id from trips: ${this.userId}`);
+            }
+        }
+        catch (error) {
+            console.error("Could not fetch default user_id:", error);
+        }
     }
     async authenticateSession() {
         console.error("Starting authentication process...");
@@ -972,10 +1007,11 @@ class FilmInventoryMCPServer {
         const tableName = include_availability
             ? "films_with_availability"
             : "films";
-        const { data: films, error } = await this.supabase
-            .from(tableName)
-            .select("*")
-            .eq("user_id", this.userId)
+        let filmsQuery = this.supabase.from(tableName).select("*");
+        if (this.userId) {
+            filmsQuery = filmsQuery.eq("user_id", this.userId);
+        }
+        const { data: films, error } = await filmsQuery
             .order("brand", { ascending: true })
             .order("name", { ascending: true });
         if (error) {
@@ -1299,6 +1335,10 @@ class FilmInventoryMCPServer {
             is_ecn,
             is_bulk_film,
         };
+        // Include user_id if available
+        if (this.userId) {
+            filmData.user_id = this.userId;
+        }
         if (price !== undefined) {
             filmData.price = price;
         }
@@ -1433,6 +1473,10 @@ class FilmInventoryMCPServer {
             end_date,
             status: "upcoming",
         };
+        // Include user_id if available
+        if (this.userId) {
+            tripData.user_id = this.userId;
+        }
         const { data: trip, error } = await this.supabase
             .from("trips")
             .insert(tripData)
@@ -1908,8 +1952,11 @@ class FilmInventoryMCPServer {
             type,
             condition,
             notes,
-            user_id: this.userId,
         };
+        // Only set user_id if it's configured
+        if (this.userId) {
+            gearData.user_id = this.userId;
+        }
         if (model)
             gearData.model = model;
         if (serial_number)
@@ -1941,10 +1988,11 @@ class FilmInventoryMCPServer {
     }
     async listGear(args) {
         const { type, brand, condition, include_trip_reservations = false } = args;
-        let query = this.supabase
-            .from("gear")
-            .select("*")
-            .eq("user_id", this.userId);
+        let query = this.supabase.from("gear").select("*");
+        // Only filter by user_id if it's set
+        if (this.userId) {
+            query = query.eq("user_id", this.userId);
+        }
         if (type) {
             query = query.eq("type", type);
         }
@@ -2017,13 +2065,14 @@ class FilmInventoryMCPServer {
         if (Object.keys(cleanedData).length === 0) {
             throw new Error("No fields to update");
         }
-        const { data: gear, error } = await this.supabase
+        let updateQuery = this.supabase
             .from("gear")
             .update(cleanedData)
-            .eq("id", gear_id)
-            .eq("user_id", this.userId)
-            .select()
-            .single();
+            .eq("id", gear_id);
+        if (this.userId) {
+            updateQuery = updateQuery.eq("user_id", this.userId);
+        }
+        const { data: gear, error } = await updateQuery.select().single();
         if (error) {
             throw new Error(`Failed to update gear: ${error.message}`);
         }
@@ -2049,12 +2098,14 @@ class FilmInventoryMCPServer {
             throw new Error("gear_id is required");
         }
         // First check if gear exists and get its info
-        const { data: gear, error: fetchError } = await this.supabase
+        let fetchQuery = this.supabase
             .from("gear")
             .select("name, brand, type")
-            .eq("id", gear_id)
-            .eq("user_id", this.userId)
-            .single();
+            .eq("id", gear_id);
+        if (this.userId) {
+            fetchQuery = fetchQuery.eq("user_id", this.userId);
+        }
+        const { data: gear, error: fetchError } = await fetchQuery.single();
         if (fetchError || !gear) {
             throw new Error("Gear not found");
         }
@@ -2081,11 +2132,11 @@ class FilmInventoryMCPServer {
             throw new Error(`Cannot delete gear: it's reserved for upcoming trips: ${tripTitles}`);
         }
         // Delete the gear
-        const { error: deleteError } = await this.supabase
-            .from("gear")
-            .delete()
-            .eq("id", gear_id)
-            .eq("user_id", this.userId);
+        let deleteQuery = this.supabase.from("gear").delete().eq("id", gear_id);
+        if (this.userId) {
+            deleteQuery = deleteQuery.eq("user_id", this.userId);
+        }
+        const { error: deleteError } = await deleteQuery;
         if (deleteError) {
             throw new Error(`Failed to delete gear: ${deleteError.message}`);
         }
@@ -2109,10 +2160,11 @@ class FilmInventoryMCPServer {
     }
     async getGearStats(args) {
         const { group_by = "type" } = args;
-        const { data: gear, error } = await this.supabase
-            .from("gear")
-            .select("*")
-            .eq("user_id", this.userId);
+        let statsQuery = this.supabase.from("gear").select("*");
+        if (this.userId) {
+            statsQuery = statsQuery.eq("user_id", this.userId);
+        }
+        const { data: gear, error } = await statsQuery;
         if (error) {
             throw new Error(`Failed to fetch gear for stats: ${error.message}`);
         }
@@ -2162,22 +2214,23 @@ class FilmInventoryMCPServer {
             throw new Error("trip_id and gear_id are required");
         }
         // Check if trip exists and belongs to user
-        const { data: trip, error: tripError } = await this.supabase
-            .from("trips")
-            .select("title")
-            .eq("id", trip_id)
-            .eq("user_id", this.userId)
-            .single();
+        let tripQuery = this.supabase.from("trips").select("title").eq("id", trip_id);
+        if (this.userId) {
+            tripQuery = tripQuery.eq("user_id", this.userId);
+        }
+        const { data: trip, error: tripError } = await tripQuery.single();
         if (tripError || !trip) {
             throw new Error("Trip not found");
         }
         // Check if gear exists and belongs to user
-        const { data: gear, error: gearError } = await this.supabase
+        let gearQuery = this.supabase
             .from("gear")
             .select("name, brand, type")
-            .eq("id", gear_id)
-            .eq("user_id", this.userId)
-            .single();
+            .eq("id", gear_id);
+        if (this.userId) {
+            gearQuery = gearQuery.eq("user_id", this.userId);
+        }
+        const { data: gear, error: gearError } = await gearQuery.single();
         if (gearError || !gear) {
             throw new Error("Gear not found");
         }
@@ -2240,22 +2293,24 @@ class FilmInventoryMCPServer {
             throw new Error("Gear reservation not found for this trip");
         }
         // Verify the trip and gear belong to the user (additional security)
-        const [tripCheck, gearCheck] = await Promise.all([
-            this.supabase
-                .from("trips")
-                .select("id")
-                .eq("id", trip_id)
-                .eq("user_id", this.userId)
-                .single(),
-            this.supabase
-                .from("gear")
-                .select("id")
-                .eq("id", gear_id)
-                .eq("user_id", this.userId)
-                .single(),
-        ]);
-        if (tripCheck.error || gearCheck.error) {
-            throw new Error("Access denied: trip or gear not found");
+        if (this.userId) {
+            const [tripCheck, gearCheck] = await Promise.all([
+                this.supabase
+                    .from("trips")
+                    .select("id")
+                    .eq("id", trip_id)
+                    .eq("user_id", this.userId)
+                    .single(),
+                this.supabase
+                    .from("gear")
+                    .select("id")
+                    .eq("id", gear_id)
+                    .eq("user_id", this.userId)
+                    .single(),
+            ]);
+            if (tripCheck.error || gearCheck.error) {
+                throw new Error("Access denied: trip or gear not found");
+            }
         }
         // Delete the reservation
         const { error: deleteError } = await this.supabase

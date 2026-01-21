@@ -65,7 +65,8 @@
       "Skill(dev-browser:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm next lint:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(source:*)"
     ],
     "deny": [],
     "additionalDirectories": [
