@@ -347,7 +347,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           {onBack ? (
@@ -364,22 +364,22 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
             </Link>
           )}
 
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2 text-[#e8e4e0]">{trip.title}</h1>
-              <div className="flex items-center gap-4 text-[#8a8078]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-[#e8e4e0]">{trip.title}</h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[#8a8078]">
                 <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {formatTripDateRange(trip.start_date, trip.end_date)}
+                  <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">{formatTripDateRange(trip.start_date, trip.end_date)}</span>
                 </div>
                 <div className="flex items-center text-sm">
-                  <MapPin className="h-4 w-4 mr-1" />
+                  <MapPin className="h-4 w-4 mr-1 flex-shrink-0" />
                   {formatTripDuration(trip.start_date, trip.end_date)}
                 </div>
               </div>
             </div>
 
-            <Button variant="destructive" size="sm" onClick={handleDeleteTrip} className="bg-[#8b2942] hover:bg-[#a33352] text-[#e8e4e0]">
+            <Button variant="destructive" size="sm" onClick={handleDeleteTrip} className="bg-[#8b2942] hover:bg-[#a33352] text-[#e8e4e0] self-start sm:flex-shrink-0">
               <Trash2 className="h-4 w-4 mr-2" />
               Delete Trip
             </Button>
@@ -397,91 +397,89 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
           </Card>
 
           <Card className="bg-[#2a2825] border-[#3d3a36]">
-            <CardHeader>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <CardTitle className="text-[#e8e4e0]">Reserved Films</CardTitle>
-                  <CardDescription className="text-[#8a8078]">
-                    Films you&apos;ve reserved for this trip
-                    {tripFilms.length > 0 && (
-                      <span className="ml-2 font-medium text-[#e8e4e0]">
-                        {isoFilter !== "all" &&
-                        getFilteredAndSortedFilms().length !==
-                          tripFilms.length ? (
-                          <>
-                            (
-                            {getFilteredAndSortedFilms().reduce(
-                              (total, film) => total + film.reserved_quantity,
-                              0
-                            )}{" "}
-                            of{" "}
-                            {tripFilms.reduce(
-                              (total, film) => total + film.reserved_quantity,
-                              0
-                            )}{" "}
-                            total)
-                          </>
-                        ) : (
-                          <>
-                            (
-                            {tripFilms.reduce(
-                              (total, film) => total + film.reserved_quantity,
-                              0
-                            )}{" "}
-                            total)
-                          </>
-                        )}
-                      </span>
-                    )}
-                  </CardDescription>
-                </div>
+            <CardHeader className="space-y-4">
+              <div>
+                <CardTitle className="text-[#e8e4e0]">Reserved Films</CardTitle>
+                <CardDescription className="text-[#8a8078]">
+                  Films you&apos;ve reserved for this trip
+                  {tripFilms.length > 0 && (
+                    <span className="ml-2 font-medium text-[#e8e4e0]">
+                      {isoFilter !== "all" &&
+                      getFilteredAndSortedFilms().length !==
+                        tripFilms.length ? (
+                        <>
+                          (
+                          {getFilteredAndSortedFilms().reduce(
+                            (total, film) => total + film.reserved_quantity,
+                            0
+                          )}{" "}
+                          of{" "}
+                          {tripFilms.reduce(
+                            (total, film) => total + film.reserved_quantity,
+                            0
+                          )}{" "}
+                          total)
+                        </>
+                      ) : (
+                        <>
+                          (
+                          {tripFilms.reduce(
+                            (total, film) => total + film.reserved_quantity,
+                            0
+                          )}{" "}
+                          total)
+                        </>
+                      )}
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Select
+                  value={selectedFilmId}
+                  onValueChange={setSelectedFilmId}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
+                    <SelectValue placeholder="Select a film" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
+                    {availableFilms.map((film) => {
+                      const expiryDate = film.expiration_date
+                        ? new Date(film.expiration_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                        : '';
+                      return (
+                        <SelectItem key={film.id} value={film.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
+                          {film.name}
+                          {expiryDate && ` • Exp: ${expiryDate}`}
+                          {' '}({film.available_count} available)
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
                 <div className="flex items-center gap-2">
-                  <Select
-                    value={selectedFilmId}
-                    onValueChange={setSelectedFilmId}
-                  >
-                    <SelectTrigger className="w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
-                      <SelectValue placeholder="Select a film" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
-                      {availableFilms.map((film) => {
-                        const expiryDate = film.expiration_date
-                          ? new Date(film.expiration_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                          : '';
-                        return (
-                          <SelectItem key={film.id} value={film.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
-                            {film.name}
-                            {expiryDate && ` • Exp: ${expiryDate}`}
-                            {' '}({film.available_count} available)
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-1">
-                    <Input
-                      type="number"
-                      min="1"
-                      max={
-                        selectedFilmId
-                          ? availableFilms.find((f) => f.id === selectedFilmId)?.available_count || 1
-                          : 1
-                      }
-                      value={quantity}
-                      onChange={(e) =>
-                        setQuantity(
-                          Math.max(1, parseInt(e.target.value) || 1)
-                        )
-                      }
-                      className="w-16 bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]"
-                      placeholder="Qty"
-                    />
-                  </div>
+                  <Input
+                    type="number"
+                    min="1"
+                    max={
+                      selectedFilmId
+                        ? availableFilms.find((f) => f.id === selectedFilmId)?.available_count || 1
+                        : 1
+                    }
+                    value={quantity}
+                    onChange={(e) =>
+                      setQuantity(
+                        Math.max(1, parseInt(e.target.value) || 1)
+                      )
+                    }
+                    className="w-20 bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]"
+                    placeholder="Qty"
+                  />
                   <Button
                     onClick={handleAddFilm}
                     disabled={!selectedFilmId || isAddingFilm || quantity < 1}
                     size="sm"
-                    className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
+                    className="flex-1 sm:flex-initial bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add {quantity > 1 ? `${quantity} Films` : "Film"}
@@ -599,15 +597,23 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   {getFilteredAndSortedFilms().map((film) => (
                     <div
                       key={film.id}
-                      className="flex items-center justify-between p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
                     >
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <p className="font-medium text-[#e8e4e0]">{film.name}</p>
+                      <div className="flex items-start sm:items-center justify-between sm:justify-start gap-3 min-w-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-[#e8e4e0] truncate">{film.name}</p>
                           <p className="text-sm text-[#8a8078]">
                             {film.brand} • {film.format} • ISO {film.iso}
                           </p>
                         </div>
+                        {editingFilmId !== film.id && (
+                          <Badge variant="outline" className="border-[#5c5955] text-[#8a8078] flex-shrink-0 sm:hidden">
+                            {film.reserved_quantity}
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
                         {editingFilmId === film.id ? (
                           <div className="flex items-center gap-2">
                             <Input
@@ -624,36 +630,29 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                             <span className="text-sm text-[#8a8078]">
                               reserved
                             </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleSaveQuantity(film.id)}
+                              className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleCancelEdit}
+                              className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
+                            >
+                              Cancel
+                            </Button>
                           </div>
                         ) : (
-                          <Badge variant="outline" className="border-[#5c5955] text-[#8a8078]">
-                            {film.reserved_quantity} reserved
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                          {editingFilmId === film.id ? (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSaveQuantity(film.id)}
-                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
-                              >
-                                Save
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={handleCancelEdit}
-                                className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
-                              >
-                                Cancel
-                              </Button>
-                            </>
-                          ) : (
-                            <>
+                          <>
+                            <Badge variant="outline" className="border-[#5c5955] text-[#8a8078] hidden sm:inline-flex">
+                              {film.reserved_quantity} reserved
+                            </Badge>
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -675,8 +674,9 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                               >
                                 <X className="h-4 w-4" />
                               </Button>
-                            </>
-                          )}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -686,41 +686,39 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
           </Card>
 
           <Card className="bg-[#2a2825] border-[#3d3a36]">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-[#e8e4e0]">Reserved Gear</CardTitle>
-                  <CardDescription className="text-[#8a8078]">
-                    Photography gear you&apos;ve reserved for this trip
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={selectedGearId}
-                    onValueChange={setSelectedGearId}
-                  >
-                    <SelectTrigger className="w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
-                      <SelectValue placeholder="Select gear" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
-                      {availableGear.map((gear) => (
-                        <SelectItem key={gear.id} value={gear.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
-                          {getGearTypeIcon(gear.type)} {gear.brand}{" "}
-                          {gear.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handleAddGear}
-                    disabled={!selectedGearId || isAddingGear}
-                    size="sm"
-                    className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Gear
-                  </Button>
-                </div>
+            <CardHeader className="space-y-4">
+              <div>
+                <CardTitle className="text-[#e8e4e0]">Reserved Gear</CardTitle>
+                <CardDescription className="text-[#8a8078]">
+                  Photography gear you&apos;ve reserved for this trip
+                </CardDescription>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <Select
+                  value={selectedGearId}
+                  onValueChange={setSelectedGearId}
+                >
+                  <SelectTrigger className="w-full sm:w-[200px] bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]">
+                    <SelectValue placeholder="Select gear" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#2a2825] border-[#3d3a36]">
+                    {availableGear.map((gear) => (
+                      <SelectItem key={gear.id} value={gear.id} className="text-[#e8e4e0] focus:bg-[#3d3a36] focus:text-[#e8e4e0]">
+                        {getGearTypeIcon(gear.type)} {gear.brand}{" "}
+                        {gear.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleAddGear}
+                  disabled={!selectedGearId || isAddingGear}
+                  size="sm"
+                  className="bg-[#3d3a36] hover:bg-[#4a4641] text-[#e8e4e0] border border-[#5c5955]/30"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Gear
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -737,15 +735,15 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   {tripGear.map((gear) => (
                     <div
                       key={gear.id}
-                      className="flex items-center justify-between p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
+                      className="flex items-center justify-between gap-3 p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-2xl flex-shrink-0">
                           {getGearTypeIcon(gear.type)}
                         </span>
-                        <div>
-                          <p className="font-medium text-[#e8e4e0]">{gear.name}</p>
-                          <p className="text-sm text-[#8a8078]">
+                        <div className="min-w-0">
+                          <p className="font-medium text-[#e8e4e0] truncate">{gear.name}</p>
+                          <p className="text-sm text-[#8a8078] truncate">
                             {gear.brand} • {gear.type}
                             {gear.model ? ` • ${gear.model}` : ""}
                           </p>
@@ -756,7 +754,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveGear(gear.id)}
-                        className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]"
+                        className="text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36] flex-shrink-0"
                       >
                         <X className="h-4 w-4" />
                       </Button>
