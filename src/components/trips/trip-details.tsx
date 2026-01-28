@@ -347,8 +347,8 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 sm:py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="container mx-auto px-4 py-6 sm:py-8 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
         <div className="mb-6">
           {onBack ? (
             <Button variant="ghost" onClick={onBack} className="mb-4 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]">
@@ -387,16 +387,16 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
         </div>
 
         <div className="grid gap-6">
-          <Card className="bg-[#2a2825] border-[#3d3a36]">
+          <Card className="bg-[#2a2825] border-[#3d3a36] overflow-hidden">
             <CardHeader>
               <CardTitle className="text-[#e8e4e0]">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-[#8a8078]">{trip.description}</p>
+              <p className="text-[#8a8078] break-words">{trip.description}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-[#2a2825] border-[#3d3a36]">
+          <Card className="bg-[#2a2825] border-[#3d3a36] overflow-hidden">
             <CardHeader className="space-y-4">
               <div>
                 <CardTitle className="text-[#e8e4e0]">Reserved Films</CardTitle>
@@ -613,9 +613,9 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0 w-full sm:w-auto">
                         {editingFilmId === film.id ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <Input
                               type="number"
                               min="1"
@@ -627,7 +627,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                               }
                               className="w-16 bg-[#2a2825] border-[#3d3a36] text-[#e8e4e0]"
                             />
-                            <span className="text-sm text-[#8a8078]">
+                            <span className="text-sm text-[#8a8078] hidden sm:inline">
                               reserved
                             </span>
                             <Button
@@ -685,7 +685,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#2a2825] border-[#3d3a36]">
+          <Card className="bg-[#2a2825] border-[#3d3a36] overflow-hidden">
             <CardHeader className="space-y-4">
               <div>
                 <CardTitle className="text-[#e8e4e0]">Reserved Gear</CardTitle>
@@ -735,13 +735,13 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
                   {tripGear.map((gear) => (
                     <div
                       key={gear.id}
-                      className="flex items-center justify-between gap-3 p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
+                      className="flex items-center justify-between gap-2 sm:gap-3 p-3 border border-[#3d3a36] rounded-lg bg-[#1e1c1a]"
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-2xl flex-shrink-0">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">
                           {getGearTypeIcon(gear.type)}
                         </span>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <p className="font-medium text-[#e8e4e0] truncate">{gear.name}</p>
                           <p className="text-sm text-[#8a8078] truncate">
                             {gear.brand} • {gear.type}
