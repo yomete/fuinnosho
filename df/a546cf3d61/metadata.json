@@ -3,10 +3,11 @@
   "checkpoint_id": "dfa546cf3d61",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 21,
+  "checkpoints_count": 24,
   "files_touched": [
     ".env.example",
     "OPEN_SOURCE_PLAN.md",
+    "mcp-server.ts",
     "package.json",
     "scripts/seed.ts",
     "src/app/(app)/film/[filmId]/page.tsx",
@@ -22,6 +23,7 @@
     "src/app/actions/films.ts",
     "src/app/actions/gear.ts",
     "src/app/actions/trips.ts",
+    "src/app/api/mcp/[transport]/route.ts",
     "src/app/api/reset-demo/route.ts",
     "src/components/demo-banner.tsx",
     "src/components/demo-films-content.tsx",
@@ -40,6 +42,8 @@
     "src/components/viz/film-inventory-grid.tsx",
     "src/lib/auth.ts",
     "src/lib/demo.ts",
+    "src/lib/mcp/supabase.ts",
+    "src/lib/mcp/tools.ts",
     "src/lib/seed-data.ts",
     "src/lib/supabase/middleware.ts",
     "src/lib/use-demo-prefix.ts",
@@ -69,7 +73,8 @@
     "supabase/migrations/026_add_usage_type_for_additions.sql",
     "supabase/migrations/027_drop_challenge_tables.sql",
     "supabase/migrations/028_add_trip_id_to_film_usage.sql",
-    "supabase/migrations/gear-migration.sql"
+    "supabase/migrations/gear-migration.sql",
+    "tsconfig.mcp.json"
   ],
   "sessions": [
     {
@@ -78,13 +83,20 @@
       "context": "/df/a546cf3d61/0/context.md",
       "content_hash": "/df/a546cf3d61/0/content_hash.txt",
       "prompt": "/df/a546cf3d61/0/prompt.txt"
+    },
+    {
+      "metadata": "/df/a546cf3d61/1/metadata.json",
+      "transcript": "/df/a546cf3d61/1/full.jsonl",
+      "context": "/df/a546cf3d61/1/context.md",
+      "content_hash": "/df/a546cf3d61/1/content_hash.txt",
+      "prompt": "/df/a546cf3d61/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 5952,
-    "cache_creation_tokens": 1032592,
-    "cache_read_tokens": 34114620,
-    "output_tokens": 44748,
-    "api_call_count": 319
+    "input_tokens": 6021,
+    "cache_creation_tokens": 1190319,
+    "cache_read_tokens": 38495674,
+    "output_tokens": 77523,
+    "api_call_count": 376
   }
 }
