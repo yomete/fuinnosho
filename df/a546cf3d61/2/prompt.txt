@@ -1,0 +1,31 @@
+i'm seeing these films, in a user logged in account even though these are demo account films
+
+---
+
+[Image: original 2512x726, displayed at 2000x578. Multiply coordinates by 1.26 to map to original image.]
+
+---
+
+ok but i still see the demo data in my logged in session
+
+---
+
+does it make sense to edit this supabase/migrations/001_initial_schema.sql
+
+---
+
+yeah the fix worked
+
+---
+
+i'm seeing data i created in my user logged in account in the demo pages for trips and gears
+
+---
+
+The by-ID functions (getTripById, getFilmById, getTripWithFilms, etc.) filter by a specific record ID so they're lower risk, but they could still leak data via the admin client if someone guesses an ID
+
+can you ex[lain some more?
+
+---
+
+yes please and make sure not to break exisitng functionalities
