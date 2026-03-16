@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { format, differenceInDays } from "date-fns";
 import Link from "next/link";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 interface FilmsSummaryProps {
   films: Film[];
@@ -64,6 +65,7 @@ function getExpirationStatus(expirationDate: string): { label: string; color: st
 }
 
 export function FilmsSummary({ films }: FilmsSummaryProps) {
+  const prefix = useDemoPrefix();
   const [showExpiringModal, setShowExpiringModal] = useState(false);
 
   const now = new Date();
@@ -243,7 +245,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                   return (
                     <Link
                       key={film.id}
-                      href={`/film/${film.id}`}
+                      href={`${prefix}/film/${film.id}`}
                       onClick={() => setShowExpiringModal(false)}
                       className="block p-4 rounded-xl border border-[#2a2420] bg-[#1a1614]/50 hover:border-[#3a3430] hover:bg-[#1a1614]/80 transition-all"
                     >

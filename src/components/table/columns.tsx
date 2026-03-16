@@ -26,10 +26,12 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { type TableRow, isFilmGroup } from "@/lib/film-grouping";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
   const rowData: TableRow = row.original;
   const isGroup = isFilmGroup(rowData);
+  const prefix = useDemoPrefix();
 
   // Always call hooks in the same order (Rules of Hooks)
   const [selectDialogOpen, setSelectDialogOpen] = useState(false);
@@ -146,7 +148,7 @@ const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem asChild>
-            <Link href={`/film/${filmData.id}`} className="flex items-center">
+            <Link href={`${prefix}/film/${filmData.id}`} className="flex items-center">
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </Link>

@@ -7,25 +7,27 @@ import { Film, MapPin, Camera, Target } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
+  const isDemo = pathname.startsWith("/demo");
+  const prefix = isDemo ? "/demo" : "";
 
   const links = [
     {
-      href: "/films",
+      href: `${prefix}/films`,
       label: "Films",
       icon: Film,
-      active: pathname.startsWith("/films") || pathname.startsWith("/film"),
+      active: pathname.startsWith(`${prefix}/films`) || pathname.startsWith(`${prefix}/film`),
     },
     {
-      href: "/gear",
+      href: `${prefix}/gear`,
       label: "Gear",
       icon: Camera,
-      active: pathname.startsWith("/gear"),
+      active: pathname.startsWith(`${prefix}/gear`),
     },
     {
-      href: "/trips",
+      href: `${prefix}/trips`,
       label: "Trips",
       icon: MapPin,
-      active: pathname.startsWith("/trips"),
+      active: pathname.startsWith(`${prefix}/trips`),
     },
   ];
 

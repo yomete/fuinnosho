@@ -2,7 +2,7 @@ import { Navigation } from "@/components/navigation";
 import NavUserIconWrapper from "@/components/nav-user-icon-wrapper";
 import { DemoBanner } from "@/components/demo-banner";
 
-export default function AppLayout({
+export default function DemoLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -1,7 +1,7 @@
 "use server";
 
 import { Trip, TripFilm, TripGear, Gear, TripSchema, tripSchema } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { getEffectiveUser, getDataClient } from "@/lib/auth";
 import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
 import { reduceFilmCount } from "./films";
@@ -16,20 +16,20 @@ export async function createTrip(data: TripSchema): Promise<CreateTripResponse> 
   try {
     const validatedData = tripSchema.parse(data);
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
+    const { userId } = await getEffectiveUser();
+
+    if (!userId) {
       throw new Error("User not authenticated");
     }
 
+    const supabase = await getDataClient();
     const tripId = uuidv4();
     const newTrip: Trip = {
       ...validatedData,
       id: tripId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      user_id: user.id,
+      user_id: userId,
       status: 'upcoming',
     };
 
@@ -56,12 +56,14 @@ export async function editTrip(
 ): Promise<CreateTripResponse> {
   try {
     const validatedData = tripSchema.parse(data);
+    const { userId } = await getEffectiveUser();
 
-    const supabase = await createClient();
+    const supabase = await getDataClient();
     const { error } = await supabase
       .from("trips")
       .update(validatedData)
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -71,6 +73,7 @@ export async function editTrip(
       .from("trips")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     revalidatePath("/trips");
@@ -89,8 +92,9 @@ export async function getTrips(): Promise<{
   error: Error | null;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Get trips with total reserved film count
     const { data, error } = await supabase
       .from("trips")
@@ -100,6 +104,7 @@ export async function getTrips(): Promise<{
           quantity
         )
       `)
+      .eq("user_id", userId)
       .order("start_date", { ascending: true });
 
     if (error) {
@@ -154,11 +159,13 @@ export async function getTrips(): Promise<{
 
 export async function getTripById(id: string): Promise<Trip | null> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("trips")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     if (error) {
@@ -178,8 +185,9 @@ export async function deleteTrip(id: string): Promise<{
   error?: Error;
 }> {
   try {
-    const supabase = await createClient();
-    const { error } = await supabase.from("trips").delete().eq("id", id);
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+    const { error } = await supabase.from("trips").delete().eq("id", id).eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -206,8 +214,21 @@ export async function addFilmToTrip(
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     // Check if this film is already in the trip
     const { data: existingTripFilm } = await supabase
       .from("trip_films")
@@ -271,7 +292,21 @@ export async function updateFilmQuantityInTrip(
       };
     }
 
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     const { error } = await supabase
       .from("trip_films")
       .update({ quantity: newQuantity })
@@ -302,7 +337,21 @@ export async function removeFilmFromTrip(
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     const { error } = await supabase
       .from("trip_films")
       .delete()
@@ -341,13 +390,15 @@ export async function getTripWithFilms(tripId: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Get trip details
     const { data: trip, error: tripError } = await supabase
       .from("trips")
       .select("*")
       .eq("id", tripId)
+      .eq("user_id", userId)
       .single();
 
     if (tripError) {
@@ -433,10 +484,12 @@ export async function getFilmsWithAvailability(): Promise<{
   error: Error | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("films_with_availability")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -464,8 +517,21 @@ export async function addGearToTrip(
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     // Check if this gear is already in the trip
     const { data: existingTripGear } = await supabase
       .from("trip_gear")
@@ -512,7 +578,21 @@ export async function removeGearFromTrip(
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     const { error } = await supabase
       .from("trip_gear")
       .delete()
@@ -549,13 +629,15 @@ export async function getTripWithGear(tripId: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Get trip details
     const { data: trip, error: tripError } = await supabase
       .from("trips")
       .select("*")
       .eq("id", tripId)
+      .eq("user_id", userId)
       .single();
 
     if (tripError) {
@@ -605,10 +687,12 @@ export async function getAvailableGear(): Promise<{
   error: Error | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("gear")
       .select("*")
+      .eq("user_id", userId)
       .order("type", { ascending: true })
       .order("brand", { ascending: true })
       .order("name", { ascending: true });
@@ -633,8 +717,9 @@ export async function updateTripStatus(
   status: 'upcoming' | 'past' | 'completed'
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // If marking trip as completed, consume the films first
     if (status === 'completed') {
       const consumeResult = await consumeTripFilms(tripId);
@@ -649,7 +734,8 @@ export async function updateTripStatus(
     const { error } = await supabase
       .from("trips")
       .update({ status })
-      .eq("id", tripId);
+      .eq("id", tripId)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -669,16 +755,18 @@ export async function updateTripStatus(
 
 export async function consumePastTripFilms(): Promise<{ success: boolean; consumed: number; error?: string }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Get all past trips that are not completed
     const today = new Date();
     const bufferDate = new Date(today);
     bufferDate.setDate(today.getDate() - 1); // 1 day buffer
-    
+
     const { data: pastTrips, error: tripsError } = await supabase
       .from("trips")
       .select("id, title, end_date")
+      .eq("user_id", userId)
       .neq("status", "completed")
       .lt("end_date", bufferDate.toISOString().split('T')[0]);
 
@@ -720,13 +808,15 @@ export async function consumePastTripFilms(): Promise<{ success: boolean; consum
 
 async function consumeTripFilms(tripId: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Get trip details
     const { data: trip, error: tripError } = await supabase
       .from("trips")
       .select("title")
       .eq("id", tripId)
+      .eq("user_id", userId)
       .single();
 
     if (tripError || !trip) {

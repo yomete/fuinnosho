@@ -69,11 +69,12 @@
       "Bash(source:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm update:*)",
-      "Bash(pnpm audit:*)"
+      "Bash(pnpm audit:*)",
+      "mcp__anki__list_decks",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
-    "deny": [],
-    "additionalDirectories": [
-      "/Users/yomi/Documents/batcave/mcp-monitoring"
-    ]
+    "deny": []
   }
 }

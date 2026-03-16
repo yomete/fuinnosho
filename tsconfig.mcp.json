@@ -15,6 +15,6 @@
     "sourceMap": false,
     "allowImportingTsExtensions": false
   },
-  "include": ["mcp-server.ts"],
+  "include": ["mcp-server.ts", "src/lib/mcp/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

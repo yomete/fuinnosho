@@ -20,6 +20,7 @@ import {
 import { format } from "date-fns";
 import { FinishBulkRollButton } from "@/components/films/finish-bulk-roll-button";
 import { AddRollsDialog } from "@/components/films/add-rolls-dialog";
+import { isDemoModeAsync } from "@/lib/demo";
 
 interface FilmDetailPageProps {
   params: Promise<{ filmId: string }>;
@@ -28,6 +29,7 @@ interface FilmDetailPageProps {
 export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
   const { filmId } = await params;
   const { film, usage, trips, error } = await getFilmWithDetails(filmId);
+  const prefix = (await isDemoModeAsync()) ? "/demo" : "";
 
   if (error || !film) {
     notFound();
@@ -64,7 +66,7 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/films" className="flex items-center gap-2">
+          <Link href={`${prefix}/films`} className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Films
           </Link>
@@ -303,7 +305,7 @@ export default async function FilmDetailPage({ params }: FilmDetailPageProps) {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/trips/${tripFilm.trips?.id}`}
+                        href={`${prefix}/trips/${tripFilm.trips?.id}`}
                         className="font-medium hover:underline"
                       >
                         {tripFilm.trips?.title}

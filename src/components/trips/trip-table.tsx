@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Film } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 interface TripTableProps {
   trips: Trip[];
@@ -21,6 +22,8 @@ interface TripTableProps {
 }
 
 export function TripTable({ trips, onTripEdit, onTripComplete }: TripTableProps) {
+  const prefix = useDemoPrefix();
+
   if (trips.length === 0) {
     return (
       <EmptyState
@@ -71,7 +74,7 @@ export function TripTable({ trips, onTripEdit, onTripComplete }: TripTableProps)
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  <Link href={`/trips/${trip.id}`}>
+                  <Link href={`${prefix}/trips/${trip.id}`}>
                     <Button size="sm">View Details</Button>
                   </Link>
                   <Button

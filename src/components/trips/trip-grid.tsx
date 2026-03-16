@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Film } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 interface TripCardProps {
   trip: Trip;
@@ -22,6 +23,8 @@ interface TripCardProps {
 
 // Memoized card component to prevent re-renders when other cards change (rerender-memo)
 const TripCard = memo(function TripCard({ trip, onTripEdit, onTripComplete }: TripCardProps) {
+  const prefix = useDemoPrefix();
+
   return (
     <Card className="cursor-pointer hover:shadow-md transition-shadow">
       <CardHeader>
@@ -53,7 +56,7 @@ const TripCard = memo(function TripCard({ trip, onTripEdit, onTripComplete }: Tr
           <span className="text-sm font-medium">{trip.reserved_film_count || 0} films reserved</span>
         </div>
         <div className="flex gap-2 mt-4">
-          <Link href={`/trips/${trip.id}`}>
+          <Link href={`${prefix}/trips/${trip.id}`}>
             <Button size="sm">
               View Details
             </Button>

@@ -8,6 +8,7 @@ import { format, differenceInDays } from "date-fns";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
 import { Film as FilmIcon } from "lucide-react";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 interface FilmInventoryGridProps {
   films: Film[];
@@ -91,6 +92,8 @@ function isLowStock(count: number): boolean {
 }
 
 export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
+  const prefix = useDemoPrefix();
+
   if (!films.length) {
     return (
       <EmptyState
@@ -189,7 +192,7 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
                     className="w-full border-[#2a2420] bg-[#1a1614]/50 text-[#c8c4c0] hover:bg-[#2a2420] hover:text-[#e8e4e0] hover:border-[#3a3430]"
                   >
                     <Link
-                      href={`/film/${film.id}`}
+                      href={`${prefix}/film/${film.id}`}
                       className="flex items-center gap-2"
                     >
                       <Eye className="h-4 w-4" />

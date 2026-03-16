@@ -8,6 +8,7 @@ interface TripFilmReservation {
   trips: Pick<Trip, 'id' | 'title' | 'description' | 'start_date' | 'end_date' | 'status'> | null;
 }
 import { createClient } from "@/lib/supabase/server";
+import { getEffectiveUser, getDataClient } from "@/lib/auth";
 import { FilmSchema, filmSchema } from "@/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
@@ -25,6 +26,7 @@ export async function editFilm(
   try {
     // Validate the data
     const validatedData = filmSchema.parse(data);
+    const { userId } = await getEffectiveUser();
 
     // Convert number fields from string to number if needed
     const processedData = {
@@ -40,11 +42,12 @@ export async function editFilm(
     };
 
     // Update in Supabase (don't include id, created_at, or user_id in update)
-    const supabase = await createClient();
+    const supabase = await getDataClient();
     const { error } = await supabase
       .from("films")
       .update(processedData)
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -55,6 +58,7 @@ export async function editFilm(
       .from("films")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     revalidatePath("/films");
@@ -74,11 +78,10 @@ export async function createFilm(
   try {
     const validatedData = filmSchema.parse(data);
 
-    // Get current user
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
+    // Get current user (supports demo mode)
+    const { userId } = await getEffectiveUser();
+
+    if (!userId) {
       throw new Error("User not authenticated");
     }
 
@@ -91,7 +94,7 @@ export async function createFilm(
       id: filmId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      user_id: user.id,
+      user_id: userId,
       iso: Number(validatedData.iso),
       price: validatedData.price ? Number(validatedData.price) : undefined,
       count: validatedData.count ? Number(validatedData.count) : undefined,
@@ -105,7 +108,8 @@ export async function createFilm(
       spooled_cassettes: validatedData.is_bulk_film ? (validatedData.spooled_cassettes !== undefined ? Number(validatedData.spooled_cassettes) : 0) : undefined,
     };
 
-    // Save to Supabase
+    // Save to Supabase (use getDataClient for demo mode support)
+    const supabase = await getDataClient();
     const { error } = await supabase.from("films").insert([newFilm]);
 
     if (error) {
@@ -127,10 +131,12 @@ export async function getFilms(): Promise<{
   error: Error | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("films")
       .select("*")
+      .eq("user_id", userId)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
@@ -151,11 +157,13 @@ export async function getFilms(): Promise<{
 
 export async function getFilmById(id: string): Promise<Film | null> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("films")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .is("deleted_at", null) // Exclude soft deleted films
       .single();
 
@@ -177,13 +185,15 @@ export async function getFilmWithDetails(id: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
 
     // Get the film
     const { data: film, error: filmError } = await supabase
       .from("films")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .is("deleted_at", null)
       .single();
 
@@ -246,13 +256,15 @@ export async function deleteFilm(id: string): Promise<{
   error?: Error;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
 
     // Soft delete: set deleted_at timestamp instead of hard delete
     const { error } = await supabase
       .from("films")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -276,13 +288,15 @@ export async function restoreFilm(id: string): Promise<{
   error?: Error;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Restore film by clearing deleted_at timestamp
     const { error } = await supabase
       .from("films")
       .update({ deleted_at: null })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -305,10 +319,12 @@ export async function getDeletedFilms(): Promise<{
   error: Error | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data, error } = await supabase
       .from("films")
       .select("*")
+      .eq("user_id", userId)
       .is("deleted_at", "not.null")
       .order("deleted_at", { ascending: false });
 
@@ -333,10 +349,11 @@ export async function permanentlyDeleteFilm(id: string): Promise<{
   error?: Error;
 }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
     // Hard delete - actually remove from database
-    const { error } = await supabase.from("films").delete().eq("id", id);
+    const { error } = await supabase.from("films").delete().eq("id", id).eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -364,19 +381,15 @@ export async function reduceFilmCount(
   usageNote: string,
   tripId?: string
 ) {
-  const supabase = await createClient();
-
-  // Debug: Check if user is authenticated
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  console.log("Current user:", user?.id, "Error:", userError);
+  const { userId } = await getEffectiveUser();
+  const supabase = await getDataClient();
 
   const { data: film, error: filmError } = await supabase
     .from("films")
     .select("count, is_bulk_film, spooled_cassettes, user_id")
     .eq("id", filmId)
+    .eq("user_id", userId)
     .single();
-
-  console.log("Film data:", film, "Film error:", filmError);
 
   if (filmError || !film) {
     return { error: "Film not found" };
@@ -393,7 +406,8 @@ export async function reduceFilmCount(
   const { error: updateError } = await supabase
     .from("films")
     .update(updateData)
-    .eq("id", filmId);
+    .eq("id", filmId)
+    .eq("user_id", userId);
 
   if (updateError) {
     return { error: updateError.message };
@@ -422,12 +436,14 @@ export async function spoolBulkFilm(
   cassettesCreated: number,
   spoolNote: string
 ) {
-  const supabase = await createClient();
+  const { userId } = await getEffectiveUser();
+  const supabase = await getDataClient();
 
   const { data: film, error: filmError } = await supabase
     .from("films")
     .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, format")
     .eq("id", filmId)
+    .eq("user_id", userId)
     .single();
 
   if (filmError || !film) {
@@ -451,12 +467,13 @@ export async function spoolBulkFilm(
   // Update film with new remaining exposures and cassette count
   const { error: updateError } = await supabase
     .from("films")
-    .update({ 
+    .update({
       bulk_remaining_exposures: newRemainingExposures,
       spooled_cassettes: newSpooledCassettes,
       count: newSpooledCassettes // For bulk films, count represents spooled cassettes
     })
-    .eq("id", filmId);
+    .eq("id", filmId)
+    .eq("user_id", userId);
 
   if (updateError) {
     return { error: updateError.message };
@@ -488,7 +505,21 @@ export async function getFilmUsageHistory(filmId: string): Promise<{
   error: string | null;
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify film belongs to current user
+    const { data: film, error: filmError } = await supabase
+      .from("films")
+      .select("id")
+      .eq("id", filmId)
+      .eq("user_id", userId)
+      .single();
+
+    if (filmError || !film) {
+      return { data: null, error: "Film not found" };
+    }
+
     const { data, error } = await supabase
       .from("film_usage")
       .select("*")
@@ -510,12 +541,14 @@ export async function getFilmUsageHistory(filmId: string): Promise<{
 }
 
 export async function finishBulkRoll(filmId: string) {
-  const supabase = await createClient();
+  const { userId } = await getEffectiveUser();
+  const supabase = await getDataClient();
 
   const { data: film, error: filmError } = await supabase
     .from("films")
     .select("bulk_quantity, bulk_rolls_used, is_bulk_film")
     .eq("id", filmId)
+    .eq("user_id", userId)
     .single();
 
   if (filmError || !film) {
@@ -538,7 +571,8 @@ export async function finishBulkRoll(filmId: string) {
   const { error: updateError } = await supabase
     .from("films")
     .update({ bulk_rolls_used: newRollsUsed })
-    .eq("id", filmId);
+    .eq("id", filmId)
+    .eq("user_id", userId);
 
   if (updateError) {
     return { error: updateError.message };
@@ -560,16 +594,17 @@ export async function addRollsToFilm(
   notes?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { userId } = await getEffectiveUser();
 
-    if (!user) {
+    if (!userId) {
       throw new Error("User not authenticated");
     }
 
     if (quantity <= 0) {
       throw new Error("Quantity must be positive");
     }
+
+    const supabase = await getDataClient();
 
     // Create usage record for the addition
     const { error: usageError } = await supabase
@@ -591,6 +626,7 @@ export async function addRollsToFilm(
       .from("films")
       .select("count")
       .eq("id", filmId)
+      .eq("user_id", userId)
       .single();
 
     if (fetchError) {
@@ -602,7 +638,8 @@ export async function addRollsToFilm(
     const { error: updateError } = await supabase
       .from("films")
       .update({ count: newCount })
-      .eq("id", filmId);
+      .eq("id", filmId)
+      .eq("user_id", userId);
 
     if (updateError) {
       throw updateError;

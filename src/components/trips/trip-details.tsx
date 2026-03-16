@@ -52,6 +52,7 @@ import {
   SortDesc,
 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/spinner";
+import { useDemoPrefix } from "@/lib/use-demo-prefix";
 
 interface TripDetailsProps {
   trip: Trip;
@@ -97,6 +98,7 @@ interface GearForTrip {
 
 export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const router = useRouter();
+  const prefix = useDemoPrefix();
   const [tripFilms, setTripFilms] = useState<FilmWithReservedQuantity[]>([]);
   const [availableFilms, setAvailableFilms] = useState<FilmWithAvailability[]>(
     []
@@ -331,7 +333,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
           router.refresh();
           onBack();
         } else {
-          router.push("/trips");
+          router.push(`${prefix}/trips`);
           router.refresh();
         }
       }
@@ -356,7 +358,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
               Back to Trips
             </Button>
           ) : (
-            <Link href="/trips">
+            <Link href={`${prefix}/trips`}>
               <Button variant="ghost" className="mb-4 text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#3d3a36]">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Trips

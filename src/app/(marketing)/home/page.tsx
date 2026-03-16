@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Film,
@@ -15,8 +15,10 @@ import {
   BarChart3,
   Server,
   Cloud,
-  Zap
+  Zap,
+  Play
 } from "lucide-react";
+import { DemoShowcasePanel } from "@/components/demo-showcase-panel";
 
 // ============================================================================
 // MARKETING PAGE - FUINNOSHO
@@ -24,6 +26,8 @@ import {
 // ============================================================================
 
 export default function MarketingPage() {
+  const [demoPanelOpen, setDemoPanelOpen] = useState(false);
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Ambient Background Effects */}
@@ -62,13 +66,19 @@ export default function MarketingPage() {
       {/* Main Content */}
       <div className="relative z-10">
         <Navigation />
-        <Hero />
+        <Hero onTryDemo={() => setDemoPanelOpen(true)} />
         <Features />
-        <AppShowcase />
+        <AppShowcase onTryDemo={() => setDemoPanelOpen(true)} />
         <Pricing />
         <OpenSourceCallout />
         <Footer />
       </div>
+
+      {/* Demo Panel */}
+      <DemoShowcasePanel
+        open={demoPanelOpen}
+        onOpenChange={setDemoPanelOpen}
+      />
     </div>
   );
 }
@@ -138,7 +148,7 @@ function Navigation() {
 // HERO SECTION
 // ============================================================================
 
-function Hero() {
+function Hero({ onTryDemo }: { onTryDemo: () => void }) {
   return (
     <section className="min-h-screen flex items-center justify-center px-6 pt-20">
       <div className="max-w-4xl mx-auto text-center">
@@ -184,13 +194,20 @@ function Hero() {
             Start for free
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
+          <button
+            onClick={onTryDemo}
+            className="group px-8 py-4 bg-[#1a1614] hover:bg-[#2a2420] border border-[#2a2420] text-[#e8e4e0] rounded-xl text-lg transition-all flex items-center gap-2"
+          >
+            <Play className="w-5 h-5" />
+            Try Demo
+          </button>
           <Link
             href="https://github.com/yomete/fuinnosho"
             target="_blank"
-            className="px-8 py-4 bg-[#1a1614] hover:bg-[#2a2420] border border-[#2a2420] text-[#e8e4e0] rounded-xl text-lg transition-all flex items-center gap-2"
+            className="px-8 py-4 bg-transparent hover:bg-[#1a1614] border border-transparent hover:border-[#2a2420] text-[#8a8078] hover:text-[#e8e4e0] rounded-xl text-lg transition-all flex items-center gap-2"
           >
             <Github className="w-5 h-5" />
-            View on GitHub
+            GitHub
           </Link>
         </div>
 
@@ -359,7 +376,7 @@ function FeatureCard({
 // APP SHOWCASE
 // ============================================================================
 
-function AppShowcase() {
+function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
   return (
     <section className="py-32 px-6 overflow-hidden">
       <div className="max-w-6xl mx-auto">
@@ -371,10 +388,18 @@ function AppShowcase() {
           >
             Designed for the darkroom
           </h2>
-          <p className="text-[#8a8078] text-lg max-w-2xl mx-auto">
+          <p className="text-[#8a8078] text-lg max-w-2xl mx-auto mb-6">
             A dark theme that's easy on the eyes, with film grain texture and
             warm amber accents that feel right at home in your workflow.
           </p>
+          <button
+            onClick={onTryDemo}
+            className="group inline-flex items-center gap-2 px-6 py-3 bg-[#1a1614] hover:bg-[#2a2420] border border-[#2a2420] text-[#e8e4e0] rounded-xl transition-all"
+          >
+            <Play className="w-4 h-4" />
+            Try the interactive demo
+            <ArrowRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+          </button>
         </div>
 
         {/* App Preview */}

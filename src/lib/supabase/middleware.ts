@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { DEMO_MODE_COOKIE } from "@/lib/demo";
+
+// Check demo mode at runtime
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -28,6 +33,13 @@ export async function updateSession(request: NextRequest) {
       },
     }
   );
+
+  // In demo mode, skip the user check and redirect logic
+  // Only check the pathname, not the cookie, since the cookie may linger from a previous /demo visit
+  const isDemoRoute = request.nextUrl.pathname.startsWith("/demo");
+  if (isDemoMode || isDemoRoute) {
+    return supabaseResponse;
+  }
 
   // Do not run code between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug

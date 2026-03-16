@@ -2,12 +2,45 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createClient } from "@/lib/supabase/server";
+import { DEMO_MODE_COOKIE, DEMO_MODE_HEADER } from "@/lib/demo";
+
+// Check demo mode at runtime
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Route-based demo mode: set header for current request and cookie for client
+  if (pathname.startsWith("/demo")) {
+    // Set request header so server components/actions detect demo mode
+    request.headers.set(DEMO_MODE_HEADER, "true");
+    const res = NextResponse.next({ request });
+    res.cookies.set(DEMO_MODE_COOKIE, "true", {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24,
+    });
+    return res;
+  }
+
+  // Clear demo cookie if present (user navigated away from demo)
+  const hadDemoCookie = request.cookies.get(DEMO_MODE_COOKIE)?.value === "true";
+  if (hadDemoCookie) {
+    request.cookies.delete(DEMO_MODE_COOKIE);
+  }
+
   const res = await updateSession(request);
 
-  // only if there's a property shuold we check for the supabase user
-  // if not, redirect to the films page.
+  // Clear the cookie on the response so the browser removes it
+  if (hadDemoCookie) {
+    res.cookies.delete(DEMO_MODE_COOKIE);
+  }
+
+  // In global demo mode, skip all auth checks
+  if (isDemoMode) {
+    return res;
+  }
 
   const supabase = await createClient();
 
@@ -19,7 +52,7 @@ export async function middleware(request: NextRequest) {
   const protectedRoutes = ["/profile", "/sync", "/settings"];
 
   const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathname.startsWith(route)
   );
 
   // Auth routes (login/register)
@@ -30,7 +63,7 @@ export async function middleware(request: NextRequest) {
     "/update-password",
   ];
   const isAuthRoute = authRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+    pathname.startsWith(route)
   );
 
   // Redirect if accessing protected route without session
@@ -48,6 +81,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/demo/:path*",
     "/films/:path*",
     "/profile/:path*",
     "/sync/:path*",

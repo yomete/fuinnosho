@@ -16,6 +16,7 @@ interface NavUserIconProps {
     email?: string;
     id: string;
   } | null;
+  isDemo?: boolean;
 }
 
 // Darkroom-friendly muted colors
@@ -42,13 +43,13 @@ function getColorFromString(str: string): string {
   return COLORS[Math.abs(hash) % COLORS.length];
 }
 
-const NavUserIcon = ({ user }: NavUserIconProps) => {
+const NavUserIcon = ({ user, isDemo = false }: NavUserIconProps) => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!user) return null;
 
-  const backgroundColor = getColorFromString(user.id);
+  const backgroundColor = isDemo ? "#f97316" : getColorFromString(user.id);
 
   const handleLogout = async () => {
     try {
@@ -61,6 +62,21 @@ const NavUserIcon = ({ user }: NavUserIconProps) => {
       setIsLoggingOut(false);
     }
   };
+
+  // In demo mode, show a simpler menu without logout
+  if (isDemo) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-amber-500 font-medium">Demo</span>
+        <div
+          className="w-8 h-8 rounded-full border border-[#2a2420] flex items-center justify-center text-xs font-bold text-white"
+          style={{ backgroundColor }}
+        >
+          D
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DropdownMenu>

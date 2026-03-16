@@ -1,7 +1,7 @@
 "use server";
 
 import { Gear, TripGear } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/server";
+import { getEffectiveUser, getDataClient } from "@/lib/auth";
 import { GearSchema, gearSchema } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
 
@@ -28,20 +28,19 @@ export async function createGear(data: GearSchema): Promise<GearResponse> {
     // Validate the data
     const validatedData = gearSchema.parse(data);
 
-    const supabase = await createClient();
-    
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
+    const { userId } = await getEffectiveUser();
+
+    if (!userId) {
       throw new Error("User must be authenticated to create gear");
     }
+
+    const supabase = await getDataClient();
 
     // Convert number fields from string to number if needed and add user_id
     const processedData = {
       ...validatedData,
       purchase_price: validatedData.purchase_price ? Number(validatedData.purchase_price) : undefined,
-      user_id: user.id,
+      user_id: userId,
     };
 
     const { data: gear, error } = await supabase
@@ -73,14 +72,13 @@ export async function editGear(
     // Validate the data
     const validatedData = gearSchema.parse(data);
 
-    const supabase = await createClient();
-    
-    // Get the current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
-    if (userError || !user) {
+    const { userId } = await getEffectiveUser();
+
+    if (!userId) {
       throw new Error("User must be authenticated to edit gear");
     }
+
+    const supabase = await getDataClient();
 
     // Convert number fields from string to number if needed
     const processedData = {
@@ -88,11 +86,11 @@ export async function editGear(
       purchase_price: validatedData.purchase_price ? Number(validatedData.purchase_price) : undefined,
     };
 
-    // Update in Supabase (RLS will ensure user can only update their own gear)
     const { error } = await supabase
       .from("gear")
       .update(processedData)
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", userId);
 
     if (error) {
       throw error;
@@ -103,6 +101,7 @@ export async function editGear(
       .from("gear")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     revalidatePath("/gear");
@@ -118,8 +117,21 @@ export async function editGear(
 
 export async function deleteGear(id: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify gear belongs to current user
+    const { data: ownedGear, error: ownerError } = await supabase
+      .from("gear")
+      .select("id")
+      .eq("id", id)
+      .eq("user_id", userId)
+      .single();
+
+    if (ownerError || !ownedGear) {
+      return { success: false, error: "Gear not found" };
+    }
+
     // Check if gear is reserved for any upcoming trips
     const { data: reservations } = await supabase
       .from("trip_gear")
@@ -169,10 +181,12 @@ export async function deleteGear(id: string): Promise<{ success: boolean; error?
 
 export async function getGear(): Promise<GearListResponse> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data: gear, error } = await supabase
       .from("gear")
       .select("*")
+      .eq("user_id", userId)
       .order("type", { ascending: true })
       .order("brand", { ascending: true })
       .order("name", { ascending: true });
@@ -193,11 +207,13 @@ export async function getGear(): Promise<GearListResponse> {
 
 export async function getGearById(id: string): Promise<GearResponse> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
     const { data: gear, error } = await supabase
       .from("gear")
       .select("*")
       .eq("id", id)
+      .eq("user_id", userId)
       .single();
 
     if (error) {
@@ -220,8 +236,21 @@ export async function reserveGearForTrip(
   gearId: string
 ): Promise<TripGearResponse> {
   try {
-    const supabase = await createClient();
-    
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify gear belongs to current user
+    const { data: ownedGear, error: ownerError } = await supabase
+      .from("gear")
+      .select("id")
+      .eq("id", gearId)
+      .eq("user_id", userId)
+      .single();
+
+    if (ownerError || !ownedGear) {
+      return { success: false, error: "Gear not found" };
+    }
+
     // Check if gear is already reserved for this trip
     const { data: existingReservation } = await supabase
       .from("trip_gear")
@@ -267,7 +296,21 @@ export async function removeGearReservation(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify gear belongs to current user
+    const { data: ownedGear, error: ownerError } = await supabase
+      .from("gear")
+      .select("id")
+      .eq("id", gearId)
+      .eq("user_id", userId)
+      .single();
+
+    if (ownerError || !ownedGear) {
+      return { success: false, error: "Gear not found" };
+    }
+
     const { error } = await supabase
       .from("trip_gear")
       .delete()
@@ -296,7 +339,21 @@ export async function getGearForTrip(tripId: string): Promise<{
   gear?: (TripGear & { gear: Gear })[];
 }> {
   try {
-    const supabase = await createClient();
+    const { userId } = await getEffectiveUser();
+    const supabase = await getDataClient();
+
+    // Verify trip belongs to current user
+    const { data: trip, error: tripError } = await supabase
+      .from("trips")
+      .select("id")
+      .eq("id", tripId)
+      .eq("user_id", userId)
+      .single();
+
+    if (tripError || !trip) {
+      return { success: false, error: "Trip not found" };
+    }
+
     const { data: tripGear, error } = await supabase
       .from("trip_gear")
       .select(`
