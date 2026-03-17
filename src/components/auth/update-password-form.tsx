@@ -35,7 +35,6 @@ const formSchema = z
 
 export function UpdatePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
@@ -60,6 +59,7 @@ export function UpdatePasswordForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      const supabase = createClient();
       // First verify the OTP
       const { error: verifyError } = await supabase.auth.verifyOtp({
         type: "recovery",

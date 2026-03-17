@@ -31,6 +31,7 @@ const NavUserIconWrapper = () => {
       return;
     }
 
+    let subscription: { unsubscribe: () => void } | null = null;
     const supabase = createClient();
 
     // Get initial user
@@ -40,13 +41,15 @@ const NavUserIconWrapper = () => {
 
     // Listen for auth changes
     const {
-      data: { subscription },
+      data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
+    subscription = authSubscription;
+
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [isDemo]);
 

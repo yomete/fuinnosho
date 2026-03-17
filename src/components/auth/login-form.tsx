@@ -31,7 +31,6 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,6 +44,7 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,

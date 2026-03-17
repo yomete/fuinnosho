@@ -38,7 +38,6 @@ const formSchema = z
 
 export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,6 +52,7 @@ export function RegisterForm() {
     setIsLoading(true);
 
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
