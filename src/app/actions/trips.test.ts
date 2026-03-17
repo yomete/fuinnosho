@@ -15,6 +15,11 @@ vi.mock('./films', () => ({
   reduceFilmCount: vi.fn(),
 }))
 
+vi.mock('@/lib/auth', () => ({
+  getEffectiveUser: vi.fn(),
+  getDataClient: vi.fn(),
+}))
+
 // Helper to create a chainable mock that properly awaits
 function createChainableMock() {
   // Create a base object that chains back to itself
@@ -68,6 +73,10 @@ import {
   consumePastTripFilms,
 } from './trips'
 import { reduceFilmCount } from './films'
+import { getEffectiveUser, getDataClient } from '@/lib/auth'
+
+const mockedGetEffectiveUser = vi.mocked(getEffectiveUser)
+const mockedGetDataClient = vi.mocked(getDataClient)
 
 describe('Trip Actions', () => {
   beforeEach(() => {
@@ -79,6 +88,8 @@ describe('Trip Actions', () => {
         getUser: vi.fn(),
       },
     } as ReturnType<typeof createChainableMock> & { auth: { getUser: ReturnType<typeof vi.fn> } }
+    mockedGetEffectiveUser.mockResolvedValue({ userId: 'user-123', isDemo: false })
+    mockedGetDataClient.mockResolvedValue(mockSupabase)
   })
 
   describe('createTrip', () => {
@@ -90,9 +101,6 @@ describe('Trip Actions', () => {
     }
 
     it('should create a trip successfully', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
 
       const result = await createTrip(validTripData)
@@ -120,9 +128,6 @@ describe('Trip Actions', () => {
     })
 
     it('should allow same start and end date (single day trip)', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
 
       const sameDayTrip = {
@@ -137,9 +142,7 @@ describe('Trip Actions', () => {
     })
 
     it('should fail when user is not authenticated', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
-      })
+      mockedGetEffectiveUser.mockResolvedValue({ userId: null, isDemo: false })
 
       const result = await createTrip(validTripData)
 
@@ -148,9 +151,6 @@ describe('Trip Actions', () => {
     })
 
     it('should handle database errors', async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-      })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({
         error: { message: 'Database connection failed' },
       })
@@ -185,7 +185,14 @@ describe('Trip Actions', () => {
 
     it('should update trip successfully', async () => {
       const updatedTrip = { id: tripId, ...updateData, status: 'upcoming' }
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ error: null })
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount === 2) {
+          return Promise.resolve({ error: null })
+        }
+        return mockSupabase
+      })
       ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValue({ data: updatedTrip, error: null })
 
       const result = await editTrip(tripId, updateData)
@@ -209,8 +216,15 @@ describe('Trip Actions', () => {
     })
 
     it('should handle update errors', async () => {
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        error: { message: 'Update failed' },
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount === 2) {
+          return Promise.resolve({
+            error: { message: 'Update failed' },
+          })
+        }
+        return mockSupabase
       })
 
       const result = await editTrip(tripId, updateData)
@@ -343,8 +357,14 @@ describe('Trip Actions', () => {
 
   describe('deleteTrip', () => {
     it('should delete a trip successfully', async () => {
-      // The chain is: from().delete().eq() - eq needs to resolve
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount === 2) {
+          return Promise.resolve({ error: null })
+        }
+        return mockSupabase
+      })
 
       const result = await deleteTrip('trip-123')
 
@@ -355,8 +375,15 @@ describe('Trip Actions', () => {
     })
 
     it('should handle deletion errors', async () => {
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValue({
-        error: { message: 'Deletion failed' },
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount === 2) {
+          return Promise.resolve({
+            error: { message: 'Deletion failed' },
+          })
+        }
+        return mockSupabase
       })
 
       const result = await deleteTrip('trip-123')
@@ -368,7 +395,9 @@ describe('Trip Actions', () => {
 
   describe('addFilmToTrip', () => {
     it('should add a new film to trip', async () => {
-      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: null, error: null })
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
 
       const result = await addFilmToTrip('trip-123', 'film-456', 3)
@@ -383,13 +412,13 @@ describe('Trip Actions', () => {
         film_id: 'film-456',
         quantity: 2,
       }
-      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: existingTripFilm, error: null })
-      // Chain: from().update().eq().eq() - counter-based mocking
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+        .mockResolvedValueOnce({ data: existingTripFilm, error: null })
       let eqCount = 0
       ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++
-        // First 2 eq calls are for the select check, next 2 are for update
-        if (eqCount >= 4) {
+        if (eqCount >= 6) {
           return Promise.resolve({ error: null })
         }
         return mockSupabase
@@ -402,7 +431,9 @@ describe('Trip Actions', () => {
     })
 
     it('should use default quantity of 1', async () => {
-      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: null, error: null })
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
 
       const result = await addFilmToTrip('trip-123', 'film-456')
@@ -411,7 +442,9 @@ describe('Trip Actions', () => {
     })
 
     it('should handle errors when adding film', async () => {
-      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: null, error: null })
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null })
       ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({
         error: { message: 'Insert failed' },
       })
@@ -425,11 +458,14 @@ describe('Trip Actions', () => {
 
   describe('updateFilmQuantityInTrip', () => {
     it('should update film quantity', async () => {
-      // Chain: from().update().eq().eq() - last eq needs to resolve
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
       let eqCount = 0
       ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++
-        if (eqCount >= 2) {
+        if (eqCount >= 4) {
           return Promise.resolve({ error: null })
         }
         return mockSupabase
@@ -458,11 +494,14 @@ describe('Trip Actions', () => {
 
   describe('removeFilmFromTrip', () => {
     it('should remove film from trip', async () => {
-      // Chain: from().delete().eq().eq() - last eq needs to resolve
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
       let eqCount = 0
       ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++
-        if (eqCount >= 2) {
+        if (eqCount >= 4) {
           return Promise.resolve({ error: null })
         }
         return mockSupabase
@@ -476,10 +515,14 @@ describe('Trip Actions', () => {
     })
 
     it('should handle removal errors', async () => {
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
       let eqCount = 0
       ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++
-        if (eqCount >= 2) {
+        if (eqCount >= 4) {
           return Promise.resolve({ error: { message: 'Delete failed' } })
         }
         return mockSupabase
@@ -498,7 +541,14 @@ describe('Trip Actions', () => {
     })
 
     it('should update trip status to upcoming', async () => {
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount >= 2) {
+          return Promise.resolve({ error: null })
+        }
+        return mockSupabase
+      })
 
       const result = await updateTripStatus('trip-123', 'upcoming')
 
@@ -507,7 +557,14 @@ describe('Trip Actions', () => {
     })
 
     it('should update trip status to past', async () => {
-      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
+      let eqCount = 0
+      ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
+        eqCount++
+        if (eqCount >= 2) {
+          return Promise.resolve({ error: null })
+        }
+        return mockSupabase
+      })
 
       const result = await updateTripStatus('trip-123', 'past')
 
@@ -522,14 +579,18 @@ describe('Trip Actions', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { title: 'Test Trip' },
-                  error: null,
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { title: 'Test Trip' },
+                    error: null,
+                  }),
                 }),
               }),
             }),
             update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              }),
             }),
           }
         }
@@ -549,7 +610,7 @@ describe('Trip Actions', () => {
         if (table === 'film_usage') {
           return {
             select: vi.fn().mockReturnValue({
-              like: vi.fn().mockResolvedValue({ data: [], error: null }),
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
             }),
           }
         }
@@ -564,12 +625,14 @@ describe('Trip Actions', () => {
       expect(vi.mocked(reduceFilmCount)).toHaveBeenCalledWith(
         'film-1',
         2,
-        'Trip: Test Trip (completed)'
+        'Trip: Test Trip (completed)',
+        'trip-123'
       )
       expect(vi.mocked(reduceFilmCount)).toHaveBeenCalledWith(
         'film-2',
         3,
-        'Trip: Test Trip (completed)'
+        'Trip: Test Trip (completed)',
+        'trip-123'
       )
     })
 
@@ -579,14 +642,18 @@ describe('Trip Actions', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { title: 'Test Trip' },
-                  error: null,
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { title: 'Test Trip' },
+                    error: null,
+                  }),
                 }),
               }),
             }),
             update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              }),
             }),
           }
         }
@@ -603,7 +670,7 @@ describe('Trip Actions', () => {
         if (table === 'film_usage') {
           return {
             select: vi.fn().mockReturnValue({
-              like: vi.fn().mockResolvedValue({ data: [], error: null }),
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
             }),
           }
         }
@@ -632,14 +699,18 @@ describe('Trip Actions', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { title: 'Test Trip' },
-                  error: null,
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { title: 'Test Trip' },
+                    error: null,
+                  }),
                 }),
               }),
             }),
             update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              }),
             }),
           }
         }
@@ -659,7 +730,7 @@ describe('Trip Actions', () => {
         if (table === 'film_usage') {
           return {
             select: vi.fn().mockReturnValue({
-              like: vi.fn().mockResolvedValue({
+              eq: vi.fn().mockResolvedValue({
                 // film-1 has already been consumed for this trip
                 data: [{ film_id: 'film-1' }],
                 error: null,
@@ -685,7 +756,8 @@ describe('Trip Actions', () => {
       expect(vi.mocked(reduceFilmCount)).toHaveBeenCalledWith(
         'film-2',
         3,
-        'Trip: Test Trip (completed)'
+        'Trip: Test Trip (completed)',
+        'trip-123'
       )
     })
 
@@ -695,14 +767,18 @@ describe('Trip Actions', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { title: 'Empty Trip' },
-                  error: null,
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { title: 'Empty Trip' },
+                    error: null,
+                  }),
                 }),
               }),
             }),
             update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null }),
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              }),
             }),
           }
         }
@@ -755,7 +831,9 @@ describe('Trip Actions', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: mockTrip, error: null }),
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: mockTrip, error: null }),
+                }),
               }),
             }),
           }
@@ -783,9 +861,11 @@ describe('Trip Actions', () => {
       ;(mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Trip not found' },
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Trip not found' },
+              }),
             }),
           }),
         }),
@@ -836,7 +916,9 @@ describe('Trip Actions', () => {
   describe('Gear functions', () => {
     describe('addGearToTrip', () => {
       it('should add gear to trip', async () => {
-        ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: null, error: null })
+        ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+          .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+          .mockResolvedValueOnce({ data: null, error: null })
         ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
 
         const result = await addGearToTrip('trip-123', 'gear-456')
@@ -846,10 +928,12 @@ describe('Trip Actions', () => {
       })
 
       it('should reject when gear already in trip', async () => {
-        ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-          data: { trip_id: 'trip-123', gear_id: 'gear-456' },
-          error: null,
-        })
+        ;(mockSupabase.single as ReturnType<typeof vi.fn>)
+          .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+          .mockResolvedValueOnce({
+            data: { trip_id: 'trip-123', gear_id: 'gear-456' },
+            error: null,
+          })
 
         const result = await addGearToTrip('trip-123', 'gear-456')
 
@@ -860,11 +944,14 @@ describe('Trip Actions', () => {
 
     describe('removeGearFromTrip', () => {
       it('should remove gear from trip', async () => {
-        // Chain: from().delete().eq().eq() - last eq needs to resolve
+        ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+          data: { id: 'trip-123' },
+          error: null,
+        })
         let eqCount = 0
         ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
           eqCount++
-          if (eqCount >= 2) {
+          if (eqCount >= 4) {
             return Promise.resolve({ error: null })
           }
           return mockSupabase
@@ -902,7 +989,9 @@ describe('Trip Actions', () => {
             return {
               select: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({ data: mockTrip, error: null }),
+                  eq: vi.fn().mockReturnValue({
+                    single: vi.fn().mockResolvedValue({ data: mockTrip, error: null }),
+                  }),
                 }),
               }),
             }
@@ -961,18 +1050,33 @@ describe('Trip Actions', () => {
         { id: 'trip-1', title: 'Past Trip 1', end_date: '2023-01-01' },
         { id: 'trip-2', title: 'Past Trip 2', end_date: '2023-06-01' },
       ]
+      let tripsSelectCount = 0
 
       ;(mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
         if (table === 'trips') {
+          tripsSelectCount++
+          if (tripsSelectCount === 1) {
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  neq: vi.fn().mockReturnValue({
+                    lt: vi.fn().mockResolvedValue({ data: pastTrips, error: null }),
+                  }),
+                }),
+              }),
+              update: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              }),
+            }
+          }
           return {
             select: vi.fn().mockReturnValue({
-              neq: vi.fn().mockReturnValue({
-                lt: vi.fn().mockResolvedValue({ data: pastTrips, error: null }),
-              }),
               eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: { title: 'Past Trip' },
-                  error: null,
+                eq: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({
+                    data: { title: 'Past Trip' },
+                    error: null,
+                  }),
                 }),
               }),
             }),
@@ -994,7 +1098,7 @@ describe('Trip Actions', () => {
         if (table === 'film_usage') {
           return {
             select: vi.fn().mockReturnValue({
-              like: vi.fn().mockResolvedValue({ data: [], error: null }),
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
             }),
           }
         }
@@ -1012,8 +1116,10 @@ describe('Trip Actions', () => {
     it('should return 0 consumed when no past trips exist', async () => {
       ;(mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
-          neq: vi.fn().mockReturnValue({
-            lt: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            neq: vi.fn().mockReturnValue({
+              lt: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
           }),
         }),
       }))
@@ -1027,10 +1133,12 @@ describe('Trip Actions', () => {
     it('should handle errors when fetching past trips', async () => {
       ;(mockSupabase.from as ReturnType<typeof vi.fn>).mockImplementation(() => ({
         select: vi.fn().mockReturnValue({
-          neq: vi.fn().mockReturnValue({
-            lt: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Query failed' },
+          eq: vi.fn().mockReturnValue({
+            neq: vi.fn().mockReturnValue({
+              lt: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Query failed' },
+              }),
             }),
           }),
         }),

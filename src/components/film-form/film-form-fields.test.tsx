@@ -379,12 +379,12 @@ describe("FilmFormFields - Input Interactions", () => {
     renderFilmFormFields({}, { iso: 400 });
 
     const isoInput = screen.getByLabelText(/iso/i);
-    // The ISO input starts with the default value
-    expect(isoInput).toHaveValue("400");
+    // Number inputs are exposed as numbers by jest-dom
+    expect(isoInput).toHaveValue(400);
 
     // Append more digits (don't clear to avoid controlled/uncontrolled issues)
     await user.type(isoInput, "0");
-    expect(isoInput).toHaveValue("4000");
+    expect(isoInput).toHaveValue(4000);
   });
 
   it("allows typing in the price field", async () => {
@@ -604,8 +604,7 @@ describe("FilmFormFields - Default Values", () => {
 
   it("renders with provided default ISO", () => {
     renderFilmFormFields({}, { iso: 800 });
-    // The ISO field displays the value as a string in the input
-    expect(screen.getByLabelText(/iso/i)).toHaveValue("800");
+    expect(screen.getByLabelText(/iso/i)).toHaveValue(800);
   });
 
   it("renders with provided default price", () => {

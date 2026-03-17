@@ -6,19 +6,57 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/auth", () => ({
+  getEffectiveUser: vi.fn(),
+  getDataClient: vi.fn(),
+}));
+
 // Create mock chain builder for Supabase
 function createMockChain() {
-  const chain: Record<string, ReturnType<typeof vi.fn>> = {};
+  const chain: Record<string, ReturnType<typeof vi.fn>> & {
+    __awaitQueue: unknown[];
+    __awaitDefault: unknown;
+    then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
+  } = {
+    __awaitQueue: [],
+    __awaitDefault: { error: null },
+    then: (resolve: (value: unknown) => unknown) =>
+      Promise.resolve(
+        chain.__awaitQueue.length > 0
+          ? chain.__awaitQueue.shift()
+          : chain.__awaitDefault
+      ).then(resolve),
+  };
 
-  chain.from = vi.fn().mockImplementation(() => chain);
-  chain.select = vi.fn().mockImplementation(() => chain);
-  chain.insert = vi.fn().mockImplementation(() => chain);
-  chain.update = vi.fn().mockImplementation(() => chain);
-  chain.delete = vi.fn().mockImplementation(() => chain);
-  chain.eq = vi.fn().mockImplementation(() => chain);
-  chain.neq = vi.fn().mockImplementation(() => chain);
-  chain.gte = vi.fn().mockImplementation(() => chain);
-  chain.order = vi.fn().mockImplementation(() => chain);
+  const chainableMethods = [
+    "from",
+    "select",
+    "insert",
+    "update",
+    "delete",
+    "eq",
+    "neq",
+    "gte",
+    "order",
+    "lt",
+  ] as const;
+
+  chainableMethods.forEach((method) => {
+    const fn = vi.fn().mockImplementation(() => chain);
+
+    fn.mockResolvedValueOnce = ((value: unknown) => {
+      chain.__awaitQueue.push(value);
+      return fn;
+    }) as typeof fn.mockResolvedValueOnce;
+
+    fn.mockResolvedValue = ((value: unknown) => {
+      chain.__awaitDefault = value;
+      return fn;
+    }) as typeof fn.mockResolvedValue;
+
+    chain[method] = fn;
+  });
+
   chain.single = vi.fn();
 
   return chain;
@@ -27,7 +65,7 @@ function createMockChain() {
 const mockChain = createMockChain();
 
 const mockSupabase = {
-  ...mockChain,
+  from: mockChain.from,
   auth: {
     getUser: vi.fn(),
   },
@@ -38,6 +76,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 // Import after mocking
+import { getDataClient, getEffectiveUser } from "@/lib/auth";
 import {
   createGear,
   editGear,
@@ -48,6 +87,9 @@ import {
   removeGearReservation,
   getGearForTrip,
 } from "./gear";
+
+const mockedGetEffectiveUser = vi.mocked(getEffectiveUser);
+const mockedGetDataClient = vi.mocked(getDataClient);
 
 // =============================================================================
 // Test Data
@@ -97,8 +139,12 @@ const mockTripGear = {
 // =============================================================================
 function resetMocks() {
   vi.clearAllMocks();
+  mockedGetEffectiveUser.mockResolvedValue({ userId: mockUser.id, isDemo: false });
+  mockedGetDataClient.mockImplementation(async () => mockSupabase);
 
   // Reset chain behavior
+  mockChain.__awaitQueue = [];
+  mockChain.__awaitDefault = { error: null };
   mockChain.from.mockImplementation(() => mockChain);
   mockChain.select.mockImplementation(() => mockChain);
   mockChain.insert.mockImplementation(() => mockChain);
@@ -107,8 +153,10 @@ function resetMocks() {
   mockChain.eq.mockImplementation(() => mockChain);
   mockChain.neq.mockImplementation(() => mockChain);
   mockChain.gte.mockImplementation(() => mockChain);
+  mockChain.lt.mockImplementation(() => mockChain);
   mockChain.order.mockImplementation(() => mockChain);
   mockChain.single.mockReset();
+  mockSupabase.auth.getUser.mockReset();
 }
 
 // =============================================================================
@@ -187,10 +235,7 @@ describe("createGear", () => {
   });
 
   it("fails when user is not authenticated", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: "Not authenticated" },
-    });
+    mockedGetEffectiveUser.mockResolvedValue({ userId: null, isDemo: false });
 
     const result = await createGear(validGearData);
 
@@ -262,10 +307,7 @@ describe("editGear", () => {
   });
 
   it("fails when user is not authenticated", async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: "Not authenticated" },
-    });
+    mockedGetEffectiveUser.mockResolvedValue({ userId: null, isDemo: false });
 
     const result = await editGear("gear-123", validGearData);
 
@@ -449,12 +491,14 @@ describe("deleteGear", () => {
   });
 
   it("deletes gear successfully when no upcoming reservations", async () => {
-    // First eq() is for the reservation check (from trip_gear)
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [],
       error: null,
     });
-    // Second eq() is for the delete (from gear)
     mockChain.eq.mockResolvedValueOnce({
       error: null,
     });
@@ -470,6 +514,10 @@ describe("deleteGear", () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30);
 
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [
         {
@@ -495,6 +543,10 @@ describe("deleteGear", () => {
     const futureDate2 = new Date();
     futureDate2.setDate(futureDate2.getDate() + 60);
 
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [
         {
@@ -524,6 +576,10 @@ describe("deleteGear", () => {
     const pastDate = new Date();
     pastDate.setDate(pastDate.getDate() - 30);
 
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [
         {
@@ -545,6 +601,10 @@ describe("deleteGear", () => {
   });
 
   it("fails when database delete fails", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [],
       error: null,
@@ -560,6 +620,10 @@ describe("deleteGear", () => {
   });
 
   it("handles null reservations data gracefully", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: null,
       error: null,
@@ -583,7 +647,10 @@ describe("reserveGearForTrip", () => {
   });
 
   it("reserves gear for trip successfully", async () => {
-    // First single() is for the duplicate check - returns null (no existing)
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.single.mockResolvedValueOnce({
       data: null,
       error: { code: "PGRST116" }, // No rows returned
@@ -607,6 +674,10 @@ describe("reserveGearForTrip", () => {
 
   it("prevents duplicate reservation", async () => {
     mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
+    mockChain.single.mockResolvedValueOnce({
       data: { id: "existing-reservation" },
       error: null,
     });
@@ -618,6 +689,10 @@ describe("reserveGearForTrip", () => {
   });
 
   it("fails when database insert fails", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.single.mockResolvedValueOnce({
       data: null,
       error: { code: "PGRST116" },
@@ -643,11 +718,13 @@ describe("removeGearReservation", () => {
   });
 
   it("removes gear reservation successfully", async () => {
-    // The chain is: from().delete().eq().eq()
-    // Need to chain eq calls - first eq returns something with eq method
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq
-      .mockReturnValueOnce(mockChain) // first .eq("trip_id", ...)
-      .mockResolvedValueOnce({ error: null }); // second .eq("gear_id", ...)
+      .mockReturnValueOnce(mockChain)
+      .mockResolvedValueOnce({ error: null });
 
     const result = await removeGearReservation("trip-123", "gear-123");
 
@@ -657,6 +734,10 @@ describe("removeGearReservation", () => {
   });
 
   it("fails when database delete fails", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq
       .mockReturnValueOnce(mockChain)
       .mockResolvedValueOnce({ error: { message: "Delete failed" } });
@@ -677,6 +758,10 @@ describe("getGearForTrip", () => {
   });
 
   it("returns gear for trip with nested gear details", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     const mockTripGearWithDetails = [
       {
         ...mockTripGear,
@@ -702,6 +787,10 @@ describe("getGearForTrip", () => {
   });
 
   it("returns empty array when no gear reserved for trip", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValue({
       data: [],
       error: null,
@@ -714,6 +803,10 @@ describe("getGearForTrip", () => {
   });
 
   it("returns empty array when data is null", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValue({
       data: null,
       error: null,
@@ -726,6 +819,10 @@ describe("getGearForTrip", () => {
   });
 
   it("fails when database query fails", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValue({
       data: null,
       error: { message: "Query failed" },
@@ -738,6 +835,10 @@ describe("getGearForTrip", () => {
   });
 
   it("returns multiple gear items for a trip", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     const lens = {
       ...mockGear,
       id: "gear-456",
@@ -910,6 +1011,10 @@ describe("Edge Cases", () => {
     const laterToday = new Date();
     laterToday.setHours(23, 59, 59, 999); // Set to end of today to avoid race condition
 
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [
         {
@@ -934,6 +1039,10 @@ describe("Edge Cases", () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30);
 
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "gear-123" },
+      error: null,
+    });
     mockChain.eq.mockResolvedValueOnce({
       data: [
         {

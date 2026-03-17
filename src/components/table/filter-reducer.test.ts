@@ -87,25 +87,12 @@ describe("filter-reducer", () => {
       });
     });
 
-    it("should read hideZeroQuantity from localStorage when true", () => {
+    it("should default hideZeroQuantity to false for SSR-safe initialization", () => {
       localStorageMock.getItem.mockReturnValue("true");
       const state = createInitialFilterState([100, 200, 400]);
 
-      expect(state.hideZeroQuantity).toBe(true);
-    });
-
-    it("should read hideZeroQuantity from localStorage when false", () => {
-      localStorageMock.getItem.mockReturnValue("false");
-      const state = createInitialFilterState([100, 200, 400]);
-
       expect(state.hideZeroQuantity).toBe(false);
-    });
-
-    it("should default hideZeroQuantity to false when localStorage is empty", () => {
-      localStorageMock.getItem.mockReturnValue(null);
-      const state = createInitialFilterState([100, 200, 400]);
-
-      expect(state.hideZeroQuantity).toBe(false);
+      expect(localStorageMock.getItem).not.toHaveBeenCalled();
     });
   });
 

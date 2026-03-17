@@ -459,35 +459,36 @@ describe("getFilmWithDetails", () => {
     const mockTrips = [
       { quantity: 3, created_at: "2024-01-01", trips: { id: "trip-1", title: "Japan Trip" } },
     ];
-
-    // Configure mocks for the three sequential queries
-    let singleCallCount = 0;
-    mockSupabase.single.mockImplementation(() => {
-      singleCallCount++;
-      if (singleCallCount === 1) {
-        return Promise.resolve({ data: mockFilm, error: null });
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "films") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: mockFilm, error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
       }
-      return Promise.resolve({ data: null, error: null });
-    });
-
-    let orderCallCount = 0;
-    mockSupabase.order.mockImplementation(() => {
-      orderCallCount++;
-      if (orderCallCount === 1) {
-        return Promise.resolve({ data: mockUsage, error: null });
+      if (table === "film_usage") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: mockUsage, error: null }),
+            }),
+          }),
+        };
       }
-      return Promise.resolve({ data: [], error: null });
-    });
-
-    // For trips query (ends with .eq)
-    let eqCallCount = 0;
-    mockSupabase.eq.mockImplementation(() => {
-      eqCallCount++;
-      // The third eq call is for trips (after film select.eq.is.single and usage select.eq.order)
-      if (eqCallCount >= 3) {
-        return Promise.resolve({ data: mockTrips, error: null });
+      if (table === "trip_films") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: mockTrips, error: null }),
+          }),
+        };
       }
-      // Return self for chaining
       return mockSupabase;
     });
 
@@ -508,14 +509,35 @@ describe("getFilmWithDetails", () => {
   });
 
   it("handles missing usage history gracefully", async () => {
-    mockSupabase.single.mockResolvedValue({ data: mockFilm, error: null });
-    mockSupabase.order.mockImplementation(() => Promise.resolve({ data: null, error: { message: "No usage" } }));
-    // For trips query (eq at the end)
-    let eqCount = 0;
-    mockSupabase.eq.mockImplementation(() => {
-      eqCount++;
-      if (eqCount >= 3) {
-        return Promise.resolve({ data: [], error: null });
+    mockSupabase.from.mockImplementation((table: string) => {
+      if (table === "films") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  single: vi.fn().mockResolvedValue({ data: mockFilm, error: null }),
+                }),
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "film_usage") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              order: vi.fn().mockResolvedValue({ data: null, error: { message: "No usage" } }),
+            }),
+          }),
+        };
+      }
+      if (table === "trip_films") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        };
       }
       return mockSupabase;
     });
@@ -640,7 +662,14 @@ describe("getDeletedFilms", () => {
 describe("permanentlyDeleteFilm", () => {
   beforeEach(() => {
     resetMocks();
-    mockSupabase.eq.mockResolvedValue({ error: null });
+    let eqCount = 0;
+    mockSupabase.eq.mockImplementation(() => {
+      eqCount++;
+      if (eqCount >= 2) {
+        return Promise.resolve({ error: null });
+      }
+      return mockSupabase;
+    });
   });
 
   it("permanently deletes a film", async () => {
@@ -652,7 +681,14 @@ describe("permanentlyDeleteFilm", () => {
   });
 
   it("returns error when permanent delete fails", async () => {
-    mockSupabase.eq.mockResolvedValue({ error: { message: "Delete failed" } });
+    let eqCount = 0;
+    mockSupabase.eq.mockImplementation(() => {
+      eqCount++;
+      if (eqCount >= 2) {
+        return Promise.resolve({ error: { message: "Delete failed" } });
+      }
+      return mockSupabase;
+    });
 
     const result = await permanentlyDeleteFilm("film-id-123");
 
@@ -743,16 +779,12 @@ describe("reduceFilmCount", () => {
   it("returns error when update fails", async () => {
     const filmWithCount = { count: 10, is_bulk_film: false, user_id: "user-123" };
     mockSupabase.single.mockResolvedValue({ data: filmWithCount, error: null });
-    // First .eq() is for the select query (returns mock for chaining to single)
-    // Second .eq() is for the update query (should return error)
     let eqCallCount = 0;
     mockSupabase.eq.mockImplementation(() => {
       eqCallCount++;
-      if (eqCallCount === 1) {
-        // For select().eq().single() - return mock for chaining
+      if (eqCallCount < 4) {
         return mockSupabase;
       }
-      // For update().eq() - return error
       return Promise.resolve({ error: { message: "Update failed" } });
     });
 
