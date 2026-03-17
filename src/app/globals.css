@@ -2,11 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   :root {
     /* Darkroom aesthetic - dark only */
     --background: 20 10% 5%;        /* #0d0b0a deep charcoal */
@@ -64,11 +65,38 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-geist-mono), monospace;
   }
 
   /* Serif headings for analog feel */
   h1, h2, h3 {
     font-family: Georgia, 'Times New Roman', serif;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .numeric-stable {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -149,4 +177,11 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up {
+    animation: none;
+  }
 }

@@ -19,7 +19,7 @@ interface GearCardProps {
 // Memoized card component to prevent re-renders when other cards change (rerender-memo)
 const GearCard = memo(function GearCard({ item, onEdit, onDelete }: GearCardProps) {
   return (
-    <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10 border-[#2a2420] hover:border-[#3a3430] hover:-translate-y-1 transition-all duration-300">
+    <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10 border-[#2a2420] transition-[border-color,transform,box-shadow] duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-1 hover:border-[#3a3430]">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-lg">
           <div className="flex items-center gap-2">

@@ -98,7 +98,7 @@ function Navigation() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500 ${
         scrolled
           ? "bg-[#0d0b0a]/90 backdrop-blur-xl border-b border-[#2a2420]/50"
           : "bg-transparent"
@@ -128,13 +128,13 @@ function Navigation() {
           </Link>
           <Link
             href="/login"
-            className="text-[#8a8078] hover:text-[#e8e4e0] transition-colors text-sm"
+            className="inline-flex min-h-10 items-center text-sm text-[#8a8078] transition-colors duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:text-[#e8e4e0]"
           >
             Sign In
           </Link>
           <Link
             href="/register"
-            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-[#0d0b0a] rounded-lg text-sm font-medium transition-colors"
+            className="inline-flex min-h-10 items-center rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-[#0d0b0a] transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-amber-400 hover:shadow-[0_10px_26px_rgba(245,158,11,0.2)] active:scale-[0.96]"
           >
             Get Started
           </Link>
@@ -160,7 +160,7 @@ function Hero({ onTryDemo }: { onTryDemo: () => void }) {
 
         {/* Main Headline */}
         <h1
-          className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-[#e8e4e0] mb-6 animate-slide-up"
+          className="text-5xl sm:text-6xl lg:text-7xl font-light tracking-tight text-[#e8e4e0] mb-6 animate-slide-up text-balance"
           style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
             animationDelay: "100ms",
@@ -189,14 +189,14 @@ function Hero({ onTryDemo }: { onTryDemo: () => void }) {
         >
           <Link
             href="/register"
-            className="group px-8 py-4 bg-amber-500 hover:bg-amber-400 text-[#0d0b0a] rounded-xl text-lg font-medium transition-all hover:scale-[1.02] flex items-center gap-2"
+            className="group inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-8 py-4 text-lg font-medium text-[#0d0b0a] transition-[background-color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-amber-400 hover:shadow-[0_12px_30px_rgba(245,158,11,0.2)] active:scale-[0.96]"
           >
             Start for free
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="h-5 w-5 transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] group-hover:translate-x-1" />
           </Link>
           <button
             onClick={onTryDemo}
-            className="group px-8 py-4 bg-[#1a1614] hover:bg-[#2a2420] border border-[#2a2420] text-[#e8e4e0] rounded-xl text-lg transition-all flex items-center gap-2"
+            className="group inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#2a2420] bg-[#1a1614] px-8 py-4 text-lg text-[#e8e4e0] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[#2a2420] hover:border-[#3a3430] active:scale-[0.96]"
           >
             <Play className="w-5 h-5" />
             Try Demo
@@ -204,7 +204,7 @@ function Hero({ onTryDemo }: { onTryDemo: () => void }) {
           <Link
             href="https://github.com/yomete/fuinnosho"
             target="_blank"
-            className="px-8 py-4 bg-transparent hover:bg-[#1a1614] border border-transparent hover:border-[#2a2420] text-[#8a8078] hover:text-[#e8e4e0] rounded-xl text-lg transition-all flex items-center gap-2"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-transparent bg-transparent px-8 py-4 text-lg text-[#8a8078] transition-[background-color,border-color,color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-[#2a2420] hover:bg-[#1a1614] hover:text-[#e8e4e0] active:scale-[0.96]"
           >
             <Github className="w-5 h-5" />
             GitHub
@@ -229,7 +229,7 @@ function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-center">
       <div
-        className="text-3xl sm:text-4xl font-light text-[#e8e4e0] mb-1"
+        className="text-3xl sm:text-4xl font-light text-[#e8e4e0] mb-1 tabular-nums"
         style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
       >
         {value}
@@ -290,7 +290,7 @@ function Features() {
         {/* Section Header */}
         <div className="text-center mb-20">
           <h2
-            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4"
+            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4 text-balance"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             Everything you need,
@@ -343,7 +343,7 @@ function FeatureCard({
 
   return (
     <div
-      className={`group relative p-6 rounded-2xl bg-gradient-to-br ${colorMap[feature.color]} border transition-all duration-300 hover:-translate-y-1`}
+      className={`group relative rounded-2xl border bg-gradient-to-br p-6 transition-[border-color,transform,box-shadow] duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(0,0,0,0.2)] ${colorMap[feature.color]}`}
       style={{
         animationDelay: `${index * 100}ms`,
       }}
@@ -383,7 +383,7 @@ function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2
-            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4"
+            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4 text-balance"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             Designed for the darkroom
@@ -394,11 +394,11 @@ function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
           </p>
           <button
             onClick={onTryDemo}
-            className="group inline-flex items-center gap-2 px-6 py-3 bg-[#1a1614] hover:bg-[#2a2420] border border-[#2a2420] text-[#e8e4e0] rounded-xl transition-all"
+            className="group inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#2a2420] bg-[#1a1614] px-6 py-3 text-[#e8e4e0] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-[#3a3430] hover:bg-[#2a2420] active:scale-[0.96]"
           >
             <Play className="w-4 h-4" />
             Try the interactive demo
-            <ArrowRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+            <ArrowRight className="h-4 w-4 translate-x-[-8px] opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] group-hover:translate-x-0 group-hover:opacity-100" />
           </button>
         </div>
 
@@ -453,7 +453,7 @@ function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
                   { label: "Slide", value: "4", color: "emerald" }
                 ].map((stat) => (
                   <div key={stat.label} className="p-4 rounded-xl bg-[#1a1614] border border-[#2a2420]">
-                    <div className="text-2xl text-[#e8e4e0] font-light mb-1">{stat.value}</div>
+                    <div className="text-2xl text-[#e8e4e0] font-light mb-1 tabular-nums">{stat.value}</div>
                     <div className="text-xs text-[#6a6460]">{stat.label}</div>
                   </div>
                 ))}
@@ -481,7 +481,7 @@ function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-[#6a6460]">{film.brand}</span>
-                      <span className="text-[#8a8078]">{film.count} rolls</span>
+                      <span className="text-[#8a8078] tabular-nums">{film.count} rolls</span>
                     </div>
                   </div>
                 ))}
@@ -565,7 +565,7 @@ function Pricing() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2
-            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4"
+            className="text-4xl sm:text-5xl font-light text-[#e8e4e0] mb-4 text-balance"
             style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             Simple, transparent pricing
@@ -605,10 +605,10 @@ function PricingCard({
   }
 }) {
   return (
-    <div className={`relative p-8 rounded-2xl border transition-all ${
+    <div className={`relative rounded-2xl border p-8 transition-[border-color,transform,box-shadow,background-color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-0.5 ${
       tier.popular
         ? "bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/30"
-        : "bg-[#1a1614] border-[#2a2420] hover:border-[#3a3430]"
+        : "bg-[#1a1614] border-[#2a2420] hover:border-[#3a3430] hover:shadow-[0_16px_38px_rgba(0,0,0,0.16)]"
     }`}>
       {tier.popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-amber-500 text-[#0d0b0a] text-xs font-medium rounded-full">
@@ -633,7 +633,7 @@ function PricingCard({
         <p className="text-sm text-[#6a6460] mb-4">{tier.description}</p>
 
         <div className="flex items-baseline gap-1">
-          <span className="text-4xl text-[#e8e4e0]">{tier.price}</span>
+          <span className="text-4xl text-[#e8e4e0] tabular-nums">{tier.price}</span>
           <span className="text-[#6a6460]">{tier.period}</span>
         </div>
       </div>
@@ -701,7 +701,7 @@ function OpenSourceCallout() {
             </div>
 
             <h2
-              className="text-3xl sm:text-4xl font-light text-[#e8e4e0] mb-4"
+              className="text-3xl sm:text-4xl font-light text-[#e8e4e0] mb-4 text-balance"
               style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
             >
               Built in the open
@@ -717,11 +717,11 @@ function OpenSourceCallout() {
               <Link
                 href="https://github.com/yomete/fuinnosho"
                 target="_blank"
-                className="group px-6 py-3 bg-[#2a2420] hover:bg-[#3a3430] border border-[#3a3430] text-[#e8e4e0] rounded-xl transition-all flex items-center gap-2"
+                className="group inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#3a3430] bg-[#2a2420] px-6 py-3 text-[#e8e4e0] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[#3a3430] hover:shadow-[0_14px_30px_rgba(0,0,0,0.18)] active:scale-[0.96]"
               >
                 <Github className="w-5 h-5" />
                 Star on GitHub
-                <ArrowRight className="w-4 h-4 opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
+                <ArrowRight className="h-4 w-4 translate-x-[-8px] opacity-0 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] group-hover:translate-x-0 group-hover:opacity-100" />
               </Link>
               <Link
                 href="https://github.com/yomete/fuinnosho/blob/main/CONTRIBUTING.md"

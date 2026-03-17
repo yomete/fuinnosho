@@ -69,7 +69,7 @@ const NavUserIcon = ({ user, isDemo = false }: NavUserIconProps) => {
       <div className="flex items-center gap-2">
         <span className="text-xs text-amber-500 font-medium">Demo</span>
         <div
-          className="w-8 h-8 rounded-full border border-[#2a2420] flex items-center justify-center text-xs font-bold text-white"
+          className="size-10 rounded-full border border-[#2a2420] flex items-center justify-center text-xs font-bold text-white"
           style={{ backgroundColor }}
         >
           D
@@ -84,7 +84,7 @@ const NavUserIcon = ({ user, isDemo = false }: NavUserIconProps) => {
         <button
           type="button"
           aria-label="User menu"
-          className="w-8 h-8 rounded-full cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-offset-[#0d0b0a] hover:ring-amber-600/50 transition-all disabled:opacity-50 border border-[#2a2420]"
+          className="size-10 rounded-full border border-[#2a2420] cursor-pointer transition-[ring-color,box-shadow,transform,opacity] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:ring-2 hover:ring-amber-600/50 hover:ring-offset-2 hover:ring-offset-[#0d0b0a] active:scale-[0.96] disabled:opacity-50"
           style={{ backgroundColor }}
         />
       </DropdownMenuTrigger>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { type Film } from "@/lib/utils";
-import { Package, Film as FilmIcon, Grid3X3, Timer, Calendar, AlertTriangle, X } from "lucide-react";
+import { Package, Film as FilmIcon, Grid3X3, Timer, Calendar, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -138,30 +138,23 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
           {statItems.map((stat, i) => {
             const Icon = stat.icon;
             const isClickable = stat.clickable;
-            return (
-              <div
-                key={stat.label}
-                onClick={isClickable ? stat.onClick : undefined}
-                className={`
-                  relative overflow-hidden rounded-xl p-4 border transition-all
-                  ${
-                    stat.alert
-                      ? "bg-red-900/10 border-red-800/30 hover:border-red-700/50"
-                      : "bg-[#1a1614]/50 border-[#2a2420] hover:border-[#3a3430]"
-                  }
-                  ${isClickable ? "cursor-pointer hover:scale-[1.02] active:scale-[0.98]" : ""}
-                `}
-                style={{
-                  animationDelay: `${i * 50}ms`,
-                }}
-              >
+            const cardClassName = `
+              relative overflow-hidden rounded-xl border p-4 text-left transition-[transform,border-color,background-color] duration-200 ease-[cubic-bezier(0.2,0,0,1)]
+              ${
+                stat.alert
+                  ? "bg-red-900/10 border-red-800/30 hover:border-red-700/50"
+                  : "bg-[#1a1614]/50 border-[#2a2420] hover:border-[#3a3430]"
+              }
+            `;
+            const cardBody = (
+              <>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[#8a8078] text-xs uppercase tracking-wider mb-1">
+                    <p className="mb-1 text-xs uppercase tracking-wider text-[#8a8078]">
                       {stat.label}
                     </p>
                     <p
-                      className={`text-3xl font-light ${stat.alert ? "text-red-400" : "text-[#e8e4e0]"}`}
+                      className={`text-3xl font-light tabular-nums ${stat.alert ? "text-red-400" : "text-[#e8e4e0]"}`}
                       style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
                     >
                       {stat.value}
@@ -172,8 +165,37 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                   />
                 </div>
                 {isClickable && (
-                  <p className="text-[10px] text-[#6a6460] mt-2">Click to view</p>
+                  <p className="mt-2 text-[10px] text-[#6a6460]">Click to view</p>
                 )}
+              </>
+            );
+
+            if (isClickable) {
+              return (
+                <button
+                  key={stat.label}
+                  type="button"
+                  onClick={stat.onClick}
+                  aria-label={`${stat.label}: ${stat.value}. Click to view details.`}
+                  className={`${cardClassName} cursor-pointer hover:scale-[1.01] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background`}
+                  style={{
+                    animationDelay: `${i * 50}ms`,
+                  }}
+                >
+                  {cardBody}
+                </button>
+              );
+            }
+
+            return (
+              <div
+                key={stat.label}
+                className={cardClassName}
+                style={{
+                  animationDelay: `${i * 50}ms`,
+                }}
+              >
+                {cardBody}
               </div>
             );
           })}
@@ -195,7 +217,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                 return (
                   <div
                     key={type}
-                    className={`h-full transition-all duration-700 ${colors.bar}`}
+                    className={`h-full transition-[width] duration-700 ease-[cubic-bezier(0.2,0,0,1)] ${colors.bar}`}
                     style={{ width: `${percentage}%` }}
                     title={`${type}: ${count} rolls (${Math.round(percentage)}%)`}
                   />
@@ -211,7 +233,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                     className="flex items-center gap-2 text-xs text-[#8a8078]"
                   >
                     <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
-                    {type} ({count})
+                    <span className="tabular-nums">{type} ({count})</span>
                   </div>
                 );
               })}
@@ -247,7 +269,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                       key={film.id}
                       href={`${prefix}/film/${film.id}`}
                       onClick={() => setShowExpiringModal(false)}
-                      className="block p-4 rounded-xl border border-[#2a2420] bg-[#1a1614]/50 hover:border-[#3a3430] hover:bg-[#1a1614]/80 transition-all"
+                      className="block rounded-xl border border-[#2a2420] bg-[#1a1614]/50 p-4 transition-[background-color,border-color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:border-[#3a3430] hover:bg-[#1a1614]/80 hover:translate-y-[-1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -275,7 +297,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
                             {daysUntil >= 0 && daysUntil <= 30 && ` (${daysUntil} days)`}
                           </span>
                         </div>
-                        <span className="text-sm text-[#8a8078]">
+                        <span className="text-sm text-[#8a8078] tabular-nums">
                           {count} roll{count !== 1 ? "s" : ""}
                         </span>
                       </div>

@@ -5,31 +5,36 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium shadow-[0_1px_1px_rgba(0,0,0,0.28),0_10px_24px_rgba(0,0,0,0.16)] transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-amber-600 to-orange-700 text-white shadow-lg shadow-amber-900/30 hover:shadow-amber-900/50 hover:from-amber-500 hover:to-orange-600",
+          "bg-gradient-to-r from-amber-600 to-orange-700 text-white shadow-[0_1px_1px_rgba(0,0,0,0.28),0_14px_28px_rgba(120,53,15,0.28)] hover:from-amber-500 hover:to-orange-600 hover:shadow-[0_1px_1px_rgba(0,0,0,0.28),0_18px_32px_rgba(120,53,15,0.34)]",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border border-[#2a2420] bg-transparent text-[#e8e4e0] hover:bg-[#2a2420]/50 hover:border-[#3a3430]",
+          "border border-[#2f2925] bg-transparent text-[#e8e4e0] shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_8px_20px_rgba(0,0,0,0.16)] hover:border-[#3a3430] hover:bg-[#2a2420]/55",
         secondary:
-          "bg-[#2a2420] text-[#e8e4e0] hover:bg-[#3a3430]",
-        ghost: "text-[#8a8078] hover:text-[#e8e4e0] hover:bg-[#2a2420]/50",
+          "bg-[#2a2420] text-[#e8e4e0] shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_8px_20px_rgba(0,0,0,0.16)] hover:bg-[#3a3430]",
+        ghost: "text-[#8a8078] shadow-none hover:bg-[#2a2420]/50 hover:text-[#e8e4e0]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: "min-h-10 px-4 py-2",
+        sm: "min-h-10 rounded-lg px-3 text-xs",
+        lg: "min-h-11 rounded-xl px-8",
+        icon: "size-10",
+      },
+      static: {
+        true: "active:scale-100",
+        false: "",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      static: false,
     },
   }
 );
@@ -38,14 +43,15 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  static?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, static: isStatic = false, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, static: isStatic, className }))}
         ref={ref}
         {...props}
       />

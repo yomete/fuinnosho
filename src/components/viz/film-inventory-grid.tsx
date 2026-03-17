@@ -119,7 +119,7 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
               relative overflow-hidden rounded-xl
               bg-gradient-to-br ${getFilmTypeGradient(film.type)}
               border border-[#2a2420] hover:border-[#3a3430]
-              transition-all duration-300
+              transition-[border-color,transform,box-shadow] duration-300 ease-[cubic-bezier(0.2,0,0,1)]
               hover:-translate-y-1 hover:shadow-lg hover:shadow-black/20
               animate-in fade-in-50 slide-in-from-bottom-5
             `}

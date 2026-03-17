@@ -187,11 +187,11 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
       />
 
       <div className="flex justify-end px-4">
-        <div className="inline-flex rounded-lg border border-[#2a2420] bg-[#1a1614]/50 p-1">
+        <div className="inline-flex rounded-xl border border-[#2f2925] bg-[#1a1614]/70 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_10px_24px_rgba(0,0,0,0.12)]">
           <Button
             variant="ghost"
             size="sm"
-            className={`px-3 ${view === "table" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
+            className={`px-3 rounded-lg ${view === "table" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
             onClick={() => setView("table")}
           >
             <TableIcon className="h-4 w-4" />
@@ -200,7 +200,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
           <Button
             variant="ghost"
             size="sm"
-            className={`px-3 ${view === "grid" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
+            className={`px-3 rounded-lg ${view === "grid" ? "bg-[#2a2420] text-[#e8e4e0]" : "text-[#8a8078] hover:text-[#e8e4e0]"}`}
             onClick={() => setView("grid")}
           >
             <GridIcon className="h-4 w-4" />
@@ -212,7 +212,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
       {view === "grid" && (
         <div
           className={`
-            transition-all duration-300 ease-in-out
+            transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)]
             ${
               view === "grid"
                 ? "opacity-100 translate-y-0"
@@ -226,7 +226,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
       {view === "table" && (
         <div
           className={`
-            transition-all duration-300 ease-in-out
+            transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)]
             ${
               view === "table"
                 ? "opacity-100 translate-y-0"

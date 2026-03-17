@@ -12,11 +12,11 @@ const TableOrGrid = ({ films }: { films: Film[] }) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-end px-2 sm:px-4">
-        <div className="inline-flex rounded-xl border border-[#2a2420] bg-[#1a1614]/80 p-1">
+        <div className="inline-flex rounded-xl border border-[#2f2925] bg-[#1a1614]/80 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_10px_24px_rgba(0,0,0,0.12)]">
           <Button
             variant="ghost"
             size="sm"
-            className={`px-2 sm:px-3 rounded-lg transition-all duration-200 ${
+            className={`px-2 sm:px-3 rounded-lg transition-[background-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
               view === "table"
                 ? "bg-[#2a2420] text-[#e8e4e0]"
                 : "text-[#6a6460] hover:text-[#8a8078] hover:bg-transparent"
@@ -31,7 +31,7 @@ const TableOrGrid = ({ films }: { films: Film[] }) => {
           <Button
             variant="ghost"
             size="sm"
-            className={`px-2 sm:px-3 rounded-lg transition-all duration-200 ${
+            className={`px-2 sm:px-3 rounded-lg transition-[background-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
               view === "grid"
                 ? "bg-[#2a2420] text-[#e8e4e0]"
                 : "text-[#6a6460] hover:text-[#8a8078] hover:bg-transparent"
