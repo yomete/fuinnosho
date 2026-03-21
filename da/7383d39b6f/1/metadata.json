@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "da7383d39b6f",
+  "session_id": "7e2737e7-41bf-4640-aab0-2f8c16922b70",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-21T16:48:36.957365Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "pnpm-lock.yaml",
+    "vercel.json"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "6a2864be-d7cf-4d7a-aae5-b2941ba77e93",
+  "token_usage": {
+    "input_tokens": 53,
+    "cache_creation_tokens": 34109,
+    "cache_read_tokens": 936451,
+    "output_tokens": 4035,
+    "api_call_count": 33
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-21T16:48:36.904256Z",
+    "agent_lines": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3,
+    "agent_percentage": 100
+  }
+}
