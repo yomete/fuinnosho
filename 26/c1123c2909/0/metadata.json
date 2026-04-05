@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "26c1123c2909",
+  "session_id": "6fb288a1-6172-4192-8b45-0f5652977294",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T13:55:08.486753Z",
+  "branch": "main",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "public/file.svg",
+    "public/globe.svg",
+    "public/next.svg",
+    "public/vercel.svg",
+    "public/window.svg",
+    "scripts/fix-bulk-film-exposures.js",
+    "setup-mcp.sh",
+    "src/app/api/fix-bulk-exposures/route.ts",
+    "src/components/films/film-page.tsx",
+    "src/components/films/lazy-loaded-viz.tsx",
+    "src/components/films/observed-section.tsx",
+    "src/components/table/columns.tsx",
+    "src/components/table/enhanced-filters-v2.test.tsx",
+    "src/components/table/enhanced-filters.tsx",
+    "src/components/table/index-v2.tsx",
+    "src/components/table/index.tsx",
+    "src/components/ui/slider.tsx",
+    "src/components/viz/acquisition-timeline.tsx"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 1974,
+    "cache_creation_tokens": 93098,
+    "cache_read_tokens": 7303388,
+    "output_tokens": 26708,
+    "api_call_count": 126
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T13:55:08.391968Z",
+    "agent_lines": 21,
+    "human_added": 1,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 23,
+    "agent_percentage": 91.30434782608695
+  }
+}

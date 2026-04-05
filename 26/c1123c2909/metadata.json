@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "26c1123c2909",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "public/file.svg",
+    "public/globe.svg",
+    "public/next.svg",
+    "public/vercel.svg",
+    "public/window.svg",
+    "scripts/fix-bulk-film-exposures.js",
+    "setup-mcp.sh",
+    "src/app/api/fix-bulk-exposures/route.ts",
+    "src/components/films/film-page.tsx",
+    "src/components/films/lazy-loaded-viz.tsx",
+    "src/components/films/observed-section.tsx",
+    "src/components/table/columns.tsx",
+    "src/components/table/enhanced-filters-v2.test.tsx",
+    "src/components/table/enhanced-filters.tsx",
+    "src/components/table/index-v2.tsx",
+    "src/components/table/index.tsx",
+    "src/components/ui/slider.tsx",
+    "src/components/viz/acquisition-timeline.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/26/c1123c2909/0/metadata.json",
+      "transcript": "/26/c1123c2909/0/full.jsonl",
+      "context": "/26/c1123c2909/0/context.md",
+      "content_hash": "/26/c1123c2909/0/content_hash.txt",
+      "prompt": "/26/c1123c2909/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1974,
+    "cache_creation_tokens": 93098,
+    "cache_read_tokens": 7303388,
+    "output_tokens": 26708,
+    "api_call_count": 126
+  }
+}
