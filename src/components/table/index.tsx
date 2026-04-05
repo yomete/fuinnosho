@@ -31,7 +31,7 @@ import {
 import { ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { EnhancedFiltersV2, FilterAction } from "./enhanced-filters-v2";
+import { EnhancedFiltersV2, FilterAction } from "./enhanced-filters";
 import { filterReducer, createInitialFilterState } from "./filter-reducer";
 
 interface FilmsTableV2Props {

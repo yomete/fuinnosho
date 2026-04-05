@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Film } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { TableIcon, GridIcon } from "lucide-react";
-import FilmsTableV2 from "@/components/table/index-v2";
+import FilmsTableV2 from "@/components/table";
 import FilmInventoryGrid from "@/components/viz/film-inventory-grid";
 
 const TableOrGrid = ({ films }: { films: Film[] }) => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { createInitialFilterState, filterReducer } from "./filter-reducer";
-import type { FilterState, FilterAction } from "./enhanced-filters-v2";
+import type { FilterState, FilterAction } from "./enhanced-filters";
 
 // Mock localStorage for tests
 const localStorageMock = (() => {

@@ -1,4 +1,4 @@
-import { FilterState, FilterAction } from "./enhanced-filters-v2";
+import { FilterState, FilterAction } from "./enhanced-filters";
 
 // Helper function to toggle item in array
 function toggleInArray<T>(array: T[], item: T): T[] {

@@ -5,7 +5,7 @@ import {
   EnhancedFiltersV2,
   FilterState,
   FilterAction,
-} from "./enhanced-filters-v2";
+} from "./enhanced-filters";
 import type { Film } from "@/lib/utils";
 
 // =============================================================================
