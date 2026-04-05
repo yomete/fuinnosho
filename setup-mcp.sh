@@ -32,7 +32,7 @@ echo "Testing MCP server startup..."
 echo "Starting server (will output startup message then exit)..."
 
 # Run server with a quick stdin test
-echo '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | npx tsx mcp-server-simple.ts 2>&1 | head -5
+echo '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}' | npx tsx mcp-server.ts 2>&1 | head -5
 
 echo ""
 echo "✅ If you saw 'Film Inventory MCP server running on stdio' above, the server is working!"
@@ -47,7 +47,7 @@ echo "{"
 echo "  \"mcpServers\": {"
 echo "    \"fuinnosho-film-inventory\": {"
 echo "      \"command\": \"npx\","
-echo "      \"args\": [\"tsx\", \"$(pwd)/mcp-server-simple.ts\"],"
+echo "      \"args\": [\"tsx\", \"$(pwd)/mcp-server.ts\"],"
 echo "      \"env\": {"
 echo "        \"NEXT_PUBLIC_SUPABASE_URL\": \"$NEXT_PUBLIC_SUPABASE_URL\","
 echo "        \"NEXT_PUBLIC_SUPABASE_ANON_KEY\": \"$NEXT_PUBLIC_SUPABASE_ANON_KEY\""

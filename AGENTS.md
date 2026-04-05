@@ -8,10 +8,9 @@ This document contains important guidelines and reminders for Codex when working
 
 ### Steps to Update MCP Server:
 
-1. **Update Data Models**: Add new fields to the relevant interfaces in both:
+1. **Update Data Models**: Add new fields to the relevant interfaces in:
 
-   - `mcp-server.ts` (main MCP server)
-   - `mcp-server-simple.ts` (simplified version)
+   - `mcp-server.ts`
 
 2. **Update Tool Schemas**: Modify the tool input schemas to include new fields in:
 
@@ -59,7 +58,6 @@ After updating the MCP server:
 ## File Locations
 
 - **Main MCP Server**: `/mcp-server.ts`
-- **Simple MCP Server**: `/mcp-server-simple.ts`
 - **TypeScript Config**: `/tsconfig.mcp.json`
 - **Build Output**: `/dist/mcp-server.js`
 - **Documentation**: `/README-MCP.md`

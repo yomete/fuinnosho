@@ -515,8 +515,8 @@ describe("EnhancedFiltersV2", () => {
       });
       await openFilterPopover(user);
 
-      const slider = screen.getByRole("slider");
-      expect(slider).toBeInTheDocument();
+      const sliders = screen.getAllByRole("slider");
+      expect(sliders.length).toBe(2);
     });
   });
 

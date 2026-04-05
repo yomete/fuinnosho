@@ -134,8 +134,18 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
       );
     }
 
+    // ISO range filter
+    const [rangeMin, rangeMax] = filterState.isoRange;
+    const isoMin = Math.min(...uniqueIsos);
+    const isoMax = Math.max(...uniqueIsos);
+    if (rangeMin !== isoMin || rangeMax !== isoMax) {
+      result = result.filter(
+        (film) => film.iso >= rangeMin && film.iso <= rangeMax
+      );
+    }
+
     return result;
-  }, [films, filterState.hideZeroQuantity]);
+  }, [films, filterState.hideZeroQuantity, filterState.isoRange, uniqueIsos]);
 
   // Group and expand films based on consolidation settings
   const tableData: FilmTableRow[] = useMemo(() => {
