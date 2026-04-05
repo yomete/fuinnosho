@@ -1,0 +1,37 @@
+[Image #1] this slider doesn't work
+
+---
+
+[Image: source: REDACTED.png]
+
+---
+
+oh i mean the slider doesn't filter data
+
+---
+
+[Image #2] still not working
+
+---
+
+[Image: source: REDACTED.png]
+
+---
+
+ok it's not working. lets use some logs to debug?
+
+---
+
+i just moved the slider but didn't see any logs. any chance we're editing the wrong file?
+
+---
+
+what other unsed files are in this reposiroty that we can clean up/get rid off.
+
+---
+
+lets commit this
+
+---
+
+can we rename fils with v2 in them?
