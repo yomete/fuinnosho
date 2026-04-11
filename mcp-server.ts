@@ -41,6 +41,7 @@ import {
   createToolHandlers,
   TOOL_DEFINITIONS,
 } from "./src/lib/mcp/tools.js";
+import type { ToolName } from "./src/lib/mcp/tool-types.js";
 
 class FilmInventoryMCPServer {
   private server: Server;
@@ -136,6 +137,10 @@ class FilmInventoryMCPServer {
           arguments: args,
         });
 
+        if (!this.isToolName(name)) {
+          throw new Error(`Unknown tool: ${name}`);
+        }
+
         const handler = this.handlers[name];
         if (!handler) {
           throw new Error(`Unknown tool: ${name}`);
@@ -181,6 +186,10 @@ class FilmInventoryMCPServer {
         };
       }
     });
+  }
+
+  private isToolName(name: string): name is ToolName {
+    return TOOL_DEFINITIONS.some((tool) => tool.name === name);
   }
 
   async run() {

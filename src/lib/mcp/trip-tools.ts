@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Film } from "@/lib/films/types";
-import type { Trip } from "@/lib/trips/types";
+import type { Film } from "../films/types.js";
+import type { Trip } from "../trips/types.js";
 import type {
   MCPToolResult,
   ToolArgumentsByName,
   TripToolHandlers,
-} from "@/lib/mcp/tool-types";
+} from "./tool-types.js";
 import {
   addFilmToTripForUser,
   createTripForUser,
@@ -15,7 +15,7 @@ import {
   getTripsForUser,
   removeFilmFromTripForUser,
   updateFilmQuantityInTripForUser,
-} from "@/lib/trips/service";
+} from "../trips/service.js";
 
 function jsonResult(data: unknown): MCPToolResult {
   return {

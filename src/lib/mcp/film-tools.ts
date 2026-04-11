@@ -6,14 +6,14 @@ import {
   softDeleteFilmForUser,
   spoolBulkFilmForUser,
   updateFilmForUser,
-} from "@/lib/films/service";
-import { formatDimensions } from "@/lib/films/schema";
-import type { Film, FilmUsage } from "@/lib/films/types";
+} from "../films/service.js";
+import { formatDimensions } from "../films/schema.js";
+import type { Film, FilmUsage } from "../films/types.js";
 import type {
   FilmToolHandlers,
   MCPToolResult,
   ToolArgumentsByName,
-} from "@/lib/mcp/tool-types";
+} from "./tool-types.js";
 
 function jsonResult(data: unknown): MCPToolResult {
   return {

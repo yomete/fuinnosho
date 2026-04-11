@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
-import type { Film, FilmUsage } from "@/lib/films/types";
-import { type FilmSchema, filmSchema, getExposuresPerRoll } from "@/lib/films/schema";
+import type { Film, FilmUsage } from "./types.js";
+import { type FilmSchema, filmSchema, getExposuresPerRoll } from "./schema.js";
 import {
   deleteFilmById,
   insertFilm,
@@ -17,7 +17,7 @@ import {
   selectFilmUsageHistory,
   softDeleteFilmById,
   updateFilmById,
-} from "@/lib/films/repository";
+} from "./repository.js";
 
 interface TripSummary {
   id: string;

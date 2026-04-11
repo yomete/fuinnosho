@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Gear, TripGear } from "@/lib/gear/types";
-import type { GearSchema } from "@/lib/gear/schema";
-import { gearSchema } from "@/lib/gear/schema";
+import type { Gear, TripGear } from "./types.js";
+import type { GearSchema } from "./schema.js";
+import { gearSchema } from "./schema.js";
 import {
   deleteGearById,
   deleteTripGearReservation,
@@ -14,8 +14,8 @@ import {
   selectGearSummaryById,
   selectTripGearReservation,
   updateGearById,
-} from "@/lib/gear/repository";
-import { selectTripById } from "@/lib/trips/repository";
+} from "./repository.js";
+import { selectTripById } from "../trips/repository.js";
 
 type GearFilters = {
   type?: string;

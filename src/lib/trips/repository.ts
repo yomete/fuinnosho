@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Trip } from "@/lib/trips/types";
+import type { Trip } from "./types.js";
 
 type TripMutation = Partial<Omit<Trip, "id" | "created_at" | "user_id">>;
 
