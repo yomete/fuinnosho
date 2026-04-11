@@ -77,7 +77,7 @@ class FilmInventoryMCPServer {
           ? "🔑 Supabase client initialized"
           : "⚠️  Running in test mode"
       );
-    } catch (error) {
+    } catch {
       console.warn(
         "⚠️  Missing Supabase environment variables - running in TEST MODE"
       );

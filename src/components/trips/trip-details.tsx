@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -119,7 +119,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [isoFilter, setIsoFilter] = useState<string>("all");
 
-  const loadTripData = async () => {
+  const loadTripData = useCallback(async () => {
     const [filmsResult, gearResult, availableFilmsResult] = await Promise.all([
       getTripWithFilms(trip.id),
       getTripWithGear(trip.id),
@@ -141,18 +141,18 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
     }
 
     setIsLoading(false);
-  };
+  }, [trip.id]);
 
-  const loadAvailableFilms = async () => {
+  const loadAvailableFilms = useCallback(async () => {
     const result = await getFilmsWithAvailability();
     if (result.data) {
       // Only show films with actual availability
       const filmsToShow = result.data.filter((film) => film.available_count > 0);
       setAvailableFilms(filmsToShow);
     }
-  };
+  }, []);
 
-  const loadAvailableGear = async () => {
+  const loadAvailableGear = useCallback(async () => {
     const result = await getAvailableGear();
     if (result.data) {
       // Filter out gear that's already reserved for this trip
@@ -161,7 +161,7 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
       );
       setAvailableGear(filteredGear);
     }
-  };
+  }, [tripGear]);
 
   useEffect(() => {
     loadTripData();

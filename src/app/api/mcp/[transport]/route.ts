@@ -5,7 +5,7 @@ import {
   TOOL_DEFINITIONS,
   type MCPToolResult,
 } from "@/lib/mcp/tools";
-import type { ToolName } from "@/lib/mcp/tool-types";
+import type { ToolArgumentsByName, ToolName } from "@/lib/mcp/tool-types";
 
 const handler = createMcpHandler(
   (server) => {
@@ -14,11 +14,15 @@ const handler = createMcpHandler(
 
     for (const def of TOOL_DEFINITIONS) {
       const toolName = def.name as ToolName;
+      const toolHandler = tools[toolName] as (
+        args: ToolArgumentsByName[ToolName]
+      ) => Promise<MCPToolResult>;
+
       server.registerTool(def.name, {
         description: def.description,
-        inputSchema: def.inputSchema as any,
-      }, async (args: any) => {
-        return (await tools[toolName](args)) as MCPToolResult & {
+        inputSchema: def.inputSchema,
+      }, async (args) => {
+        return (await toolHandler(args as ToolArgumentsByName[ToolName])) as MCPToolResult & {
           [key: string]: unknown;
         };
       });

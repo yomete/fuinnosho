@@ -1,8 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { DEMO_MODE_COOKIE } from "@/lib/demo";
-
 // Check demo mode at runtime
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
