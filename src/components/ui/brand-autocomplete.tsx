@@ -24,12 +24,11 @@ export function BrandAutocomplete({
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   // Filter brands based on input
-  const filteredBrands = React.useMemo(() => {
-    if (!inputValue) return brands;
-    return brands.filter((brand) =>
-      brand.toLowerCase().includes(inputValue.toLowerCase())
-    );
-  }, [brands, inputValue]);
+  const filteredBrands = !inputValue
+    ? brands
+    : brands.filter((brand) =>
+        brand.toLowerCase().includes(inputValue.toLowerCase())
+      );
 
   // Handle clicks outside
   React.useEffect(() => {

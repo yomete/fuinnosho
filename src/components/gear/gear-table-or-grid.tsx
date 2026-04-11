@@ -1,5 +1,5 @@
 "use client";
-import { useState, useReducer, useMemo, useCallback } from "react";
+import { useState, useReducer } from "react";
 import type { Gear } from "@/lib/gear/types";
 import { Button } from "@/components/ui/button";
 import { TableIcon, GridIcon } from "lucide-react";
@@ -16,17 +16,12 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
   const [view, setView] = useState<"table" | "grid">("table");
 
   // Extract unique prices for initial state
-  const uniquePrices = useMemo(() =>
-    gear
-      .map((item) => item.purchase_price)
-      .filter((price): price is number => price !== undefined),
-    [gear]
-  );
+  const uniquePrices = gear
+    .map((item) => item.purchase_price)
+    .filter((price): price is number => price !== undefined);
 
-  const { minPrice, maxPrice } = useMemo(() => ({
-    minPrice: uniquePrices.length > 0 ? Math.floor(Math.min(...uniquePrices)) : 0,
-    maxPrice: uniquePrices.length > 0 ? Math.ceil(Math.max(...uniquePrices)) : 1000
-  }), [uniquePrices]);
+  const minPrice = uniquePrices.length > 0 ? Math.floor(Math.min(...uniquePrices)) : 0;
+  const maxPrice = uniquePrices.length > 0 ? Math.ceil(Math.max(...uniquePrices)) : 1000;
 
   // Reducer for filter state
   const [filterState, dispatch] = useReducer(
@@ -36,8 +31,7 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
   );
 
   // Apply filters
-  const filteredGear = useMemo(() => {
-    return gear.filter((item) => {
+  const filteredGear = gear.filter((item) => {
       // Search
       if (filterState.search) {
         const searchLower = filterState.search.toLowerCase();
@@ -83,10 +77,9 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
 
       return true;
     });
-  }, [gear, filterState]);
 
   // Generate active filters display
-  const activeFilters = useMemo(() => {
+  const activeFilters = (() => {
     const filters: { column: string; value: string; isNot: boolean }[] = [];
 
     // Add regular filters
@@ -121,15 +114,15 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
     }
 
     return filters;
-  }, [filterState, minPrice, maxPrice]);
+  })();
 
   // Handle filter actions
-  const handleFilterAction = useCallback((action: GearFilterAction) => {
+  const handleFilterAction = (action: GearFilterAction) => {
     dispatch(action);
-  }, []);
+  };
 
   // Handle removing individual filters
-  const handleRemoveFilter = useCallback((column: string, value: string) => {
+  const handleRemoveFilter = (column: string, value: string) => {
     if (column === "price") {
       dispatch({ type: 'SET_PRICE_RANGE', range: [minPrice, maxPrice] });
       return;
@@ -160,18 +153,13 @@ export function GearTableOrGrid({ gear }: GearTableOrGridProps) {
         dispatch({ type: 'TOGGLE_CONDITION', condition: value, isNot: true });
       }
     }
-  }, [filterState, minPrice, maxPrice]);
+  };
 
   // Handle clearing all filters
-  const handleClearAllFilters = useCallback(() => {
+  const handleClearAllFilters = () => {
     dispatch({ type: 'CLEAR_ALL' });
-    // We also need to reset price range to bounds which the reducer might not know perfectly
-    // without extra logic, but let's see if we can just dispatch a separate price reset if needed
-    // or if the reducer handles it well enough.
-    // Actually, the reducer's CLEAR_ALL doesn't reset price range to dynamic bounds.
-    // Let's explicitly reset price range here to be safe.
     dispatch({ type: 'SET_PRICE_RANGE', range: [minPrice, maxPrice] });
-  }, [minPrice, maxPrice]);
+  };
 
   return (
     <div className="space-y-4">

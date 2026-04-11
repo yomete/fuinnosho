@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { editGear, getGear } from "@/app/actions/gear";
 import { toast } from "sonner";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { GearFormFields } from "./gear-form-fields";
 import type { Gear } from "@/lib/gear/types";
 import type { GearSchema } from "@/lib/gear/schema";
@@ -42,7 +42,7 @@ export function EditGear({ gear, onClose }: EditGearProps) {
     },
   });
 
-  const fetchCameras = useCallback(async () => {
+  const fetchCameras = async () => {
     try {
       const result = await getGear();
       if (result.success && result.gear) {
@@ -53,7 +53,7 @@ export function EditGear({ gear, onClose }: EditGearProps) {
     } catch (error) {
       console.error("Error fetching cameras:", error);
     }
-  }, [gear.id]);
+  };
 
   useEffect(() => {
     // Fetch cameras when component mounts

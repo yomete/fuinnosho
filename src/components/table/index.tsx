@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { columns } from "./columns";
 import { type Film } from "@/lib/utils";
-import { useState, useEffect, useCallback, useMemo, useReducer } from "react";
+import { useState, useEffect, useReducer } from "react";
 import {
   groupFilms,
   applyExpansionState,
@@ -44,10 +44,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   const searchParams = useSearchParams();
 
   // Extract unique ISOs for initial state
-  const uniqueIsos = useMemo(() => 
-    Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
-    [films]
-  );
+  const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b);
 
   // All filter state managed by reducer - single source of truth
   const [filterState, dispatch] = useReducer(
@@ -121,7 +118,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   }, [columnFilters, pathname, router, searchParams]);
 
   // Apply filters to data based on current filter state
-  const filteredFilms = useMemo(() => {
+  const filteredFilms = (() => {
     let result = films;
 
     // Hide zero quantity filter
@@ -145,10 +142,10 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
 
     return result;
-  }, [films, filterState.hideZeroQuantity, filterState.isoRange, uniqueIsos]);
+  })();
 
   // Group and expand films based on consolidation settings
-  const tableData: FilmTableRow[] = useMemo(() => {
+  const tableData: FilmTableRow[] = (() => {
     // First group the films if consolidation is enabled
     const grouped = groupFilms(filteredFilms, {
       enableGrouping: enableConsolidation,
@@ -156,16 +153,16 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
 
     // Then apply expansion state
     return applyExpansionState(grouped, expansionState);
-  }, [filteredFilms, enableConsolidation, expansionState]);
+  })();
 
   // Toggle expansion for a group
-  const toggleExpansion = useCallback((groupKey: string) => {
+  const toggleExpansion = (groupKey: string) => {
     setExpansionState((prev) => {
       const next = new Map(prev);
       next.set(groupKey, !prev.get(groupKey));
       return next;
     });
-  }, []);
+  };
 
   // Update table column filters when filter state changes
   useEffect(() => {
@@ -225,34 +222,34 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   });
 
   // Generate active filters display
-  const activeFilters = useMemo(() => {
+  const activeFilters = (() => {
     const filters: { column: string; value: string; isNot: boolean }[] = [];
 
     // Add regular filters
-    filterState.brands.forEach(brand => 
+    filterState.brands.forEach(brand =>
       filters.push({ column: "brand", value: brand, isNot: false })
     );
-    filterState.types.forEach(type => 
+    filterState.types.forEach(type =>
       filters.push({ column: "type", value: type, isNot: false })
     );
-    filterState.formats.forEach(format => 
+    filterState.formats.forEach(format =>
       filters.push({ column: "format", value: format, isNot: false })
     );
-    filterState.isos.forEach(iso => 
+    filterState.isos.forEach(iso =>
       filters.push({ column: "iso", value: iso.toString(), isNot: false })
     );
 
     // Add NOT filters
-    filterState.notBrands.forEach(brand => 
+    filterState.notBrands.forEach(brand =>
       filters.push({ column: "brand", value: brand, isNot: true })
     );
-    filterState.notTypes.forEach(type => 
+    filterState.notTypes.forEach(type =>
       filters.push({ column: "type", value: type, isNot: true })
     );
-    filterState.notFormats.forEach(format => 
+    filterState.notFormats.forEach(format =>
       filters.push({ column: "format", value: format, isNot: true })
     );
-    filterState.notIsos.forEach(iso => 
+    filterState.notIsos.forEach(iso =>
       filters.push({ column: "iso", value: iso.toString(), isNot: true })
     );
 
@@ -262,15 +259,15 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
 
     return filters;
-  }, [filterState]);
+  })();
 
   // Handle filter actions from child component
-  const handleFilterAction = useCallback((action: FilterAction) => {
+  const handleFilterAction = (action: FilterAction) => {
     dispatch(action);
-  }, []);
+  };
 
   // Handle removing individual filters
-  const handleRemoveFilter = useCallback((column: string, value: string) => {
+  const handleRemoveFilter = (column: string, value: string) => {
     if (column === "quantity" && value === "hide-zero") {
       dispatch({ type: 'TOGGLE_HIDE_ZERO', value: false });
       return;
@@ -311,13 +308,13 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
         dispatch({ type: 'TOGGLE_ISO', iso, isNot: true });
       }
     }
-  }, [filterState]);
+  };
 
   // Handle clearing all filters
-  const handleClearAllFilters = useCallback(() => {
+  const handleClearAllFilters = () => {
     dispatch({ type: 'CLEAR_ALL' });
     table.resetColumnFilters();
-  }, [table]);
+  };
 
   return (
     <div className="flex flex-col gap-4 p-2 sm:p-4">

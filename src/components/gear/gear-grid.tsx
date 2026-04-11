@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useCallback } from "react";
+import { useState } from "react";
 import { getConditionColor, getGearTypeIcon } from "@/lib/utils";
 import type { Gear } from "@/lib/gear/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,8 +17,7 @@ interface GearCardProps {
   onDelete: (item: Gear) => void;
 }
 
-// Memoized card component to prevent re-renders when other cards change (rerender-memo)
-const GearCard = memo(function GearCard({ item, onEdit, onDelete }: GearCardProps) {
+function GearCard({ item, onEdit, onDelete }: GearCardProps) {
   return (
     <Card className="bg-gradient-to-br from-zinc-500/10 to-zinc-600/10 border-[#2a2420] transition-[border-color,transform,box-shadow] duration-300 ease-[cubic-bezier(0.2,0,0,1)] hover:-translate-y-1 hover:border-[#3a3430]">
       <CardHeader className="pb-3">
@@ -98,7 +97,7 @@ const GearCard = memo(function GearCard({ item, onEdit, onDelete }: GearCardProp
       </CardContent>
     </Card>
   );
-});
+}
 
 interface GearGridProps {
   gear: Gear[];
@@ -108,9 +107,8 @@ export function GearGrid({ gear }: GearGridProps) {
   const [editingGear, setEditingGear] = useState<Gear | null>(null);
   const [deletingGear, setDeletingGear] = useState<Gear | null>(null);
 
-  // Stable callbacks to prevent GearCard re-renders (rerender-functional-setstate)
-  const handleEdit = useCallback((item: Gear) => setEditingGear(item), []);
-  const handleDelete = useCallback((item: Gear) => setDeletingGear(item), []);
+  const handleEdit = (item: Gear) => setEditingGear(item);
+  const handleDelete = (item: Gear) => setDeletingGear(item);
 
   if (!gear.length) {
     return (

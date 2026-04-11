@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Film } from "@/lib/utils";
 import { getDeletedFilms } from "@/app/actions/films";
 import { DeletedFilmsTable } from "./deleted-films-table";
@@ -17,12 +17,12 @@ export function DeletedFilmsSection() {
   const [deletedFilms, setDeletedFilms] = useState<Film[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loadDeletedFilms = useCallback(async () => {
+  const loadDeletedFilms = async () => {
     setIsLoading(true);
     const { data } = await getDeletedFilms();
     setDeletedFilms(data || []);
     setIsLoading(false);
-  }, []);
+  };
 
   useEffect(() => {
     if (isOpen && deletedFilms.length === 0) {
