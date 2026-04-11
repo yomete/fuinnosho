@@ -5,13 +5,11 @@ import Link from "next/link";
 import {
   Film,
   MapPin,
-  FlaskConical,
   Sparkles,
   Github,
   ArrowRight,
   Check,
   Camera,
-  Calendar,
   BarChart3,
   Server,
   Cloud,
@@ -178,7 +176,7 @@ function Hero({ onTryDemo }: { onTryDemo: () => void }) {
           style={{ animationDelay: "200ms", animationFillMode: "both" }}
         >
           Track your film stock, plan photo trips with reservations,
-          log your development chemistry. Everything a film photographer needs,
+          and keep your gear organized. Everything a film photographer needs,
           nothing more.
         </p>
 
@@ -258,12 +256,6 @@ function Features() {
       color: "emerald"
     },
     {
-      icon: FlaskConical,
-      title: "Chemistry Tracking",
-      description: "Log your development chemistry, track usage, know when solutions are exhausted. Recipe management included.",
-      color: "violet"
-    },
-    {
       icon: Sparkles,
       title: "AI Recommendations",
       description: "Get smart film suggestions based on your shooting conditions. Powered by OpenAI, available on Pro tier.",
@@ -295,7 +287,7 @@ function Features() {
           >
             Everything you need,
             <br />
-            <span className="text-[#8a8078]">nothing you don't</span>
+            <span className="text-[#8a8078]">nothing you don&apos;t</span>
           </h2>
         </div>
 
@@ -389,7 +381,7 @@ function AppShowcase({ onTryDemo }: { onTryDemo: () => void }) {
             Designed for the darkroom
           </h2>
           <p className="text-[#8a8078] text-lg max-w-2xl mx-auto mb-6">
-            A dark theme that's easy on the eyes, with film grain texture and
+            A dark theme that&apos;s easy on the eyes, with film grain texture and
             warm amber accents that feel right at home in your workflow.
           </p>
           <button
@@ -510,7 +502,6 @@ function Pricing() {
         "Full film inventory management",
         "Gear tracking",
         "Trip planning with reservations",
-        "Chemistry & development logging",
         "Basic usage analytics",
         "Community support"
       ],

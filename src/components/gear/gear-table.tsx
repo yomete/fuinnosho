@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Gear, getConditionColor, getGearTypeIcon, formatDate } from "@/lib/utils";
+import { getConditionColor, getGearTypeIcon, formatDate } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
 import { Button } from "@/components/ui/button";
 import {
   Table,

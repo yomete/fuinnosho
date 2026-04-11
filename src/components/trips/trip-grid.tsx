@@ -1,6 +1,11 @@
 "use client";
 import { memo } from "react";
-import { Trip, formatTripDateRange, formatTripDuration, getTripStatusColor } from "@/lib/utils";
+import {
+  formatTripDateRange,
+  formatTripDuration,
+  getTripStatusColor,
+} from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
 import { Button } from "@/components/ui/button";
 import {
   Card,

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { deleteGear } from "@/app/actions/gear";
 import { toast } from "sonner";
-import { Gear } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
 import { Loader2 } from "lucide-react";
 
 interface DeleteGearDialogProps {

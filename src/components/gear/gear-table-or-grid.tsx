@@ -1,6 +1,6 @@
 "use client";
 import { useState, useReducer, useMemo, useCallback } from "react";
-import { Gear } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
 import { Button } from "@/components/ui/button";
 import { TableIcon, GridIcon } from "lucide-react";
 import { GearTable } from "./gear-table";

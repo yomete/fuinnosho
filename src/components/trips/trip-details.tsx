@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Trip,
-  Gear,
   getGearTypeIcon,
   formatTripDateRange,
   formatTripDuration,
 } from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
+import type { Gear } from "@/lib/gear/types";
 import {
   getTripWithFilms,
   addFilmToTrip,

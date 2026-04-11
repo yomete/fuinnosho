@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Trip } from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
 import { Button } from "@/components/ui/button";
 import { TableIcon, GridIcon } from "lucide-react";
 import { TripTable } from "./trip-table";

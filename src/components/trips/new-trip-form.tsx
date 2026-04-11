@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createTrip } from "@/app/actions/trips";
-import { TripSchema } from "@/lib/utils";
+import type { TripSchema } from "@/lib/trips/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

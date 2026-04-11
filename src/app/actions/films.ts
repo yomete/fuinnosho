@@ -1,17 +1,27 @@
 "use server";
 
-import { Film, FilmUsage, Trip, getExposuresPerRoll } from "@/lib/utils";
-
-interface TripFilmReservation {
-  quantity: number;
-  created_at: string;
-  trips: Pick<Trip, 'id' | 'title' | 'description' | 'start_date' | 'end_date' | 'status'> | null;
-}
+import type { Film, FilmUsage } from "@/lib/films/types";
+import type { FilmSchema } from "@/lib/films/schema";
+import type { TripFilmReservation } from "@/lib/films/service";
 import { createClient } from "@/lib/supabase/server";
 import { getEffectiveUser, getDataClient } from "@/lib/auth";
-import { FilmSchema, filmSchema } from "@/lib/utils";
-import { v4 as uuidv4 } from "uuid";
 import { revalidatePath } from "next/cache";
+import {
+  addRollsToFilmForUser,
+  createFilmForUser,
+  finishBulkRollForUser,
+  getDeletedFilmsForUser,
+  getFilmByIdForUser,
+  getFilmDetailsForUser,
+  getFilmUsageHistoryForUser,
+  getFilmsForUser,
+  permanentlyDeleteFilmForUser,
+  reduceFilmCountForUser,
+  restoreFilmForUser,
+  softDeleteFilmForUser,
+  spoolBulkFilmForUser,
+  updateFilmForUser,
+} from "@/lib/films/service";
 
 interface CreateFilmResponse {
   success: boolean;
@@ -24,45 +34,12 @@ export async function editFilm(
   data: FilmSchema
 ): Promise<CreateFilmResponse> {
   try {
-    // Validate the data
-    const validatedData = filmSchema.parse(data);
     const { userId } = await getEffectiveUser();
-
-    // Convert number fields from string to number if needed
-    const processedData = {
-      ...validatedData,
-      iso: Number(validatedData.iso),
-      price: validatedData.price ? Number(validatedData.price) : undefined,
-      count: validatedData.count ? Number(validatedData.count) : undefined,
-      bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
-      bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
-      calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
-      bulk_remaining_exposures: validatedData.bulk_remaining_exposures ? Number(validatedData.bulk_remaining_exposures) : undefined,
-      spooled_cassettes: validatedData.spooled_cassettes ? Number(validatedData.spooled_cassettes) : undefined,
-    };
-
-    // Update in Supabase (don't include id, created_at, or user_id in update)
     const supabase = await getDataClient();
-    const { error } = await supabase
-      .from("films")
-      .update(processedData)
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) {
-      throw error;
-    }
-
-    // Fetch the updated film to return
-    const { data: updatedFilm } = await supabase
-      .from("films")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", userId)
-      .single();
+    const film = await updateFilmForUser(supabase, userId ?? undefined, id, data);
 
     revalidatePath("/films");
-    return { success: true, film: updatedFilm };
+    return { success: true, film };
   } catch (error) {
     console.error("Error editing film:", error);
     return {
@@ -76,47 +53,16 @@ export async function createFilm(
   data: FilmSchema
 ): Promise<CreateFilmResponse> {
   try {
-    const validatedData = filmSchema.parse(data);
-
-    // Get current user (supports demo mode)
     const { userId } = await getEffectiveUser();
 
     if (!userId) {
       throw new Error("User not authenticated");
     }
 
-    // Generate a unique ID for the film
-    const filmId = uuidv4();
-
-    // Create film with ID, timestamp, and user_id
-    const newFilm: Film = {
-      ...validatedData,
-      id: filmId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      user_id: userId,
-      iso: Number(validatedData.iso),
-      price: validatedData.price ? Number(validatedData.price) : undefined,
-      count: validatedData.count ? Number(validatedData.count) : undefined,
-      bulk_length_meters: validatedData.bulk_length_meters ? Number(validatedData.bulk_length_meters) : undefined,
-      bulk_quantity: validatedData.bulk_quantity ? Number(validatedData.bulk_quantity) : undefined,
-      calculated_rolls: validatedData.calculated_rolls ? Number(validatedData.calculated_rolls) : undefined,
-      bulk_remaining_exposures: validatedData.is_bulk_film ?
-        (validatedData.bulk_remaining_exposures !== undefined ? Number(validatedData.bulk_remaining_exposures) :
-          // Calculate initial exposures from bulk film length and format
-          Number(validatedData.calculated_rolls || 0) * getExposuresPerRoll(validatedData.format)) : undefined,
-      spooled_cassettes: validatedData.is_bulk_film ? (validatedData.spooled_cassettes !== undefined ? Number(validatedData.spooled_cassettes) : 0) : undefined,
-    };
-
-    // Save to Supabase (use getDataClient for demo mode support)
     const supabase = await getDataClient();
-    const { error } = await supabase.from("films").insert([newFilm]);
+    const film = await createFilmForUser(supabase, userId, data);
 
-    if (error) {
-      throw error;
-    }
-
-    return { success: true, film: newFilm };
+    return { success: true, film };
   } catch (error) {
     console.error("Error creating film:", error);
     return {
@@ -133,16 +79,7 @@ export async function getFilms(): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-    const { data, error } = await supabase
-      .from("films")
-      .select("*")
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
+    const data = await getFilmsForUser(supabase, userId);
 
     return { data, error: null };
   } catch (error) {
@@ -159,19 +96,7 @@ export async function getFilmById(id: string): Promise<Film | null> {
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-    const { data, error } = await supabase
-      .from("films")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", userId)
-      .is("deleted_at", null) // Exclude soft deleted films
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return data;
+    return await getFilmByIdForUser(supabase, userId ?? undefined, id);
   } catch (error) {
     console.error("Error fetching film by ID:", error);
     return null;
@@ -187,56 +112,16 @@ export async function getFilmWithDetails(id: string): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-
-    // Get the film
-    const { data: film, error: filmError } = await supabase
-      .from("films")
-      .select("*")
-      .eq("id", id)
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .single();
-
-    if (filmError) {
-      throw filmError;
-    }
-
-    // Get usage history
-    const { data: usage, error: usageError } = await supabase
-      .from("film_usage")
-      .select("*")
-      .eq("film_id", id)
-      .order("created_at", { ascending: false });
-
-    if (usageError) {
-      console.warn("Error fetching usage history:", usageError);
-    }
-
-    // Get trips that this film is reserved for
-    const { data: trips, error: tripsError } = await supabase
-      .from("trip_films")
-      .select(`
-        quantity,
-        created_at,
-        trips!inner(
-          id,
-          title,
-          description,
-          start_date,
-          end_date,
-          status
-        )
-      `)
-      .eq("film_id", id);
-
-    if (tripsError) {
-      console.warn("Error fetching trips:", tripsError);
-    }
+    const { film, usage, trips } = await getFilmDetailsForUser(
+      supabase,
+      userId ?? undefined,
+      id
+    );
 
     return {
       film,
-      usage: usage || [],
-      trips: (trips || []) as unknown as TripFilmReservation[],
+      usage,
+      trips,
       error: null,
     };
   } catch (error) {
@@ -245,7 +130,10 @@ export async function getFilmWithDetails(id: string): Promise<{
       film: null,
       usage: null,
       trips: null,
-      error: error instanceof Error ? error.message : "Failed to fetch film details",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch film details",
     };
   }
 }
@@ -258,17 +146,7 @@ export async function deleteFilm(id: string): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-
-    // Soft delete: set deleted_at timestamp instead of hard delete
-    const { error } = await supabase
-      .from("films")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) {
-      throw error;
-    }
+    await softDeleteFilmForUser(supabase, userId ?? undefined, id);
 
     revalidatePath("/films");
     return { success: true, message: "Film moved to trash" };
@@ -290,17 +168,7 @@ export async function restoreFilm(id: string): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-
-    // Restore film by clearing deleted_at timestamp
-    const { error } = await supabase
-      .from("films")
-      .update({ deleted_at: null })
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (error) {
-      throw error;
-    }
+    await restoreFilmForUser(supabase, userId ?? undefined, id);
 
     revalidatePath("/films");
     return { success: true, message: "Film restored successfully" };
@@ -321,16 +189,7 @@ export async function getDeletedFilms(): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-    const { data, error } = await supabase
-      .from("films")
-      .select("*")
-      .eq("user_id", userId)
-      .is("deleted_at", "not.null")
-      .order("deleted_at", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
+    const data = await getDeletedFilmsForUser(supabase, userId);
 
     return { data, error: null };
   } catch (error) {
@@ -338,7 +197,9 @@ export async function getDeletedFilms(): Promise<{
     return {
       data: null,
       error:
-        error instanceof Error ? error : new Error("Failed to fetch deleted films"),
+        error instanceof Error
+          ? error
+          : new Error("Failed to fetch deleted films"),
     };
   }
 }
@@ -351,13 +212,7 @@ export async function permanentlyDeleteFilm(id: string): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-
-    // Hard delete - actually remove from database
-    const { error } = await supabase.from("films").delete().eq("id", id).eq("user_id", userId);
-
-    if (error) {
-      throw error;
-    }
+    await permanentlyDeleteFilmForUser(supabase, userId ?? undefined, id);
 
     return { success: true, message: "Film permanently deleted" };
   } catch (error) {
@@ -365,7 +220,9 @@ export async function permanentlyDeleteFilm(id: string): Promise<{
     return {
       success: false,
       error:
-        error instanceof Error ? error : new Error("Failed to permanently delete film"),
+        error instanceof Error
+          ? error
+          : new Error("Failed to permanently delete film"),
     };
   }
 }
@@ -383,51 +240,17 @@ export async function reduceFilmCount(
 ) {
   const { userId } = await getEffectiveUser();
   const supabase = await getDataClient();
-
-  const { data: film, error: filmError } = await supabase
-    .from("films")
-    .select("count, is_bulk_film, spooled_cassettes, user_id")
-    .eq("id", filmId)
-    .eq("user_id", userId)
-    .single();
-
-  if (filmError || !film) {
-    return { error: "Film not found" };
-  }
-
-  const currentCount = film.count || 0;
-  const newCount = Math.max(0, currentCount - quantity);
-
-  // For bulk films, also update spooled_cassettes count
-  const updateData = film.is_bulk_film 
-    ? { count: newCount, spooled_cassettes: Math.max(0, (film.spooled_cassettes || 0) - quantity) }
-    : { count: newCount };
-
-  const { error: updateError } = await supabase
-    .from("films")
-    .update(updateData)
-    .eq("id", filmId)
-    .eq("user_id", userId);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  const { error: usageError } = await supabase.from("film_usage").insert({
-    film_id: filmId,
+  const result = await reduceFilmCountForUser(
+    supabase,
+    userId ?? undefined,
+    filmId,
     quantity,
-    usage_note: usageNote,
-    usage_type: 'shoot', // This is for shooting/using spooled cassettes
-    ...(tripId && { trip_id: tripId }),
-  });
-
-  if (usageError) {
-    console.error("Usage error:", usageError);
-    return { error: `Failed to record usage: ${usageError.message}` };
-  }
+    usageNote,
+    tripId
+  );
 
   revalidatePath("/films");
-  return { success: true, newCount };
+  return result;
 }
 
 export async function spoolBulkFilm(
@@ -438,66 +261,17 @@ export async function spoolBulkFilm(
 ) {
   const { userId } = await getEffectiveUser();
   const supabase = await getDataClient();
-
-  const { data: film, error: filmError } = await supabase
-    .from("films")
-    .select("bulk_remaining_exposures, spooled_cassettes, is_bulk_film, format")
-    .eq("id", filmId)
-    .eq("user_id", userId)
-    .single();
-
-  if (filmError || !film) {
-    return { error: "Film not found" };
-  }
-
-  if (!film.is_bulk_film) {
-    return { error: "This is not a bulk film" };
-  }
-
-  const currentRemainingExposures = film.bulk_remaining_exposures || 0;
-  const currentSpooledCassettes = film.spooled_cassettes || 0;
-
-  if (exposuresToSpool > currentRemainingExposures) {
-    return { error: "Not enough bulk film remaining" };
-  }
-
-  const newRemainingExposures = currentRemainingExposures - exposuresToSpool;
-  const newSpooledCassettes = currentSpooledCassettes + cassettesCreated;
-
-  // Update film with new remaining exposures and cassette count
-  const { error: updateError } = await supabase
-    .from("films")
-    .update({
-      bulk_remaining_exposures: newRemainingExposures,
-      spooled_cassettes: newSpooledCassettes,
-      count: newSpooledCassettes // For bulk films, count represents spooled cassettes
-    })
-    .eq("id", filmId)
-    .eq("user_id", userId);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
-
-  // Record spooling usage
-  const { error: usageError } = await supabase.from("film_usage").insert({
-    film_id: filmId,
-    quantity: cassettesCreated,
-    usage_note: spoolNote,
-    usage_type: 'spool',
-    exposures_used: exposuresToSpool,
-  });
-
-  if (usageError) {
-    return { error: "Failed to record spooling" };
-  }
+  const result = await spoolBulkFilmForUser(
+    supabase,
+    userId ?? undefined,
+    filmId,
+    exposuresToSpool,
+    cassettesCreated,
+    spoolNote
+  );
 
   revalidatePath("/films");
-  return { 
-    success: true, 
-    remainingExposures: newRemainingExposures,
-    spooledCassettes: newSpooledCassettes 
-  };
+  return result;
 }
 
 export async function getFilmUsageHistory(filmId: string): Promise<{
@@ -507,35 +281,15 @@ export async function getFilmUsageHistory(filmId: string): Promise<{
   try {
     const { userId } = await getEffectiveUser();
     const supabase = await getDataClient();
-
-    // Verify film belongs to current user
-    const { data: film, error: filmError } = await supabase
-      .from("films")
-      .select("id")
-      .eq("id", filmId)
-      .eq("user_id", userId)
-      .single();
-
-    if (filmError || !film) {
-      return { data: null, error: "Film not found" };
-    }
-
-    const { data, error } = await supabase
-      .from("film_usage")
-      .select("*")
-      .eq("film_id", filmId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    return { data, error: null };
+    return await getFilmUsageHistoryForUser(supabase, userId ?? undefined, filmId);
   } catch (error) {
     console.error("Error fetching film usage history:", error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Failed to fetch usage history",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch usage history",
     };
   }
 }
@@ -543,51 +297,13 @@ export async function getFilmUsageHistory(filmId: string): Promise<{
 export async function finishBulkRoll(filmId: string) {
   const { userId } = await getEffectiveUser();
   const supabase = await getDataClient();
-
-  const { data: film, error: filmError } = await supabase
-    .from("films")
-    .select("bulk_quantity, bulk_rolls_used, is_bulk_film")
-    .eq("id", filmId)
-    .eq("user_id", userId)
-    .single();
-
-  if (filmError || !film) {
-    return { error: "Film not found" };
-  }
-
-  if (!film.is_bulk_film) {
-    return { error: "This is not a bulk film" };
-  }
-
-  const currentRollsUsed = film.bulk_rolls_used || 0;
-  const totalRolls = film.bulk_quantity || 0;
-
-  if (currentRollsUsed >= totalRolls) {
-    return { error: "All bulk rolls have been used" };
-  }
-
-  const newRollsUsed = currentRollsUsed + 1;
-
-  const { error: updateError } = await supabase
-    .from("films")
-    .update({ bulk_rolls_used: newRollsUsed })
-    .eq("id", filmId)
-    .eq("user_id", userId);
-
-  if (updateError) {
-    return { error: updateError.message };
-  }
+  const result = await finishBulkRollForUser(supabase, userId ?? undefined, filmId);
 
   revalidatePath("/films");
   revalidatePath(`/film/${filmId}`);
-  return {
-    success: true,
-    bulk_rolls_used: newRollsUsed,
-    bulk_rolls_remaining: totalRolls - newRollsUsed
-  };
+  return result;
 }
 
-// Add rolls to existing film inventory
 export async function addRollsToFilm(
   filmId: string,
   quantity: number,
@@ -600,50 +316,8 @@ export async function addRollsToFilm(
       throw new Error("User not authenticated");
     }
 
-    if (quantity <= 0) {
-      throw new Error("Quantity must be positive");
-    }
-
     const supabase = await getDataClient();
-
-    // Create usage record for the addition
-    const { error: usageError } = await supabase
-      .from("film_usage")
-      .insert({
-        film_id: filmId,
-        quantity: quantity,
-        usage_type: 'add',
-        usage_note: notes || `Added ${quantity} roll${quantity > 1 ? 's' : ''}`,
-        created_at: new Date().toISOString(),
-      });
-
-    if (usageError) {
-      throw usageError;
-    }
-
-    // Update the film count
-    const { data: currentFilm, error: fetchError } = await supabase
-      .from("films")
-      .select("count")
-      .eq("id", filmId)
-      .eq("user_id", userId)
-      .single();
-
-    if (fetchError) {
-      throw fetchError;
-    }
-
-    const newCount = (currentFilm.count || 0) + quantity;
-
-    const { error: updateError } = await supabase
-      .from("films")
-      .update({ count: newCount })
-      .eq("id", filmId)
-      .eq("user_id", userId);
-
-    if (updateError) {
-      throw updateError;
-    }
+    await addRollsToFilmForUser(supabase, userId ?? undefined, filmId, quantity, notes);
 
     revalidatePath("/films");
     revalidatePath(`/films/${filmId}`);

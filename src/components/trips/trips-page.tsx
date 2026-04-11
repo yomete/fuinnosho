@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Trip } from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
 import { Button } from "@/components/ui/button";
 import { NewTripForm } from "./new-trip-form";
 import { EditTripForm } from "./edit-trip-form";

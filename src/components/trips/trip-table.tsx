@@ -1,5 +1,10 @@
 "use client";
-import { Trip, formatTripDateRange, formatTripDuration, getTripStatusColor } from "@/lib/utils";
+import {
+  formatTripDateRange,
+  formatTripDuration,
+  getTripStatusColor,
+} from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
 import { Button } from "@/components/ui/button";
 import {
   Table,

@@ -19,8 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GearSchema, gearTypes, gearConditions, Gear } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import type { Gear } from "@/lib/gear/types";
+import type { GearSchema } from "@/lib/gear/schema";
+import { gearConditions, gearTypes } from "@/lib/gear/schema";
 
 interface GearFormFieldsProps {
   form: UseFormReturn<GearSchema>;

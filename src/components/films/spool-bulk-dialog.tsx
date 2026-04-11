@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Scissors } from "lucide-react";
-import { formatDimensions } from "@/lib/utils";
+import { formatDimensions } from "@/lib/films/schema";
 
 interface SpoolBulkDialogProps {
   filmId: string;

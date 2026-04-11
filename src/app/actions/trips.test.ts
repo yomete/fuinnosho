@@ -96,7 +96,7 @@ describe('Trip Actions', () => {
       },
     } as ReturnType<typeof createChainableMock> & { auth: { getUser: ReturnType<typeof vi.fn> } }
     mockedGetEffectiveUser.mockResolvedValue({ userId: 'user-123', isDemo: false })
-    mockedGetDataClient.mockResolvedValue(mockSupabase)
+    mockedGetDataClient.mockResolvedValue(mockSupabase as never)
   })
 
   describe('createTrip', () => {
@@ -1037,8 +1037,9 @@ describe('Trip Actions', () => {
       it('should add gear to trip', async () => {
         ;(mockSupabase.single as ReturnType<typeof vi.fn>)
           .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+          .mockResolvedValueOnce({ data: { id: 'gear-456' }, error: null })
           .mockResolvedValueOnce({ data: null, error: null })
-        ;(mockSupabase.insert as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null })
+          .mockResolvedValueOnce({ data: { id: 'trip-gear-123' }, error: null })
 
         const result = await addGearToTrip('trip-123', 'gear-456')
 
@@ -1049,6 +1050,7 @@ describe('Trip Actions', () => {
       it('should reject when gear already in trip', async () => {
         ;(mockSupabase.single as ReturnType<typeof vi.fn>)
           .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
+          .mockResolvedValueOnce({ data: { id: 'gear-456' }, error: null })
           .mockResolvedValueOnce({
             data: { trip_id: 'trip-123', gear_id: 'gear-456' },
             error: null,
@@ -1057,7 +1059,7 @@ describe('Trip Actions', () => {
         const result = await addGearToTrip('trip-123', 'gear-456')
 
         expect(result.success).toBe(false)
-        expect(result.error).toBe('This gear is already reserved for this trip')
+        expect(result.error).toBe('Gear is already reserved for this trip')
       })
     })
 
@@ -1067,10 +1069,14 @@ describe('Trip Actions', () => {
           data: { id: 'trip-123' },
           error: null,
         })
+        ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+          data: { id: 'gear-456' },
+          error: null,
+        })
         let eqCount = 0
         ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
           eqCount++
-          if (eqCount >= 4) {
+          if (eqCount >= 6) {
             return Promise.resolve({ error: null })
           }
           return mockSupabase

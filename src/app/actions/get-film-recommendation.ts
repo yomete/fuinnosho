@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { WeatherConditions, ShootingScenario } from "@/types/recommendation";
 import { getFilms } from "@/app/actions/films";
 import { getFilmById } from "@/app/actions/films";
-import { Film } from "@/lib/utils";
+import type { Film } from "@/lib/films/types";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });

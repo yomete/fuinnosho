@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getFilmUsageHistory } from "@/app/actions/films";
-import { FilmUsage, formatDate } from "@/lib/utils";
+import type { FilmUsage } from "@/lib/films/types";
+import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

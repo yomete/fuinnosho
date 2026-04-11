@@ -1,5 +1,5 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import type { GearSchema } from "@/lib/utils";
+import type { GearSchema } from "@/lib/gear/schema";
 
 // Mock revalidatePath
 vi.mock("next/cache", () => ({
@@ -12,21 +12,35 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // Create mock chain builder for Supabase
+type MockChain = {
+  __awaitQueue: unknown[];
+  __awaitDefault: unknown;
+  then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
+  single: ReturnType<typeof vi.fn>;
+  from: ReturnType<typeof vi.fn>;
+  select: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  neq: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  lt: ReturnType<typeof vi.fn>;
+};
+
 function createMockChain() {
-  const chain: Record<string, ReturnType<typeof vi.fn>> & {
-    __awaitQueue: unknown[];
-    __awaitDefault: unknown;
-    then: (resolve: (value: unknown) => unknown) => Promise<unknown>;
-  } = {
+  const chain = {
     __awaitQueue: [],
     __awaitDefault: { error: null },
+    single: vi.fn(),
     then: (resolve: (value: unknown) => unknown) =>
       Promise.resolve(
         chain.__awaitQueue.length > 0
           ? chain.__awaitQueue.shift()
           : chain.__awaitDefault
       ).then(resolve),
-  };
+  } as unknown as MockChain;
 
   const chainableMethods = [
     "from",
@@ -56,9 +70,6 @@ function createMockChain() {
 
     chain[method] = fn;
   });
-
-  chain.single = vi.fn();
-
   return chain;
 }
 
@@ -140,7 +151,7 @@ const mockTripGear = {
 function resetMocks() {
   vi.clearAllMocks();
   mockedGetEffectiveUser.mockResolvedValue({ userId: mockUser.id, isDemo: false });
-  mockedGetDataClient.mockImplementation(async () => mockSupabase);
+  mockedGetDataClient.mockImplementation(async () => mockSupabase as never);
 
   // Reset chain behavior
   mockChain.__awaitQueue = [];
@@ -648,6 +659,10 @@ describe("reserveGearForTrip", () => {
 
   it("reserves gear for trip successfully", async () => {
     mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
+    mockChain.single.mockResolvedValueOnce({
       data: { id: "gear-123" },
       error: null,
     });
@@ -674,6 +689,10 @@ describe("reserveGearForTrip", () => {
 
   it("prevents duplicate reservation", async () => {
     mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
+    mockChain.single.mockResolvedValueOnce({
       data: { id: "gear-123" },
       error: null,
     });
@@ -689,6 +708,10 @@ describe("reserveGearForTrip", () => {
   });
 
   it("fails when database insert fails", async () => {
+    mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
     mockChain.single.mockResolvedValueOnce({
       data: { id: "gear-123" },
       error: null,
@@ -719,12 +742,21 @@ describe("removeGearReservation", () => {
 
   it("removes gear reservation successfully", async () => {
     mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
+    mockChain.single.mockResolvedValueOnce({
       data: { id: "gear-123" },
       error: null,
     });
-    mockChain.eq
-      .mockReturnValueOnce(mockChain)
-      .mockResolvedValueOnce({ error: null });
+    let eqCount = 0;
+    mockChain.eq.mockImplementation(() => {
+      eqCount++;
+      if (eqCount >= 6) {
+        return Promise.resolve({ error: null });
+      }
+      return mockChain;
+    });
 
     const result = await removeGearReservation("trip-123", "gear-123");
 
@@ -735,12 +767,21 @@ describe("removeGearReservation", () => {
 
   it("fails when database delete fails", async () => {
     mockChain.single.mockResolvedValueOnce({
+      data: { id: "trip-123" },
+      error: null,
+    });
+    mockChain.single.mockResolvedValueOnce({
       data: { id: "gear-123" },
       error: null,
     });
-    mockChain.eq
-      .mockReturnValueOnce(mockChain)
-      .mockResolvedValueOnce({ error: { message: "Delete failed" } });
+    let eqCount = 0;
+    mockChain.eq.mockImplementation(() => {
+      eqCount++;
+      if (eqCount >= 6) {
+        return Promise.resolve({ error: { message: "Delete failed" } });
+      }
+      return mockChain;
+    });
 
     const result = await removeGearReservation("trip-123", "gear-123");
 

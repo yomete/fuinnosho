@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TripGrid } from "./trip-grid";
-import type { Trip } from "@/lib/utils";
+import type { Trip } from "@/lib/trips/types";
 
 vi.mock("next/link", () => ({
   default: ({

@@ -53,7 +53,7 @@ import {
   addRollsToFilm,
   logout,
 } from "./films";
-import type { FilmSchema } from "@/lib/utils";
+import type { FilmSchema } from "@/lib/films/schema";
 
 // =============================================================================
 // Test Data Fixtures

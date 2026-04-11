@@ -20,7 +20,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { FilmSchema, calculateRollsFromBulkFilm, getBulkFilmInfo } from "@/lib/utils";
+import {
+  FilmSchema,
+  calculateRollsFromBulkFilm,
+  getBulkFilmInfo,
+} from "@/lib/films/schema";
 import { BrandAutocomplete } from "@/components/ui/brand-autocomplete";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";

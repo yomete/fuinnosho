@@ -1,6 +1,7 @@
 "use client";
 
-import { Gear, getConditionColor, getGearTypeIcon } from "@/lib/utils";
+import { getConditionColor, getGearTypeIcon } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 

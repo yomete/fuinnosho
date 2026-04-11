@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { FilmFormFields } from "./film-form-fields";
-import { filmSchema, type FilmSchema } from "@/lib/utils";
-import { ReactNode } from "react";
+import { filmSchema, type FilmSchema } from "@/lib/films/schema";
 
 // Mock the BrandAutocomplete component since it has external dependencies
 vi.mock("@/components/ui/brand-autocomplete", () => ({
@@ -50,24 +49,6 @@ const defaultFormValues: FilmSchema = {
   bulk_remaining_exposures: undefined,
   spooled_cassettes: undefined,
 };
-
-// Wrapper component to provide form context
-interface FormWrapperProps {
-  children: ReactNode;
-  defaultValues?: Partial<FilmSchema>;
-  onSubmit?: (values: FilmSchema) => Promise<void>;
-}
-
-function FormWrapper({
-  children,
-  defaultValues = {},
-}: FormWrapperProps) {
-  const methods = useForm<FilmSchema>({
-    resolver: zodResolver(filmSchema),
-    defaultValues: { ...defaultFormValues, ...defaultValues },
-  });
-  return <FormProvider {...methods}>{children}</FormProvider>;
-}
 
 // Helper to render the component with form context
 function renderFilmFormFields(
@@ -219,7 +200,6 @@ describe("FilmFormFields - Bulk Film Toggle", () => {
   });
 
   it("shows bulk film toggle when 35mm format is selected", async () => {
-    const user = userEvent.setup();
     renderFilmFormFields({}, { format: "35mm" });
 
     // Wait for the component to render with the format

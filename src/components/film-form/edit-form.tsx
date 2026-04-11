@@ -14,9 +14,9 @@ import {
 import { deleteFilm, editFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
-import { type Film } from "@/lib/utils";
+import type { Film } from "@/lib/films/types";
 import { FilmFormFields } from "./film-form-fields";
-import { FilmSchema, filmSchema } from "@/lib/utils";
+import { FilmSchema, filmSchema } from "@/lib/films/schema";
 
 interface EditFilmProps {
   film: Film;

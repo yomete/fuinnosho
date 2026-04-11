@@ -19,7 +19,7 @@ export function BrandAutocomplete({
 }: BrandAutocompleteProps) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState(value || "");
-  const { data: brands = [] } = useBrands();
+  const brands = useBrands();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 

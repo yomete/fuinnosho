@@ -1,12 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function useBrands() {
-  const supabase = createClient();
+  const [brands, setBrands] = useState<string[]>([]);
 
-  return useQuery({
-    queryKey: ["brands"],
-    queryFn: async () => {
+  useEffect(() => {
+    const supabase = createClient();
+
+    let isMounted = true;
+
+    async function loadBrands() {
       const { data, error } = await supabase
         .from("films")
         .select("brand")
@@ -15,15 +18,26 @@ export function useBrands() {
 
       if (error) {
         console.error("Error fetching brands:", error);
-        return [];
+        return;
       }
 
-      // Extract unique brands
       const uniqueBrands = Array.from(
         new Set(data?.map((film) => film.brand) || [])
-      ).filter(Boolean).sort();
+      )
+        .filter(Boolean)
+        .sort();
 
-      return uniqueBrands;
-    },
-  });
+      if (isMounted) {
+        setBrands(uniqueBrands);
+      }
+    }
+
+    void loadBrands();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return brands;
 }

@@ -3,9 +3,9 @@
 [![CI](https://github.com/yomete/fuinnosho/actions/workflows/ci.yml/badge.svg)](https://github.com/yomete/fuinnosho/actions/workflows/ci.yml)
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
 
-A film photography inventory management system for analog photographers. Track your film stock, plan trips, manage gear, and log development sessions.
+A film photography inventory management system for analog photographers. Track your film stock, plan trips, and manage gear.
 
-Built with Next.js 15, TypeScript, Supabase, and Radix UI.
+Built with Next.js 16, TypeScript, Supabase, and Radix UI.
 
 ## Screenshots
 
@@ -20,17 +20,11 @@ Built with Next.js 15, TypeScript, Supabase, and Radix UI.
   </tr>
   <tr>
     <td><img src="docs/screenshots/trips.png" alt="Trip Planning" width="400"/></td>
-    <td><img src="docs/screenshots/chemistry.png" alt="Chemistry Inventory" width="400"/></td>
+    <td><img src="docs/screenshots/usage.png" alt="Usage Analytics" width="400"/></td>
   </tr>
   <tr>
     <td><em>Trip Planning - Plan photo trips and reserve film</em></td>
-    <td><em>Chemistry Inventory - Track your development chemicals</em></td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="docs/screenshots/usage.png" alt="Usage Analytics" width="400"/></td>
-  </tr>
-  <tr>
-    <td colspan="2"><em>Usage Analytics - Monitor consumption patterns and costs</em></td>
+    <td><em>Usage Analytics - Monitor consumption patterns and costs</em></td>
   </tr>
 </table>
 
@@ -56,7 +50,7 @@ Built with Next.js 15, TypeScript, Supabase, and Radix UI.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Database**: Supabase (PostgreSQL + Auth)
 - **UI**: Radix UI + Tailwind CSS
@@ -120,9 +114,7 @@ src/
 │   ├── films/        # Film inventory
 │   ├── gear/         # Gear management
 │   ├── trips/        # Trip planning
-│   ├── chemistry/    # Chemistry inventory
-│   ├── develop/      # Development sessions
-│   └── usage/        # Analytics
+│   └── settings/     # Account settings
 ├── components/       # React components
 ├── lib/              # Utilities and Supabase client
 └── types/            # TypeScript types

@@ -13,7 +13,9 @@ import { editGear, getGear } from "@/app/actions/gear";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
 import { GearFormFields } from "./gear-form-fields";
-import { Gear, GearSchema, gearSchema } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
+import type { GearSchema } from "@/lib/gear/schema";
+import { gearSchema } from "@/lib/gear/schema";
 
 interface EditGearProps {
   gear: Gear;

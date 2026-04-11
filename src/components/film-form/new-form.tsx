@@ -16,7 +16,7 @@ import { createFilm } from "@/app/actions/films";
 import { toast } from "sonner";
 import { useState } from "react";
 import { FilmFormFields } from "./film-form-fields";
-import { FilmSchema, filmSchema } from "@/lib/utils";
+import { FilmSchema, filmSchema } from "@/lib/films/schema";
 
 export function NewFilm() {
   const [isOpen, setIsOpen] = useState(false);

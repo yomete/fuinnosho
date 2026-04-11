@@ -8,7 +8,7 @@ import {
   FilmGroup,
   TableRow,
 } from "./film-grouping";
-import { Film } from "./utils";
+import type { Film } from "./films/types";
 
 // Helper function to create mock Film objects
 function createMockFilm(overrides: Partial<Film> = {}): Film {

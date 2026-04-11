@@ -16,7 +16,9 @@ import { createGear, getGear } from "@/app/actions/gear";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { GearFormFields } from "./gear-form-fields";
-import { GearSchema, gearSchema, Gear } from "@/lib/utils";
+import type { Gear } from "@/lib/gear/types";
+import type { GearSchema } from "@/lib/gear/schema";
+import { gearSchema } from "@/lib/gear/schema";
 
 export function NewGear() {
   const [isOpen, setIsOpen] = useState(false);
