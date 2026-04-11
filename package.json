@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "build:mcp": "npx tsc --project tsconfig.mcp.json && node scripts/rewrite-mcp-dist-imports.mjs",
     "lint": "eslint .",
     "seed": "npx tsx scripts/seed.ts",
     "test": "vitest",

@@ -1,15 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatDimensions, getExposuresPerRoll } from "../films/schema.js";
-import type { Film, FilmUsage } from "../films/types.js";
-import type { Trip, TripFilm } from "../trips/types.js";
-import type { Gear, TripGear } from "../gear/types.js";
-import { createFilmToolHandlers } from "./film-tools.js";
-import { createTripToolHandlers } from "./trip-tools.js";
-import { createGearToolHandlers } from "./gear-tools.js";
+import { formatDimensions, getExposuresPerRoll } from "@/lib/films/schema";
+import type { Film, FilmUsage } from "@/lib/films/types";
+import type { Trip, TripFilm } from "@/lib/trips/types";
+import type { Gear, TripGear } from "@/lib/gear/types";
+import { createFilmToolHandlers } from "@/lib/mcp/film-tools";
+import { createTripToolHandlers } from "@/lib/mcp/trip-tools";
+import { createGearToolHandlers } from "@/lib/mcp/gear-tools";
 import type {
   MCPToolResult,
   ToolHandlersByName,
-} from "./tool-types.js";
+} from "@/lib/mcp/tool-types";
 
 export type { Film, FilmUsage, Gear, Trip, TripFilm, TripGear };
 export { formatDimensions, getExposuresPerRoll };

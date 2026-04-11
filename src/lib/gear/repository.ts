@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Gear } from "./types.js";
+import type { Gear } from "@/lib/gear/types";
 
 type GearMutation = Partial<Omit<Gear, "id" | "created_at" | "updated_at">>;
 

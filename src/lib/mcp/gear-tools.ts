@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Gear } from "../gear/types.js";
+import type { Gear } from "@/lib/gear/types";
 import type {
   GearToolHandlers,
   MCPToolResult,
   ToolArgumentsByName,
-} from "./tool-types.js";
+} from "@/lib/mcp/tool-types";
 import {
   createGearForUser,
   deleteGearForUser,
@@ -13,8 +13,8 @@ import {
   getGearSummaryForUser,
   removeGearReservationForUser,
   reserveGearForTripForUser,
-} from "../gear/service.js";
-import { getTripByIdForUser } from "../trips/service.js";
+} from "@/lib/gear/service";
+import { getTripByIdForUser } from "@/lib/trips/service";
 
 function jsonResult(data: unknown): MCPToolResult {
   return {

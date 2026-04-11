@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
-import type { Trip } from "./types.js";
-import type { TripSchema } from "./schema.js";
-import { tripSchema } from "./schema.js";
+import type { Trip } from "@/lib/trips/types";
+import type { TripSchema } from "@/lib/trips/schema";
+import { tripSchema } from "@/lib/trips/schema";
 import {
   deleteTripById,
   deleteTripFilmReservation,
@@ -18,7 +18,7 @@ import {
   selectTripWithFilms,
   updateTripById,
   updateTripFilmReservation,
-} from "./repository.js";
+} from "@/lib/trips/repository";
 
 type DisplayTrip = Trip & { reserved_film_count?: number };
 

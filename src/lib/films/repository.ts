@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Film, FilmUsage } from "./types.js";
+import type { Film, FilmUsage } from "@/lib/films/types";
 
 type FilmMutation = Omit<Partial<Film>, "deleted_at"> & {
   deleted_at?: string | null;

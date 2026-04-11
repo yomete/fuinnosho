@@ -1,5 +1,5 @@
 import * as z from "zod";
-import type { GearCondition, GearType } from "./types.js";
+import type { GearCondition, GearType } from "@/lib/gear/types";
 
 export const gearTypeValues = [
   "camera",

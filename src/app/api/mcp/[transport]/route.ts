@@ -5,6 +5,7 @@ import {
   TOOL_DEFINITIONS,
   type MCPToolResult,
 } from "@/lib/mcp/tools";
+import type { ToolName } from "@/lib/mcp/tool-types";
 
 const handler = createMcpHandler(
   (server) => {
@@ -12,11 +13,12 @@ const handler = createMcpHandler(
     const tools = createToolHandlers(supabase, userId);
 
     for (const def of TOOL_DEFINITIONS) {
+      const toolName = def.name as ToolName;
       server.registerTool(def.name, {
         description: def.description,
         inputSchema: def.inputSchema as any,
       }, async (args: any) => {
-        return (await tools[def.name](args)) as MCPToolResult & {
+        return (await tools[toolName](args)) as MCPToolResult & {
           [key: string]: unknown;
         };
       });
