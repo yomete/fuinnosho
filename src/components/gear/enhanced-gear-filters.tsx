@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, memo } from "react";
 import type { Gear } from "@/lib/gear/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,19 +82,10 @@ const EnhancedGearFiltersComponent = function EnhancedGearFilters({
   minPrice,
   maxPrice,
 }: EnhancedGearFiltersProps) {
-  // Get unique values for filter options (memoized)
-  const uniqueBrands = useMemo(() => 
-    Array.from(new Set(gear.map((item) => item.brand))).sort(),
-    [gear]
-  );
-  const uniqueTypes = useMemo(() => 
-    Array.from(new Set(gear.map((item) => item.type))).sort(),
-    [gear]
-  );
-  const uniqueConditions = useMemo(() => 
-    Array.from(new Set(gear.map((item) => item.condition))).sort(),
-    [gear]
-  );
+  // Get unique values for filter options
+  const uniqueBrands = Array.from(new Set(gear.map((item) => item.brand))).sort();
+  const uniqueTypes = Array.from(new Set(gear.map((item) => item.type))).sort();
+  const uniqueConditions = Array.from(new Set(gear.map((item) => item.condition))).sort();
 
   return (
     <div className="flex flex-col gap-4">
@@ -422,4 +412,4 @@ const EnhancedGearFiltersComponent = function EnhancedGearFilters({
   );
 };
 
-export const EnhancedGearFilters = memo(EnhancedGearFiltersComponent);
+export const EnhancedGearFilters = EnhancedGearFiltersComponent;

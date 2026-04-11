@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { formatDimensions, getExposuresPerRoll } from "@/lib/films/schema";
 import type { Film, FilmUsage } from "@/lib/films/types";
 import type { Trip, TripFilm } from "@/lib/trips/types";
@@ -28,10 +29,45 @@ type JSONSchemaObject = {
   required?: string[];
 };
 
+export type { JSONSchemaObject };
+
 export interface ToolDefinition {
   name: string;
   description: string;
   inputSchema: JSONSchemaObject;
+}
+
+function jsonSchemaPrimitiveToZodSchema(schema: JSONSchemaPrimitive) {
+  let zodSchema: z.ZodTypeAny;
+
+  if (schema.enum && schema.enum.length > 0) {
+    zodSchema = z.enum(schema.enum as [string, ...string[]]);
+  } else if (schema.type === "string") {
+    zodSchema = z.string();
+  } else if (schema.type === "number") {
+    zodSchema = z.number();
+  } else {
+    zodSchema = z.boolean();
+  }
+
+  zodSchema = zodSchema.describe(schema.description);
+
+  if (schema.default !== undefined) {
+    return zodSchema.default(schema.default);
+  }
+
+  return zodSchema;
+}
+
+export function jsonSchemaObjectToZodRawShape(schema: JSONSchemaObject) {
+  const required = new Set(schema.required ?? []);
+
+  return Object.fromEntries(
+    Object.entries(schema.properties).map(([key, value]) => {
+      const zodSchema = jsonSchemaPrimitiveToZodSchema(value);
+      return [key, required.has(key) ? zodSchema : zodSchema.optional()];
+    })
+  );
 }
 
 export const TOOL_DEFINITIONS: ToolDefinition[] = [

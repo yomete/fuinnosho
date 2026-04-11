@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo, memo } from "react";
 import { Film } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,28 +84,14 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
   onRemoveFilter,
   onClearAllFilters,
 }: EnhancedFiltersV2Props) {
-  // Get unique values for filter options (memoized)
-  const uniqueBrands = useMemo(() =>
-    Array.from(new Set(films.map((film) => film.brand))).sort(),
-    [films]
-  );
-  const uniqueTypes = useMemo(() =>
-    Array.from(new Set(films.map((film) => film.type))).sort(),
-    [films]
-  );
-  const uniqueFormats = useMemo(() =>
-    Array.from(new Set(films.map((film) => film.format))).sort(),
-    [films]
-  );
-  const uniqueIsos = useMemo(() =>
-    Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
-    [films]
-  );
+  // Get unique values for filter options
+  const uniqueBrands = Array.from(new Set(films.map((film) => film.brand))).sort();
+  const uniqueTypes = Array.from(new Set(films.map((film) => film.type))).sort();
+  const uniqueFormats = Array.from(new Set(films.map((film) => film.format))).sort();
+  const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b);
 
-  const { minIso, maxIso } = useMemo(() => ({
-    minIso: Math.min(...uniqueIsos),
-    maxIso: Math.max(...uniqueIsos)
-  }), [uniqueIsos]);
+  const minIso = Math.min(...uniqueIsos);
+  const maxIso = Math.max(...uniqueIsos);
 
   return (
     <div className="flex flex-col gap-4">
@@ -490,4 +475,4 @@ const EnhancedFiltersV2Component = function EnhancedFiltersV2({
   );
 };
 
-export const EnhancedFiltersV2 = memo(EnhancedFiltersV2Component);
+export const EnhancedFiltersV2 = EnhancedFiltersV2Component;
