@@ -3,6 +3,7 @@ import { createMcpSupabaseClient } from "@/lib/mcp/supabase";
 import {
   createToolHandlers,
   TOOL_DEFINITIONS,
+  jsonSchemaObjectToZodRawShape,
   type MCPToolResult,
 } from "@/lib/mcp/tools";
 import type { ToolArgumentsByName, ToolName } from "@/lib/mcp/tool-types";
@@ -20,7 +21,7 @@ const handler = createMcpHandler(
 
       server.registerTool(def.name, {
         description: def.description,
-        inputSchema: def.inputSchema,
+        inputSchema: jsonSchemaObjectToZodRawShape(def.inputSchema),
       }, async (args) => {
         return (await toolHandler(args as ToolArgumentsByName[ToolName])) as MCPToolResult & {
           [key: string]: unknown;
