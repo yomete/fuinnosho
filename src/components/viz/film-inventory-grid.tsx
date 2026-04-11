@@ -1,6 +1,7 @@
 "use client";
 
 import { type Film } from "@/lib/utils";
+import { useCurrentDate } from "@/hooks/use-current-date";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Camera, Package, Eye } from "lucide-react";
@@ -79,10 +80,10 @@ function getAvailableCount(film: Film): number {
   return film.count || 1;
 }
 
-function isExpiringSoon(expirationDate: string): boolean {
+function isExpiringSoon(expirationDate: string, now: Date): boolean {
   const daysUntilExpiration = differenceInDays(
     new Date(expirationDate),
-    new Date()
+    now
   );
   return daysUntilExpiration <= 90;
 }
@@ -93,6 +94,7 @@ function isLowStock(count: number): boolean {
 
 export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
   const prefix = useDemoPrefix();
+  const now = useCurrentDate();
 
   if (!films.length) {
     return (
@@ -110,7 +112,7 @@ export default function FilmInventoryGrid({ films }: FilmInventoryGridProps) {
         const is35mm = film.format === "35mm";
         const availableCount = getAvailableCount(film);
         const lowStock = isLowStock(availableCount);
-        const expiringSoon = isExpiringSoon(film.expiration_date);
+        const expiringSoon = isExpiringSoon(film.expiration_date, now);
 
         return (
           <div

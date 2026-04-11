@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useCurrentDate } from "@/hooks/use-current-date";
 import {
   Film,
   MapPin,
@@ -735,6 +736,8 @@ function OpenSourceCallout() {
 // ============================================================================
 
 function Footer() {
+  const now = useCurrentDate();
+
   return (
     <footer className="py-16 px-6 border-t border-[#2a2420]/50">
       <div className="max-w-6xl mx-auto">
@@ -770,7 +773,7 @@ function Footer() {
 
           {/* Copyright */}
           <p className="text-sm text-[#6a6460]">
-            © {new Date().getFullYear()} Fūin no Sho. Open source.
+            © {now.getFullYear()} Fūin no Sho. Open source.
           </p>
         </div>
       </div>

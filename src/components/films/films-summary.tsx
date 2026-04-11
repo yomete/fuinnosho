@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { type Film } from "@/lib/utils";
+import { useCurrentDate } from "@/hooks/use-current-date";
 import { Package, Film as FilmIcon, Grid3X3, Timer, Calendar, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -36,8 +37,8 @@ function getTotalCount(film: Film): number {
 }
 
 // Get films that are expiring soon or already expired
-function getExpiringFilms(films: Film[]): Film[] {
-  const threeMonthsFromNow = new Date();
+function getExpiringFilms(films: Film[], now: Date): Film[] {
+  const threeMonthsFromNow = new Date(now);
   threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
 
   return films
@@ -49,8 +50,7 @@ function getExpiringFilms(films: Film[]): Film[] {
     .sort((a, b) => new Date(a.expiration_date).getTime() - new Date(b.expiration_date).getTime());
 }
 
-function getExpirationStatus(expirationDate: string): { label: string; color: string } {
-  const now = new Date();
+function getExpirationStatus(expirationDate: string, now: Date): { label: string; color: string } {
   const exp = new Date(expirationDate);
   const daysUntil = differenceInDays(exp, now);
 
@@ -68,8 +68,8 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
   const prefix = useDemoPrefix();
   const [showExpiringModal, setShowExpiringModal] = useState(false);
 
-  const now = new Date();
-  const threeMonthsFromNow = new Date();
+  const now = useCurrentDate();
+  const threeMonthsFromNow = new Date(now);
   threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
 
   // Count rolls (not just stocks) that are expiring soon or already expired
@@ -83,7 +83,7 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
     return sum;
   }, 0);
 
-  const expiringFilms = getExpiringFilms(films);
+  const expiringFilms = getExpiringFilms(films, now);
 
   const stats = {
     totalRolls: films.reduce((sum, f) => sum + getTotalCount(f), 0),
@@ -260,9 +260,9 @@ export function FilmsSummary({ films }: FilmsSummaryProps) {
             ) : (
               <div className="space-y-3 pb-4">
                 {expiringFilms.map((film) => {
-                  const status = getExpirationStatus(film.expiration_date);
+                  const status = getExpirationStatus(film.expiration_date, now);
                   const count = getAvailableCount(film);
-                  const daysUntil = differenceInDays(new Date(film.expiration_date), new Date());
+                  const daysUntil = differenceInDays(new Date(film.expiration_date), now);
 
                   return (
                     <Link

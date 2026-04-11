@@ -1,6 +1,7 @@
 "use client";
 
 import { type Film } from "@/lib/utils";
+import { useCurrentDate } from "@/hooks/use-current-date";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,13 +21,13 @@ const getPulseIntensity = (daysUntilExpiration: number) => {
 };
 
 export default function ExpirationTimeline({ films }: ExpirationTimelineProps) {
+  const now = useCurrentDate();
   const sortedFilms = [...films].sort(
     (a, b) =>
       new Date(a.expiration_date).getTime() -
       new Date(b.expiration_date).getTime()
   );
 
-  const now = new Date();
   const thirtyDaysFromNow = addDays(now, 30);
 
   const expiredFilms = sortedFilms.filter((film) => {
