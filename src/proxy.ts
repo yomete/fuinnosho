@@ -7,7 +7,7 @@ import { DEMO_MODE_COOKIE, DEMO_MODE_HEADER } from "@/lib/demo";
 // Check demo mode at runtime
 const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Route-based demo mode: set header for current request and cookie for client

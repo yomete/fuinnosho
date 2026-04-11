@@ -73,7 +73,8 @@
       "mcp__anki__list_decks",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npx vercel:*)"
     ],
     "deny": []
   }

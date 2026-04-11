@@ -90,6 +90,7 @@ interface TripGridProps {
 }
 
 export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
+  const ongoingTrips = trips.filter((trip) => trip.status === 'ongoing');
   const upcomingTrips = trips.filter((trip) => trip.status === 'upcoming');
   const pastTrips = trips.filter((trip) => trip.status === 'past');
   const completedTrips = trips.filter((trip) => trip.status === 'completed');
@@ -106,6 +107,21 @@ export function TripGrid({ trips, onTripEdit, onTripComplete }: TripGridProps) {
 
   return (
     <div className="space-y-8">
+      {ongoingTrips.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Ongoing Trips</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {ongoingTrips.map((trip) => (
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                onTripEdit={onTripEdit}
+                onTripComplete={onTripComplete}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       {upcomingTrips.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold mb-4">Upcoming Trips</h2>

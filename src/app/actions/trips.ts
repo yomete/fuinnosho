@@ -12,6 +12,38 @@ interface CreateTripResponse {
   trip?: Trip;
 }
 
+const TRIP_STATUS_PRIORITY: Record<Trip["status"], number> = {
+  ongoing: 0,
+  upcoming: 1,
+  past: 2,
+  completed: 3,
+};
+
+function getTripTimeValue(date: string): number {
+  return new Date(date).getTime();
+}
+
+function compareTripsForDisplay(a: Trip, b: Trip): number {
+  const statusDifference =
+    TRIP_STATUS_PRIORITY[a.status] - TRIP_STATUS_PRIORITY[b.status];
+
+  if (statusDifference !== 0) {
+    return statusDifference;
+  }
+
+  switch (a.status) {
+    case "ongoing":
+      return getTripTimeValue(a.end_date) - getTripTimeValue(b.end_date);
+    case "upcoming":
+      return getTripTimeValue(a.start_date) - getTripTimeValue(b.start_date);
+    case "past":
+    case "completed":
+      return getTripTimeValue(b.end_date) - getTripTimeValue(a.end_date);
+    default:
+      return 0;
+  }
+}
+
 export async function createTrip(data: TripSchema): Promise<CreateTripResponse> {
   try {
     const validatedData = tripSchema.parse(data);
@@ -144,7 +176,7 @@ export async function getTrips(): Promise<{
         reserved_film_count,
         status,
       };
-    }) || [];
+    }).sort(compareTripsForDisplay) || [];
 
     return { data: tripsWithCounts, error: null };
   } catch (error) {

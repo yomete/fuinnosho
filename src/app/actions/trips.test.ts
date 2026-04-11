@@ -79,6 +79,13 @@ const mockedGetEffectiveUser = vi.mocked(getEffectiveUser)
 const mockedGetDataClient = vi.mocked(getDataClient)
 
 describe('Trip Actions', () => {
+  const formatLocalDate = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
     // Create fresh chainable mock for each test
@@ -322,6 +329,118 @@ describe('Trip Actions', () => {
 
       expect(result.data).toEqual([])
       expect(result.error).toBeNull()
+    })
+
+    it('should sort ongoing and upcoming trips before past and completed trips', async () => {
+      const today = new Date()
+      today.setHours(12, 0, 0, 0)
+
+      const formatDate = (date: Date) => date.toISOString().split('T')[0]
+
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+
+      const nextWeek = new Date(today)
+      nextWeek.setDate(nextWeek.getDate() + 7)
+
+      const nextMonth = new Date(today)
+      nextMonth.setDate(nextMonth.getDate() + 30)
+
+      const startedThreeDaysAgo = new Date(today)
+      startedThreeDaysAgo.setDate(startedThreeDaysAgo.getDate() - 3)
+
+      const endsTomorrow = new Date(today)
+      endsTomorrow.setDate(endsTomorrow.getDate() + 1)
+
+      const startedYesterday = new Date(today)
+      startedYesterday.setDate(startedYesterday.getDate() - 1)
+
+      const endsNextWeek = new Date(today)
+      endsNextWeek.setDate(endsNextWeek.getDate() + 7)
+
+      const pastStart = new Date(today)
+      pastStart.setDate(pastStart.getDate() - 10)
+
+      const pastEnd = new Date(today)
+      pastEnd.setDate(pastEnd.getDate() - 2)
+
+      const completedStart = new Date(today)
+      completedStart.setDate(completedStart.getDate() - 20)
+
+      const completedEnd = new Date(today)
+      completedEnd.setDate(completedEnd.getDate() - 5)
+
+      const mockTrips = [
+        {
+          id: 'trip-completed',
+          title: 'Completed Trip',
+          start_date: formatDate(completedStart),
+          end_date: formatDate(completedEnd),
+          status: 'completed',
+          trip_films: [],
+        },
+        {
+          id: 'trip-upcoming-later',
+          title: 'Upcoming Later',
+          start_date: formatDate(nextMonth),
+          end_date: formatDate(new Date(nextMonth)),
+          status: 'upcoming',
+          trip_films: [],
+        },
+        {
+          id: 'trip-past',
+          title: 'Past Trip',
+          start_date: formatDate(pastStart),
+          end_date: formatDate(pastEnd),
+          status: 'upcoming',
+          trip_films: [],
+        },
+        {
+          id: 'trip-ongoing-sooner',
+          title: 'Ongoing Ending Soon',
+          start_date: formatDate(startedThreeDaysAgo),
+          end_date: formatDate(endsTomorrow),
+          status: 'upcoming',
+          trip_films: [],
+        },
+        {
+          id: 'trip-upcoming-sooner',
+          title: 'Upcoming Sooner',
+          start_date: formatDate(tomorrow),
+          end_date: formatDate(nextWeek),
+          status: 'past',
+          trip_films: [],
+        },
+        {
+          id: 'trip-ongoing-later',
+          title: 'Ongoing Ending Later',
+          start_date: formatDate(startedYesterday),
+          end_date: formatDate(endsNextWeek),
+          status: 'past',
+          trip_films: [],
+        },
+      ]
+
+      ;(mockSupabase.order as ReturnType<typeof vi.fn>).mockResolvedValue({ data: mockTrips, error: null })
+
+      const result = await getTrips()
+
+      expect(result.data?.map((trip) => trip.id)).toEqual([
+        'trip-ongoing-sooner',
+        'trip-ongoing-later',
+        'trip-upcoming-sooner',
+        'trip-upcoming-later',
+        'trip-past',
+        'trip-completed',
+      ])
+      expect(result.data?.map((trip) => trip.status)).toEqual([
+        'ongoing',
+        'ongoing',
+        'upcoming',
+        'upcoming',
+        'past',
+        'completed',
+      ])
     })
   })
 
@@ -1155,10 +1274,11 @@ describe('Trip Actions', () => {
   describe('Date edge cases', () => {
     it('should handle trips starting exactly today as ongoing', async () => {
       const today = new Date()
-      const todayStr = today.toISOString().split('T')[0]
+      today.setHours(12, 0, 0, 0)
+      const todayStr = formatLocalDate(today)
       const futureDate = new Date(today)
       futureDate.setDate(futureDate.getDate() + 5)
-      const futureDateStr = futureDate.toISOString().split('T')[0]
+      const futureDateStr = formatLocalDate(futureDate)
 
       const mockTrips = [
         {
@@ -1180,10 +1300,11 @@ describe('Trip Actions', () => {
 
     it('should handle trips ending exactly today as ongoing', async () => {
       const today = new Date()
-      const todayStr = today.toISOString().split('T')[0]
+      today.setHours(12, 0, 0, 0)
+      const todayStr = formatLocalDate(today)
       const pastDate = new Date(today)
       pastDate.setDate(pastDate.getDate() - 5)
-      const pastDateStr = pastDate.toISOString().split('T')[0]
+      const pastDateStr = formatLocalDate(pastDate)
 
       const mockTrips = [
         {
@@ -1205,11 +1326,12 @@ describe('Trip Actions', () => {
 
     it('should handle trips ending yesterday as past', async () => {
       const yesterday = new Date()
+      yesterday.setHours(12, 0, 0, 0)
       yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = yesterday.toISOString().split('T')[0]
+      const yesterdayStr = formatLocalDate(yesterday)
       const startDate = new Date(yesterday)
       startDate.setDate(startDate.getDate() - 5)
-      const startDateStr = startDate.toISOString().split('T')[0]
+      const startDateStr = formatLocalDate(startDate)
 
       const mockTrips = [
         {
@@ -1231,11 +1353,12 @@ describe('Trip Actions', () => {
 
     it('should handle trips starting tomorrow as upcoming', async () => {
       const tomorrow = new Date()
+      tomorrow.setHours(12, 0, 0, 0)
       tomorrow.setDate(tomorrow.getDate() + 1)
-      const tomorrowStr = tomorrow.toISOString().split('T')[0]
+      const tomorrowStr = formatLocalDate(tomorrow)
       const endDate = new Date(tomorrow)
       endDate.setDate(endDate.getDate() + 5)
-      const endDateStr = endDate.toISOString().split('T')[0]
+      const endDateStr = formatLocalDate(endDate)
 
       const mockTrips = [
         {
