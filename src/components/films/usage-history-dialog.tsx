@@ -20,16 +20,24 @@ interface UsageHistoryDialogProps {
   filmId: string;
   filmName: string;
   currentCount?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
 export function UsageHistoryDialog({
   filmId,
   filmName,
   currentCount = 0,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
 }: UsageHistoryDialogProps) {
   const [open, setOpen] = useState(false);
   const [usageHistory, setUsageHistory] = useState<FilmUsage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isOpen = controlledOpen ?? open;
+  const setIsOpen = controlledOnOpenChange ?? setOpen;
 
   const loadUsageHistory = useCallback(async () => {
     setIsLoading(true);
@@ -41,23 +49,25 @@ export function UsageHistoryDialog({
   }, [filmId]);
 
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       loadUsageHistory();
     }
-  }, [open, loadUsageHistory]);
+  }, [isOpen, loadUsageHistory]);
 
   const totalUsed = usageHistory.reduce((sum, usage) => sum + usage.quantity, 0);
   const spooledCount = usageHistory.filter(u => u.usage_type === 'spool').reduce((sum, usage) => sum + usage.quantity, 0);
   const shotCount = usageHistory.filter(u => u.usage_type === 'shoot').reduce((sum, usage) => sum + usage.quantity, 0);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <History className="h-4 w-4 mr-1" />
-          History
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <History className="h-4 w-4 mr-1" />
+            History
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Usage History for {filmName}</DialogTitle>

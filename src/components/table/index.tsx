@@ -7,11 +7,10 @@ import {
   getFilteredRowModel,
   useReactTable,
   type SortingState,
-  type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { columns } from "./columns";
 import { type Film } from "@/lib/utils";
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect, useReducer, useMemo } from "react";
 import {
   groupFilms,
   applyExpansionState,
@@ -44,7 +43,10 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   const searchParams = useSearchParams();
 
   // Extract unique ISOs for initial state
-  const uniqueIsos = Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b);
+  const uniqueIsos = useMemo(
+    () => Array.from(new Set(films.map((film) => film.iso))).sort((a, b) => a - b),
+    [films]
+  );
 
   // All filter state managed by reducer - single source of truth
   const [filterState, dispatch] = useReducer(
@@ -54,7 +56,6 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   );
 
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Consolidation state - always start with true for SSR, sync from localStorage after hydration
   const [enableConsolidation, setEnableConsolidation] = useState(true);
@@ -89,36 +90,8 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
   }, []);
 
-  // Sync URL params on column filter changes (existing functionality)
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    columnFilters.forEach((filter) => {
-      if (filter.value !== undefined && filter.value !== "") {
-        if (Array.isArray(filter.value)) {
-          params.set(filter.id, filter.value.join(","));
-        } else {
-          params.set(filter.id, String(filter.value));
-        }
-      }
-    });
-
-    const newQuery = params.toString();
-    const currentQuery = searchParams.toString();
-
-    // Only update URL if the query actually changed to avoid infinite loops
-    if (newQuery !== currentQuery) {
-      const timeoutId = setTimeout(() => {
-        const query = newQuery ? `?${newQuery}` : pathname;
-        router.replace(query, { scroll: false });
-      }, 300);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [columnFilters, pathname, router, searchParams]);
-
   // Apply filters to data based on current filter state
-  const filteredFilms = (() => {
+  const filteredFilms = useMemo(() => {
     let result = films;
 
     // Hide zero quantity filter
@@ -142,10 +115,10 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
 
     return result;
-  })();
+  }, [films, filterState.hideZeroQuantity, filterState.isoRange, uniqueIsos]);
 
   // Group and expand films based on consolidation settings
-  const tableData: FilmTableRow[] = (() => {
+  const tableData: FilmTableRow[] = useMemo(() => {
     // First group the films if consolidation is enabled
     const grouped = groupFilms(filteredFilms, {
       enableGrouping: enableConsolidation,
@@ -153,7 +126,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
 
     // Then apply expansion state
     return applyExpansionState(grouped, expansionState);
-  })();
+  }, [enableConsolidation, expansionState, filteredFilms]);
 
   // Toggle expansion for a group
   const toggleExpansion = (groupKey: string) => {
@@ -164,9 +137,8 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     });
   };
 
-  // Update table column filters when filter state changes
-  useEffect(() => {
-    const newColumnFilters: ColumnFiltersState = [];
+  const columnFilters = useMemo(() => {
+    const newColumnFilters = [];
 
     // Name filter
     if (filterState.name) {
@@ -201,8 +173,35 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
       newColumnFilters.push({ id: "iso", value: { not: filterState.notIsos } });
     }
 
-    setColumnFilters(newColumnFilters);
+    return newColumnFilters;
   }, [filterState]);
+
+  // Sync URL params on derived column filter changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    columnFilters.forEach((filter) => {
+      if (filter.value !== undefined && filter.value !== "") {
+        if (Array.isArray(filter.value)) {
+          params.set(filter.id, filter.value.join(","));
+        } else {
+          params.set(filter.id, String(filter.value));
+        }
+      }
+    });
+
+    const newQuery = params.toString();
+    const currentQuery = searchParams.toString();
+
+    if (newQuery !== currentQuery) {
+      const timeoutId = setTimeout(() => {
+        const query = newQuery ? `?${newQuery}` : pathname;
+        router.replace(query, { scroll: false });
+      }, 300);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [columnFilters, pathname, router, searchParams]);
 
   const table = useReactTable({
     data: tableData,
@@ -211,7 +210,6 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     state: {
       sorting,
       columnFilters,
@@ -222,7 +220,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   });
 
   // Generate active filters display
-  const activeFilters = (() => {
+  const activeFilters = useMemo(() => {
     const filters: { column: string; value: string; isNot: boolean }[] = [];
 
     // Add regular filters
@@ -259,7 +257,7 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
     }
 
     return filters;
-  })();
+  }, [filterState]);
 
   // Handle filter actions from child component
   const handleFilterAction = (action: FilterAction) => {
@@ -313,7 +311,6 @@ export default function FilmsTableV2({ films }: FilmsTableV2Props) {
   // Handle clearing all filters
   const handleClearAllFilters = () => {
     dispatch({ type: 'CLEAR_ALL' });
-    table.resetColumnFilters();
   };
 
   return (

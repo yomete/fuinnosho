@@ -38,6 +38,8 @@ const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
   const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
   const [reduceDialogOpen, setReduceDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [filmData, setFilmData] = useState(isGroup ? ({} as Film) : (rowData as Film));
 
   // Sync local state when film prop changes
@@ -157,15 +159,7 @@ const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
             onSelect={(event) => {
               event.preventDefault();
               setDropdownOpen(false);
-              // Small delay to ensure dropdown closes before dialog opens
-              setTimeout(() => {
-                const editButton = document.querySelector(
-                  `[data-edit-film="${filmData.id}"] button`
-                );
-                if (editButton) {
-                  (editButton as HTMLElement).click();
-                }
-              }, 100);
+              setEditDialogOpen(true);
             }}
           >
             <Edit className="mr-2 h-4 w-4" />
@@ -175,14 +169,7 @@ const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
             onSelect={(event) => {
               event.preventDefault();
               setDropdownOpen(false);
-              setTimeout(() => {
-                const historyButton = document.querySelector(
-                  `[data-history-film="${filmData.id}"] button`
-                );
-                if (historyButton) {
-                  (historyButton as HTMLElement).click();
-                }
-              }, 100);
+              setHistoryDialogOpen(true);
             }}
           >
             <History className="mr-2 h-4 w-4" />
@@ -190,19 +177,24 @@ const ActionsCell = ({ row }: { row: { original: TableRow } }) => {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      {/* Hidden dialog triggers with data attributes */}
-      <div style={{ position: "absolute", left: "-9999px", opacity: 0 }}>
-        <div data-edit-film={filmData.id}>
-          <EditFilm film={filmData} />
-        </div>
-        <div data-history-film={filmData.id}>
-          <UsageHistoryDialog
-            filmId={filmData.id}
-            filmName={filmData.name}
-            currentCount={filmData.count}
-          />
-        </div>
-      </div>
+      {editDialogOpen && (
+        <EditFilm
+          film={filmData}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          hideTrigger
+        />
+      )}
+      {historyDialogOpen && (
+        <UsageHistoryDialog
+          filmId={filmData.id}
+          filmName={filmData.name}
+          currentCount={filmData.count}
+          open={historyDialogOpen}
+          onOpenChange={setHistoryDialogOpen}
+          hideTrigger
+        />
+      )}
     </div>
   );
 };
@@ -402,33 +394,6 @@ export const columns: ColumnDef<TableRow>[] = [
       }
 
       const film = rowData as Film;
-
-      if (film.is_bulk_film) {
-        // For bulk films, available = spooled cassettes - reserved
-        const spooledCassettes = film.spooled_cassettes || 0;
-        const reserved = film.reserved_quantity || 0;
-        const available = Math.max(0, spooledCassettes - reserved);
-        const isLow = available <= 2 && available > 0;
-        const isEmpty = available === 0;
-
-        return (
-          <div className="text-center">
-            <span
-              className={`font-medium ${
-                isEmpty
-                  ? "text-red-600"
-                  : isLow
-                  ? "text-yellow-600"
-                  : "text-green-600"
-              }`}
-            >
-              {available}
-            </span>
-            <div className="text-xs text-muted-foreground">cassettes</div>
-          </div>
-        );
-      }
-
       const available = film.available_count ?? 0;
       const isLow = available <= 2 && available > 0;
       const isEmpty = available === 0;

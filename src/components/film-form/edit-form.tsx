@@ -20,11 +20,21 @@ import { FilmSchema, filmSchema } from "@/lib/films/schema";
 
 interface EditFilmProps {
   film: Film;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 }
 
-export function EditFilm({ film }: EditFilmProps) {
+export function EditFilm({
+  film,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  hideTrigger = false,
+}: EditFilmProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const open = controlledOpen ?? isOpen;
+  const setOpen = controlledOnOpenChange ?? setIsOpen;
 
   const form = useForm<FilmSchema>({
     resolver: zodResolver(filmSchema),
@@ -71,7 +81,7 @@ export function EditFilm({ film }: EditFilmProps) {
 
       toast.success("Film has been edited");
       form.reset();
-      setIsOpen(false);
+      setOpen(false);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to edit film"
@@ -89,7 +99,7 @@ export function EditFilm({ film }: EditFilmProps) {
     const result = await deleteFilm(film.id);
     if (result.success) {
       toast.success(result.message || "Film deleted successfully");
-      setIsOpen(false);
+      setOpen(false);
     } else {
       toast.error(result.error?.message || "Failed to delete film");
     }
@@ -104,10 +114,12 @@ export function EditFilm({ film }: EditFilmProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">Edit</Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="outline">Edit</Button>
+        </DialogTrigger>
+      )}
 
       <DialogContent className="sm:max-w-[680px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
