@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.mobile-ui-fixture*.json
 
 # next.js
 /.next/
@@ -38,6 +39,11 @@ yarn-error.log*
 
 # mcp
 dist/node_modules
+
+# xcode
+xcuserdata/
+*.xcuserstate
+ios/Fuinnosho/Configuration/Secrets.xcconfig
 
 # typescript
 *.tsbuildinfo

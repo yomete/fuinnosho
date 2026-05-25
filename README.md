@@ -7,6 +7,10 @@ A film photography inventory management system for analog photographers. Track y
 
 Built with Next.js 16, TypeScript, Supabase, and Radix UI.
 
+The repo also includes a native SwiftUI iOS companion app in [`ios/`](ios/).
+It talks directly to the same Supabase project for auth, films, gear, trips,
+and shared reservation workflows.
+
 ## Screenshots
 
 <table>
@@ -106,9 +110,27 @@ For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
 
 Fuinnosho includes an MCP server for integration with Claude Desktop. See [README-MCP.md](README-MCP.md) for setup instructions.
 
+## iOS Companion App
+
+The native iOS app lives in [`ios/`](ios/) and is generated with XcodeGen from
+[`ios/project.yml`](ios/project.yml). See [`ios/README.md`](ios/README.md) for
+setup, Supabase config, and verification commands.
+
+```bash
+MOBILE_PROBE_USER_ID=<auth-user-id> \
+MOBILE_WRITE_SMOKE=1 \
+MOBILE_SMOKE_CREATE_USER=1 \
+pnpm verify:mobile
+```
+
 ## Project Structure
 
 ```
+ios/
+├── Fuinnosho/        # SwiftUI app source
+├── FuinnoshoTests/   # XCTest coverage
+└── project.yml       # XcodeGen project definition
+
 src/
 ├── app/              # Next.js App Router pages
 │   ├── films/        # Film inventory
