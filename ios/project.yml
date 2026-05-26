@@ -27,8 +27,10 @@ targets:
         MARKETING_VERSION: 0.1.0
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Fuinnosho/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: 6.0
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 29Z33532UU
   FuinnoshoTests:
     type: bundle.unit-test
     platform: iOS

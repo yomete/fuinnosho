@@ -43,6 +43,7 @@ dist/node_modules
 # xcode
 xcuserdata/
 *.xcuserstate
+ios/build/
 ios/Fuinnosho/Configuration/Secrets.xcconfig
 
 # typescript

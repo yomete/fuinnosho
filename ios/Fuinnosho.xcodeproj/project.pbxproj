@@ -33,6 +33,7 @@
 		BC02693A19783722BE60F0DA /* InventoryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E73E532CC38DD5A90BB9A13F /* InventoryServiceTests.swift */; };
 		C83E642633AA66DDE4A1C598 /* NewFilmView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46BC663ABE5768EDBE19E623 /* NewFilmView.swift */; };
 		C85494C9D422097A3142B12C /* InventoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356492074C339F68DCFB0697 /* InventoryService.swift */; };
+		CA946B2F83016B2A28A23A39 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 310B994B0454FDD6732F8B78 /* Assets.xcassets */; };
 		CD11B7D419E40C58A1EB1C37 /* FilmsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B6BCDAEC74F3AF10893D919 /* FilmsListView.swift */; };
 		CD3959BD07FBBA1B52DBCE3B /* TripGearReservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F28A0BBEF4D744834088C8EF /* TripGearReservation.swift */; };
 		D7F9E3B9B36A1D2B9D64FA1B /* FormDataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BF5C32D699AF0EDA1ECB7A /* FormDataTests.swift */; };
@@ -58,6 +59,7 @@
 		2C260DF3C30F3C7EA0E2B01B /* Gear.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gear.swift; sourceTree = "<group>"; };
 		2F150C18862FD35A10AC3B69 /* FilmDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmDetailView.swift; sourceTree = "<group>"; };
 		30D5F8F1559EA1EF949E1A97 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
+		310B994B0454FDD6732F8B78 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3143B5942285F9626A7B1FFD /* DebugLoadStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLoadStatusView.swift; sourceTree = "<group>"; };
 		356492074C339F68DCFB0697 /* InventoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryService.swift; sourceTree = "<group>"; };
 		3D042B9D2B34F4FD8AAF9523 /* GearListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearListView.swift; sourceTree = "<group>"; };
@@ -73,7 +75,7 @@
 		74EA54BC7D74FF68B7C09B4C /* FilmStockAdjustmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmStockAdjustmentView.swift; sourceTree = "<group>"; };
 		75A5DB05BEE27F74E5BE9176 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		7B15C836922C71EA6F20C004 /* NewTripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripView.swift; sourceTree = "<group>"; };
-		84FE902E57F61CD1EF2CCDC7 /* Fuinnosho.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fuinnosho.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		84FE902E57F61CD1EF2CCDC7 /* Fuinnosho.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fuinnosho.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8520E1D69A6B85A282226C1D /* FuinnoshoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuinnoshoApp.swift; sourceTree = "<group>"; };
 		8863FF79BCA16100F77C9D65 /* Film.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Film.swift; sourceTree = "<group>"; };
 		8B3AB693218A7AD74755B281 /* Secrets.example.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.example.xcconfig; sourceTree = "<group>"; };
@@ -209,6 +211,7 @@
 		B6C04040AC31A0DE9CA8B2C9 /* Fuinnosho */ = {
 			isa = PBXGroup;
 			children = (
+				310B994B0454FDD6732F8B78 /* Assets.xcassets */,
 				538D4BFF9A7AB62FDE601FFC /* Info.plist */,
 				F0285D895F1F49E9F6228D92 /* App */,
 				C249B8FC4771A3DEC63CF71A /* Configuration */,
@@ -277,6 +280,7 @@
 			buildConfigurationList = 65EE0A9D948DBE47183BEB72 /* Build configuration list for PBXNativeTarget "Fuinnosho" */;
 			buildPhases = (
 				66DAE0AE8B24D532E94A8363 /* Sources */,
+				A2A18967A89FA7C4C7127F2A /* Resources */,
 				C3C3DF4374D6AA1BFC4D34C3 /* Frameworks */,
 			);
 			buildRules = (
@@ -301,6 +305,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					A041C2E4919AF2E100894DD6 = {
+						DevelopmentTeam = 29Z33532UU;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -327,6 +332,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A2A18967A89FA7C4C7127F2A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA946B2F83016B2A28A23A39 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		66DAE0AE8B24D532E94A8363 /* Sources */ = {
