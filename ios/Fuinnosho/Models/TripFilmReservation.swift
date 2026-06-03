@@ -7,6 +7,7 @@ struct TripFilmReservation: Identifiable, Codable, Hashable {
   var quantity: Int
   var createdAt: String?
   var film: ReservedFilm?
+  var trip: ReservedTrip?
 
   enum CodingKeys: String, CodingKey {
     case id
@@ -15,6 +16,7 @@ struct TripFilmReservation: Identifiable, Codable, Hashable {
     case quantity
     case createdAt = "created_at"
     case film = "films"
+    case trip = "trips"
   }
 }
 
@@ -25,6 +27,24 @@ struct ReservedFilm: Identifiable, Codable, Hashable {
   var iso: Int
   var format: String
   var type: String
+}
+
+struct ReservedTrip: Identifiable, Codable, Hashable {
+  let id: UUID
+  var title: String
+  var description: String?
+  var startDate: String
+  var endDate: String
+  var status: TripStatus?
+
+  enum CodingKeys: String, CodingKey {
+    case id
+    case title
+    case description
+    case startDate = "start_date"
+    case endDate = "end_date"
+    case status
+  }
 }
 
 struct NewTripFilmReservation: Encodable {

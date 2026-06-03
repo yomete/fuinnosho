@@ -7,6 +7,7 @@ struct SignInView: View {
   @State private var password = ""
   @State private var isCreatingAccount = false
   @State private var isSubmitting = false
+  @State private var isShowingPasswordReset = false
 
   var body: some View {
     NavigationStack {
@@ -57,11 +58,21 @@ struct SignInView: View {
         }
         .frame(maxWidth: .infinity)
 
+        if !isCreatingAccount {
+          Button("Forgot password?") {
+            isShowingPasswordReset = true
+          }
+          .frame(maxWidth: .infinity)
+        }
+
         Spacer()
       }
       .padding()
       .background(FuinnoshoTheme.background.ignoresSafeArea())
       .foregroundStyle(FuinnoshoTheme.text)
+      .sheet(isPresented: $isShowingPasswordReset) {
+        PasswordResetView(email: email)
+      }
     }
   }
 

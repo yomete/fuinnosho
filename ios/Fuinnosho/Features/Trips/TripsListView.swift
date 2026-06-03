@@ -8,6 +8,8 @@ struct TripsListView: View {
   @State private var errorMessage: String?
   @State private var isLoading = false
   @State private var isShowingNewTrip = false
+  @State private var searchText = ""
+  @State private var selectedStatus: TripStatus?
 
   var body: some View {
     List {
@@ -15,7 +17,23 @@ struct TripsListView: View {
         ProgressView()
       }
 
-      ForEach(trips) { trip in
+      if !trips.isEmpty {
+        Section("Summary") {
+          LabeledContent("Trips", value: "\(trips.count)")
+          LabeledContent("Reserved rolls", value: "\(trips.reduce(0) { $0 + ($1.reservedFilmCount ?? 0) })")
+        }
+
+        Section("Filter") {
+          Picker("Status", selection: $selectedStatus) {
+            Text("All").tag(nil as TripStatus?)
+            ForEach(TripStatus.allCases, id: \.self) { status in
+              Text(status.rawValue.capitalized).tag(status as TripStatus?)
+            }
+          }
+        }
+      }
+
+      ForEach(filteredTrips) { trip in
         NavigationLink {
           TripDetailView(trip: trip) {
             await reload()
@@ -46,10 +64,11 @@ struct TripsListView: View {
       }
     }
     .overlay {
-      if trips.isEmpty && !isLoading {
+      if filteredTrips.isEmpty && !isLoading {
         ContentUnavailableView("No trips yet", systemImage: "map", description: Text("Plan your next photo trip."))
       }
     }
+    .searchable(text: $searchText, prompt: "Search trips")
     .alert("Trips Error", isPresented: Binding(
       get: { errorMessage != nil },
       set: { if !$0 { errorMessage = nil } }
@@ -66,17 +85,23 @@ struct TripsListView: View {
     .task {
       await reload()
     }
-    .onChange(of: authStore.signedInEmail) { _, email in
-      guard email != nil else { return }
-      Task {
-        await reload()
-      }
-    }
     .refreshable {
       await reload()
     }
     .safeAreaInset(edge: .bottom) {
-      DebugLoadStatusView(label: "Trips", count: trips.count)
+      DebugLoadStatusView(label: "Trips", count: filteredTrips.count)
+    }
+  }
+
+  private var filteredTrips: [Trip] {
+    let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+    return trips.filter { trip in
+      let matchesStatus = selectedStatus == nil || trip.status == selectedStatus
+      let matchesQuery = query.isEmpty
+        || trip.title.lowercased().contains(query)
+        || trip.description.lowercased().contains(query)
+      return matchesStatus && matchesQuery
     }
   }
 

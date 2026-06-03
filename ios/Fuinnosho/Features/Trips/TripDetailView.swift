@@ -16,6 +16,15 @@ private enum TripConfirmation: Identifiable {
   }
 }
 
+private enum TripFilmSort: String, CaseIterable, Identifiable {
+  case iso = "ISO"
+  case name = "Name"
+  case brand = "Brand"
+  case quantity = "Quantity"
+
+  var id: String { rawValue }
+}
+
 private struct TripFilmReservationRow: View {
   let reservation: TripFilmReservation
   let canEdit: Bool
@@ -70,7 +79,8 @@ struct TripDetailView: View {
   @State private var currentTrip: Trip
   @State private var reservations: [TripFilmReservation] = []
   @State private var gearReservations: [TripGearReservation] = []
-  @State private var availableFilms: [Film] = []
+  @State private var reservableFilms: [Film] = []
+  @State private var filmAvailabilityById: [UUID: Int] = [:]
   @State private var availableGear: [Gear] = []
   @State private var errorMessage: String?
   @State private var isLoading = false
@@ -85,6 +95,9 @@ struct TripDetailView: View {
   @State private var quantity = 1
   @State private var editQuantity = 1
   @State private var isSavingQuantity = false
+  @State private var filmSort: TripFilmSort = .iso
+  @State private var isDescendingFilmSort = true
+  @State private var selectedFilmISO: Int?
 
   init(trip: Trip, onChange: @escaping () async -> Void) {
     self.trip = trip
@@ -223,9 +236,24 @@ struct TripDetailView: View {
       if reservations.isEmpty {
         Text("No reserved film yet")
           .foregroundStyle(.secondary)
+      } else {
+        Picker("Sort", selection: $filmSort) {
+          ForEach(TripFilmSort.allCases) { sort in
+            Text(sort.rawValue).tag(sort)
+          }
+        }
+
+        Toggle("Descending", isOn: $isDescendingFilmSort)
+
+        Picker("ISO", selection: $selectedFilmISO) {
+          Text("All").tag(nil as Int?)
+          ForEach(availableReservationISOs, id: \.self) { iso in
+            Text("\(iso)").tag(iso as Int?)
+          }
+        }
       }
 
-      ForEach(reservations) { reservation in
+      ForEach(filteredReservations) { reservation in
         TripFilmReservationRow(
           reservation: reservation,
           canEdit: !isCompleted
@@ -355,16 +383,49 @@ struct TripDetailView: View {
     "\(editQuantity) roll\(editQuantity == 1 ? "" : "s")"
   }
 
-  private var reservableFilms: [Film] {
-    availableFilms.filter { availableCount(for: $0) > 0 }
+  private var selectedFilmAvailability: Int {
+    guard let selectedFilmId else { return 1 }
+
+    return max(1, filmAvailabilityById[selectedFilmId] ?? 0)
   }
 
-  private var selectedFilmAvailability: Int {
-    guard let selectedFilm = availableFilms.first(where: { $0.id == selectedFilmId }) else {
-      return 1
+  private var availableReservationISOs: [Int] {
+    Array(Set(reservations.compactMap(\.film?.iso))).sorted()
+  }
+
+  private var filteredReservations: [TripFilmReservation] {
+    let filtered = reservations.filter { reservation in
+      selectedFilmISO == nil || reservation.film?.iso == selectedFilmISO
     }
 
-    return max(1, availableCount(for: selectedFilm))
+    return filtered.sorted { first, second in
+      let comparison: ComparisonResult
+
+      switch filmSort {
+      case .iso:
+        comparison = compare(first.film?.iso ?? 0, second.film?.iso ?? 0)
+      case .name:
+        comparison = (first.film?.name ?? "").localizedCaseInsensitiveCompare(second.film?.name ?? "")
+      case .brand:
+        comparison = (first.film?.brand ?? "").localizedCaseInsensitiveCompare(second.film?.brand ?? "")
+      case .quantity:
+        comparison = compare(first.quantity, second.quantity)
+      }
+
+      if comparison == .orderedSame {
+        return (first.film?.name ?? "") < (second.film?.name ?? "")
+      }
+
+      return isDescendingFilmSort ? comparison == .orderedDescending : comparison == .orderedAscending
+    }
+  }
+
+  private func compare(_ first: Int, _ second: Int) -> ComparisonResult {
+    if first == second {
+      return .orderedSame
+    }
+
+    return first < second ? .orderedAscending : .orderedDescending
   }
 
   private func availableCount(for film: Film) -> Int {
@@ -372,9 +433,7 @@ struct TripDetailView: View {
   }
 
   private func editQuantityLimit(for reservation: TripFilmReservation) -> Int {
-    let availableCount = availableFilms
-      .first(where: { $0.id == reservation.filmId })
-      .map(availableCount(for:)) ?? 0
+    let availableCount = filmAvailabilityById[reservation.filmId] ?? 0
     return max(1, reservation.quantity + availableCount)
   }
 
@@ -397,15 +456,25 @@ struct TripDetailView: View {
       async let filmRows = service.listFilms()
       async let gearRows = service.listAvailableGear()
       async let tripRow = service.getTrip(id: trip.id)
-      reservations = try await filmReservationRows
-      gearReservations = try await gearReservationRows
-      availableFilms = try await filmRows
-      availableGear = try await gearRows
+      let loadedFilmReservations = try await filmReservationRows
+      let loadedGearReservations = try await gearReservationRows
+      let loadedFilms = try await filmRows
+      let reservedGearIds = Set(loadedGearReservations.map(\.gearId))
+      let loadedGear = try await gearRows
         .filter { gear in
-          !gearReservations.contains(where: { $0.gearId == gear.id })
+          !reservedGearIds.contains(gear.id)
         }
-      currentTrip = try await tripRow
-      isCompleted = currentTrip.status == .completed
+      let loadedTrip = try await tripRow
+
+      reservations = loadedFilmReservations
+      gearReservations = loadedGearReservations
+      reservableFilms = loadedFilms.filter { availableCount(for: $0) > 0 }
+      filmAvailabilityById = Dictionary(
+        uniqueKeysWithValues: loadedFilms.map { ($0.id, availableCount(for: $0)) }
+      )
+      availableGear = loadedGear
+      currentTrip = loadedTrip
+      isCompleted = loadedTrip.status == .completed
     } catch {
       if await authStore.signOutIfAuthenticationFailed(error) {
         return

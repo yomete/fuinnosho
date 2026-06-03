@@ -1,10 +1,12 @@
 import Foundation
 
-enum TripStatus: String, Codable, Hashable {
+enum TripStatus: String, Codable, CaseIterable, Hashable, Identifiable {
   case upcoming
   case ongoing
   case past
   case completed
+
+  var id: String { rawValue }
 }
 
 struct Trip: Identifiable, Codable, Hashable {

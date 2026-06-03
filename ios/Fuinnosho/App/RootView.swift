@@ -5,13 +5,17 @@ struct RootView: View {
 
   var body: some View {
     Group {
-      switch authStore.sessionState {
-      case .checking:
-        ProgressView()
-      case .signedOut:
-        SignInView()
-      case .signedIn:
-        AppShellView()
+      if authStore.needsPasswordResetUpdate {
+        UpdatePasswordView()
+      } else {
+        switch authStore.sessionState {
+        case .checking:
+          ProgressView()
+        case .signedOut:
+          SignInView()
+        case .signedIn:
+          AppShellView()
+        }
       }
     }
   }

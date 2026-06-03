@@ -7,6 +7,7 @@ struct NewGearView: View {
   @State private var service = InventoryService()
   @State private var form: GearFormData
   @State private var cameras: [Gear] = []
+  @State private var didLoadCameras = false
   @State private var errorMessage: String?
   @State private var isSaving = false
 
@@ -36,6 +37,10 @@ struct NewGearView: View {
           .onChange(of: form.type) { _, type in
             if type != .lens {
               form.cameraId = nil
+            } else if !didLoadCameras {
+              Task {
+                await loadCameras()
+              }
             }
           }
 
@@ -76,7 +81,9 @@ struct NewGearView: View {
         }
       }
       .task {
-        await loadCameras()
+        if form.type == .lens {
+          await loadCameras()
+        }
       }
       .navigationTitle(gear == nil ? "New Gear" : "Edit Gear")
       .toolbar {
@@ -97,11 +104,14 @@ struct NewGearView: View {
   }
 
   private func loadCameras() async {
+    guard !didLoadCameras else { return }
+
     do {
       cameras = try await service.listGear()
         .filter { item in
           item.type == .camera && item.id != gear?.id
         }
+      didLoadCameras = true
     } catch {
       if await authStore.signOutIfAuthenticationFailed(error) {
         return

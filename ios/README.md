@@ -46,13 +46,15 @@ Native SwiftUI companion app for the Fuinnosho web app.
 
 ## Current Scope
 
-- Supabase email/password auth
-- Films list, detail, create, edit, stock adjustments, soft delete, ECN metadata, editing notes, and basic bulk-film fields
-- Gear list, detail, create, edit, delete, model, serial number, purchase date, and purchase price fields
-- Trips list with web-matched derived status ordering, create/edit with native date pickers, delete, detail, film reservation, gear packing, and completion-driven film consumption
+- Supabase email/password auth, password reset links, email updates, password updates, and sign out
+- Films list with search, native filters, stock statistics, type distribution, expiring-soon timeline, detail, create, edit, stock adjustments, deleted-film restore/permanent delete, ECN metadata, editing notes, usage history, trip reservation context, and bulk-film spooling/completion tools
+- Gear list with search, type/brand/condition/price filtering, statistics, top-brand and condition breakdowns, detail, create, edit, delete, model, serial number, purchase date, and purchase price fields
+- Trips list with search/filtering/statistics and web-matched derived status ordering, create/edit with native date pickers, delete, detail, sortable/filterable film reservations, film reservation quantity changes, gear packing, and completion-driven film consumption
 - Detail screens refresh after edits and stock changes so web and iOS stay aligned after shared Supabase writes
 
 The app talks directly to the same Supabase tables and views as the web app, so the database schema and RLS policies are the shared contract.
+
+Marketing pages, public demo routes, MCP/API routes, and AI film recommendations are still web/server concerns rather than native app screens.
 
 ## MVP Verification
 
@@ -82,6 +84,15 @@ repo root:
 MOBILE_UI_EXPECT_FILM="UI Smoke Film" pnpm fixture:mobile:ui verify
 pnpm fixture:mobile:ui cleanup
 ```
+
+For repeatable DEBUG simulator launch checks, pass the fixture credentials as
+launch arguments:
+
+```bash
+-MobileSmokeEmail <fixture-email> -MobileSmokePassword <fixture-password>
+```
+
+These launch arguments are only consumed by DEBUG builds.
 
 Optionally run the write smoke against the same account:
 

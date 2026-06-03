@@ -76,6 +76,16 @@ the temporary user and owned rows afterward:
 pnpm fixture:mobile:ui cleanup
 ```
 
+In DEBUG builds, the simulator can also sign in with fixture credentials passed
+as launch arguments:
+
+```bash
+-MobileSmokeEmail <fixture-email> -MobileSmokePassword <fixture-password>
+```
+
+Use this for automated read acceptance of the Films, Gear, and Trips tabs when
+manual typing is not available.
+
 ## Opt-in Write Smoke
 
 From the repo root, run this only when you want to mutate Supabase with a
@@ -119,6 +129,8 @@ client after creating the user, and deletes the temporary auth user at the end.
 
 - Create a film named `iOS Smoke Film`.
 - Confirm it appears in the Films list.
+- Use search plus format/type/stock filters and confirm the list changes.
+- Confirm Summary, Distribution, and Expiration Timeline sections render without overlapping text.
 - Open the film detail and edit the notes or editing notes.
 - Add one roll from Adjust Stock.
 - Mark one roll shot from Adjust Stock.
@@ -135,6 +147,8 @@ Shared Supabase surface:
 
 - Create gear named `iOS Smoke Gear`.
 - Confirm it appears in the Gear list.
+- Use search plus type/brand/condition/price filters and confirm the list changes.
+- Confirm Summary, Top Brands, and Condition sections render with expected counts.
 - Open the gear detail and edit the notes.
 - Delete the gear.
 - Confirm the web app reflects the create/edit/delete changes.
@@ -150,6 +164,7 @@ Shared Supabase surface:
 - Confirm it appears in the Trips list with derived status ordering.
 - Open the trip detail.
 - Reserve available film.
+- Sort and filter reserved film by ISO in the trip detail.
 - Edit the reserved film quantity.
 - Pack available gear.
 - Remove the reserved film.

@@ -8,11 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		01D96D89116030924BC9ADE3 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 7037639B3586645F44A9449B /* Supabase */; };
+		049463214325800D0F3BBA6B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E49F49B838ACE1E7FED8202 /* SettingsView.swift */; };
 		080CD0CD28B5E2B49E2D114D /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C93527C73577BF43BEAA7FEE /* RootView.swift */; };
 		080E0F67AEA0D3BE16D39996 /* FilmDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F150C18862FD35A10AC3B69 /* FilmDetailView.swift */; };
+		0924B33A8EA6153D7C14CCB5 /* UpdatePasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB3BD2CC2096F0F63D11C5E5 /* UpdatePasswordView.swift */; };
 		0C9FCE293DE8118728688DEF /* TripsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA92D2A5EC43EDA824EBF6AA /* TripsListView.swift */; };
+		14820300D91346E94329838E /* DeletedFilmsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A9C5BF800BE9D8B3B66056 /* DeletedFilmsView.swift */; };
 		18550AAF2F8339BDCB566797 /* FilmFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9393A59A4720BF379F9031BB /* FilmFormData.swift */; };
 		1CDD7FB40F2DB0875201A759 /* Film.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8863FF79BCA16100F77C9D65 /* Film.swift */; };
+		1F7785D7C3D1B6465E31BD40 /* AuthDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53C6B93FA2BB07F21F853BD7 /* AuthDeepLink.swift */; };
 		2E9DE717C04B60B95D74D71D /* TripDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97639018AB634E4CAB6E8F96 /* TripDetailView.swift */; };
 		329B2B6AE170BB3836B8272D /* FilmStockAdjustmentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74EA54BC7D74FF68B7C09B4C /* FilmStockAdjustmentView.swift */; };
 		32EFC2B17E5398DE95A27F0F /* DebugLoadStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3143B5942285F9626A7B1FFD /* DebugLoadStatusView.swift */; };
@@ -23,6 +27,8 @@
 		5E60E888DFFD22D20721FE57 /* TripFilmReservation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 712DC7EACF88BB76A9E9A669 /* TripFilmReservation.swift */; };
 		762E646CC22B2585C0E1B397 /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30D5F8F1559EA1EF949E1A97 /* AuthSessionStore.swift */; };
 		769C58F28D3CC06AF462B6FC /* TripFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBE83052B4B4546BD238959A /* TripFormData.swift */; };
+		7CC09129C2798FD7CD2749E4 /* FilmBulkSpoolView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BB7C82A6ACDC96C98E697A2 /* FilmBulkSpoolView.swift */; };
+		7E60520AF8B71D5EA36178E0 /* PasswordResetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 248DF2E4E3E6800241F61F69 /* PasswordResetView.swift */; };
 		81A548EF1D4DD91E75F679B3 /* GearDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56673501C27925BB023667CB /* GearDetailView.swift */; };
 		885E53F88BA974DA0654A790 /* NewGearView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE9DE993B21EFACE9C3B6358 /* NewGearView.swift */; };
 		8F0BC3BB8A0F60815C8C8CEA /* GearFormData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 495F796ECA6AF4355557AF51 /* GearFormData.swift */; };
@@ -55,6 +61,7 @@
 
 /* Begin PBXFileReference section */
 		20BF5C32D699AF0EDA1ECB7A /* FormDataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormDataTests.swift; sourceTree = "<group>"; };
+		248DF2E4E3E6800241F61F69 /* PasswordResetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordResetView.swift; sourceTree = "<group>"; };
 		2B6BCDAEC74F3AF10893D919 /* FilmsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmsListView.swift; sourceTree = "<group>"; };
 		2C260DF3C30F3C7EA0E2B01B /* Gear.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gear.swift; sourceTree = "<group>"; };
 		2F150C18862FD35A10AC3B69 /* FilmDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmDetailView.swift; sourceTree = "<group>"; };
@@ -66,7 +73,9 @@
 		3F98B66ABC056B9D56B73250 /* FuinnoshoTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuinnoshoTheme.swift; sourceTree = "<group>"; };
 		46BC663ABE5768EDBE19E623 /* NewFilmView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewFilmView.swift; sourceTree = "<group>"; };
 		495F796ECA6AF4355557AF51 /* GearFormData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearFormData.swift; sourceTree = "<group>"; };
+		4BB7C82A6ACDC96C98E697A2 /* FilmBulkSpoolView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmBulkSpoolView.swift; sourceTree = "<group>"; };
 		538D4BFF9A7AB62FDE601FFC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		53C6B93FA2BB07F21F853BD7 /* AuthDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthDeepLink.swift; sourceTree = "<group>"; };
 		56673501C27925BB023667CB /* GearDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GearDetailView.swift; sourceTree = "<group>"; };
 		57D8538CB20598B0409DA9FD /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		5B9D880936E6F64C984911B7 /* Trip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trip.swift; sourceTree = "<group>"; };
@@ -75,6 +84,7 @@
 		74EA54BC7D74FF68B7C09B4C /* FilmStockAdjustmentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmStockAdjustmentView.swift; sourceTree = "<group>"; };
 		75A5DB05BEE27F74E5BE9176 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		7B15C836922C71EA6F20C004 /* NewTripView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewTripView.swift; sourceTree = "<group>"; };
+		7E49F49B838ACE1E7FED8202 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		84FE902E57F61CD1EF2CCDC7 /* Fuinnosho.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fuinnosho.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8520E1D69A6B85A282226C1D /* FuinnoshoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuinnoshoApp.swift; sourceTree = "<group>"; };
 		8863FF79BCA16100F77C9D65 /* Film.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Film.swift; sourceTree = "<group>"; };
@@ -82,8 +92,10 @@
 		9393A59A4720BF379F9031BB /* FilmFormData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmFormData.swift; sourceTree = "<group>"; };
 		97639018AB634E4CAB6E8F96 /* TripDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDetailView.swift; sourceTree = "<group>"; };
 		9B0CD85C455701A8B75D45EA /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
+		B3A9C5BF800BE9D8B3B66056 /* DeletedFilmsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeletedFilmsView.swift; sourceTree = "<group>"; };
 		BBE83052B4B4546BD238959A /* TripFormData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripFormData.swift; sourceTree = "<group>"; };
 		C93527C73577BF43BEAA7FEE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		DB3BD2CC2096F0F63D11C5E5 /* UpdatePasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatePasswordView.swift; sourceTree = "<group>"; };
 		DCBCF63502AA925C310A7B50 /* TripDisplay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDisplay.swift; sourceTree = "<group>"; };
 		DE9DE993B21EFACE9C3B6358 /* NewGearView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewGearView.swift; sourceTree = "<group>"; };
 		E73E532CC38DD5A90BB9A13F /* InventoryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryServiceTests.swift; sourceTree = "<group>"; };
@@ -147,7 +159,9 @@
 		3A41FE21FAD23ADE08E95671 /* Auth */ = {
 			isa = PBXGroup;
 			children = (
+				248DF2E4E3E6800241F61F69 /* PasswordResetView.swift */,
 				57D8538CB20598B0409DA9FD /* SignInView.swift */,
+				DB3BD2CC2096F0F63D11C5E5 /* UpdatePasswordView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -163,6 +177,8 @@
 		52B31A9A84056465DBC1D1AA /* Films */ = {
 			isa = PBXGroup;
 			children = (
+				B3A9C5BF800BE9D8B3B66056 /* DeletedFilmsView.swift */,
+				4BB7C82A6ACDC96C98E697A2 /* FilmBulkSpoolView.swift */,
 				2F150C18862FD35A10AC3B69 /* FilmDetailView.swift */,
 				9393A59A4720BF379F9031BB /* FilmFormData.swift */,
 				2B6BCDAEC74F3AF10893D919 /* FilmsListView.swift */,
@@ -191,6 +207,7 @@
 				3A41FE21FAD23ADE08E95671 /* Auth */,
 				52B31A9A84056465DBC1D1AA /* Films */,
 				FAFFBCC85F2C2C6CEA85CDA2 /* Gear */,
+				F8DA37FBE516F2E25640FEF2 /* Settings */,
 				11A867010D279B5F7B4F8829 /* Trips */,
 			);
 			path = Features;
@@ -200,6 +217,7 @@
 			isa = PBXGroup;
 			children = (
 				75A5DB05BEE27F74E5BE9176 /* AppError.swift */,
+				53C6B93FA2BB07F21F853BD7 /* AuthDeepLink.swift */,
 				30D5F8F1559EA1EF949E1A97 /* AuthSessionStore.swift */,
 				356492074C339F68DCFB0697 /* InventoryService.swift */,
 				F91CD9DC1A4110D3E6995048 /* SupabaseService.swift */,
@@ -241,6 +259,14 @@
 				C93527C73577BF43BEAA7FEE /* RootView.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		F8DA37FBE516F2E25640FEF2 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				7E49F49B838ACE1E7FED8202 /* SettingsView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		FAFFBCC85F2C2C6CEA85CDA2 /* Gear */ = {
@@ -351,9 +377,12 @@
 			files = (
 				3826347C4510296BBA3D9D3F /* AppError.swift in Sources */,
 				90BE45B735EECBCAD3DDB292 /* AppShellView.swift in Sources */,
+				1F7785D7C3D1B6465E31BD40 /* AuthDeepLink.swift in Sources */,
 				762E646CC22B2585C0E1B397 /* AuthSessionStore.swift in Sources */,
 				32EFC2B17E5398DE95A27F0F /* DebugLoadStatusView.swift in Sources */,
+				14820300D91346E94329838E /* DeletedFilmsView.swift in Sources */,
 				1CDD7FB40F2DB0875201A759 /* Film.swift in Sources */,
+				7CC09129C2798FD7CD2749E4 /* FilmBulkSpoolView.swift in Sources */,
 				080E0F67AEA0D3BE16D39996 /* FilmDetailView.swift in Sources */,
 				18550AAF2F8339BDCB566797 /* FilmFormData.swift in Sources */,
 				329B2B6AE170BB3836B8272D /* FilmStockAdjustmentView.swift in Sources */,
@@ -369,7 +398,9 @@
 				C83E642633AA66DDE4A1C598 /* NewFilmView.swift in Sources */,
 				885E53F88BA974DA0654A790 /* NewGearView.swift in Sources */,
 				DA2407B68851A367469895A6 /* NewTripView.swift in Sources */,
+				7E60520AF8B71D5EA36178E0 /* PasswordResetView.swift in Sources */,
 				080CD0CD28B5E2B49E2D114D /* RootView.swift in Sources */,
+				049463214325800D0F3BBA6B /* SettingsView.swift in Sources */,
 				D8C90FD96311512741119AF0 /* SignInView.swift in Sources */,
 				5D0050E67D9A30A4486F7C92 /* SupabaseService.swift in Sources */,
 				DEB9EB8EE503BAE04C1B1C8C /* Trip.swift in Sources */,
@@ -379,6 +410,7 @@
 				769C58F28D3CC06AF462B6FC /* TripFormData.swift in Sources */,
 				CD3959BD07FBBA1B52DBCE3B /* TripGearReservation.swift in Sources */,
 				0C9FCE293DE8118728688DEF /* TripsListView.swift in Sources */,
+				0924B33A8EA6153D7C14CCB5 /* UpdatePasswordView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

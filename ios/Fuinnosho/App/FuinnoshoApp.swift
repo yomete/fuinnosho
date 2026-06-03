@@ -9,6 +9,9 @@ struct FuinnoshoApp: App {
       RootView()
         .environment(authStore)
         .tint(FuinnoshoTheme.accent)
+        .onOpenURL { url in
+          authStore.handleOpenURL(url)
+        }
         .task {
           authStore.observeAuthState()
           await authStore.restoreSession()

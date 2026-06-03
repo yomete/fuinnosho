@@ -24,6 +24,83 @@ final class FormDataTests: XCTestCase {
     XCTAssertEqual(film.bulkLengthMeters, 30.50)
   }
 
+  func testFilmUsageDecodesExposureCounts() throws {
+    let json = """
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "film_id": "00000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "usage_note": "Spooled at home",
+      "usage_type": "spool",
+      "exposures_used": 72
+    }
+    """
+
+    let usage = try JSONDecoder().decode(FilmUsage.self, from: Data(json.utf8))
+
+    XCTAssertEqual(usage.usageType, "spool")
+    XCTAssertEqual(usage.exposuresUsed, 72)
+  }
+
+  func testFilmUsageEncodesExposureCountsWhenPresent() throws {
+    let usage = NewFilmUsage(
+      filmId: "00000000-0000-0000-0000-000000000003",
+      quantity: 1,
+      usageNote: "Spooled from test",
+      usageType: "spool",
+      tripId: nil,
+      exposuresUsed: 36
+    )
+
+    let data = try JSONEncoder().encode(usage)
+    let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    XCTAssertEqual(json["usage_type"] as? String, "spool")
+    XCTAssertEqual(json["exposures_used"] as? Int, 36)
+  }
+
+  func testFilmDeletedAtUpdateEncodesNullWhenRestoring() throws {
+    let update = FilmDeletedAtUpdate(deletedAt: nil)
+
+    let data = try JSONEncoder().encode(update)
+    let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    XCTAssertTrue(json.keys.contains("deleted_at"))
+    XCTAssertTrue(json["deleted_at"] is NSNull)
+  }
+
+  func testTripFilmReservationDecodesTripContext() throws {
+    let json = """
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "trip_id": "00000000-0000-0000-0000-000000000006",
+      "film_id": "00000000-0000-0000-0000-000000000003",
+      "quantity": 2,
+      "trips": {
+        "id": "00000000-0000-0000-0000-000000000006",
+        "title": "Istanbul",
+        "description": "Street photography",
+        "start_date": "2026-06-10",
+        "end_date": "2026-06-12",
+        "status": "upcoming"
+      }
+    }
+    """
+
+    let reservation = try JSONDecoder().decode(TripFilmReservation.self, from: Data(json.utf8))
+
+    XCTAssertEqual(reservation.quantity, 2)
+    XCTAssertEqual(reservation.trip?.title, "Istanbul")
+    XCTAssertEqual(reservation.trip?.status, .upcoming)
+  }
+
+  func testAuthDeepLinkRecognizesPasswordRecoveryCallback() throws {
+    let url = try XCTUnwrap(URL(string: "fuinnosho://auth/callback?code=abc&type=recovery"))
+
+    XCTAssertTrue(AuthDeepLink.isAuthCallback(url))
+    XCTAssertTrue(AuthDeepLink.isPasswordRecovery(url))
+  }
+
   func testTripDecodesMissingOptionalDisplayFields() throws {
     let json = """
     {

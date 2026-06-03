@@ -1,34 +1,50 @@
 import Foundation
 
 enum TripDisplay {
-  static func status(for trip: Trip) -> TripStatus {
-    if trip.status == .completed {
-      return .completed
-    }
+  struct SortKey {
+    var status: TripStatus
+    var startDate: Date
+    var endDate: Date
+  }
 
+  private static let dateParseStrategy = Date.ISO8601FormatStyle.iso8601.year().month().day().parseStrategy
+  private static let priority: [TripStatus: Int] = [
+    .ongoing: 0,
+    .upcoming: 1,
+    .past: 2,
+    .completed: 3,
+  ]
+
+  static func status(for trip: Trip) -> TripStatus {
+    sortKey(for: trip).status
+  }
+
+  static func sortKey(for trip: Trip) -> SortKey {
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
     let startDate = date(from: trip.startDate).map(calendar.startOfDay(for:)) ?? today
     let endDate = date(from: trip.endDate).map(calendar.startOfDay(for:)) ?? startDate
 
+    if trip.status == .completed {
+      return SortKey(status: .completed, startDate: startDate, endDate: endDate)
+    }
+
     if startDate > today {
-      return .upcoming
+      return SortKey(status: .upcoming, startDate: startDate, endDate: endDate)
     }
 
     if endDate < today {
-      return .past
+      return SortKey(status: .past, startDate: startDate, endDate: endDate)
     }
 
-    return .ongoing
+    return SortKey(status: .ongoing, startDate: startDate, endDate: endDate)
   }
 
   static func compare(_ lhs: Trip, _ rhs: Trip) -> Bool {
-    let priority: [TripStatus: Int] = [
-      .ongoing: 0,
-      .upcoming: 1,
-      .past: 2,
-      .completed: 3,
-    ]
+    compare(sortKey(for: lhs), sortKey(for: rhs))
+  }
+
+  static func compare(_ lhs: SortKey, _ rhs: SortKey) -> Bool {
     let lhsPriority = priority[lhs.status] ?? 0
     let rhsPriority = priority[rhs.status] ?? 0
 
@@ -36,22 +52,17 @@ enum TripDisplay {
       return lhsPriority < rhsPriority
     }
 
-    let lhsStart = date(from: lhs.startDate) ?? .distantPast
-    let rhsStart = date(from: rhs.startDate) ?? .distantPast
-    let lhsEnd = date(from: lhs.endDate) ?? lhsStart
-    let rhsEnd = date(from: rhs.endDate) ?? rhsStart
-
     switch lhs.status {
     case .ongoing:
-      return lhsEnd < rhsEnd
+      return lhs.endDate < rhs.endDate
     case .upcoming:
-      return lhsStart < rhsStart
+      return lhs.startDate < rhs.startDate
     case .past, .completed:
-      return lhsEnd > rhsEnd
+      return lhs.endDate > rhs.endDate
     }
   }
 
   static func date(from value: String) -> Date? {
-    try? Date.ISO8601FormatStyle.iso8601.year().month().day().parseStrategy.parse(value)
+    try? dateParseStrategy.parse(value)
   }
 }

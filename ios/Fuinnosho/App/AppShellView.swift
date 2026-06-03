@@ -34,6 +34,13 @@ struct AppShellView: View {
       .tabItem {
         Label("Trips", systemImage: "map")
       }
+
+      NavigationStack {
+        SettingsView()
+      }
+      .tabItem {
+        Label("Settings", systemImage: "gearshape")
+      }
     }
   }
 

@@ -23,6 +23,21 @@ struct InventoryService {
     return films.filter { $0.deletedAt == nil }
   }
 
+  func listDeletedFilms() async throws -> [Film] {
+    let userId = try await supabase.currentUserId()
+
+    let films: [Film] = try await supabase.client
+      .from("films_with_availability")
+      .select()
+      .eq("user_id", value: userId)
+      .not("deleted_at", operator: .is, value: "null")
+      .order("deleted_at", ascending: false)
+      .execute()
+      .value
+
+    return films
+  }
+
   func createFilm(_ film: FilmFormData) async throws {
     let userId = try await supabase.currentUserId()
     let payload = NewFilm(
@@ -87,7 +102,29 @@ struct InventoryService {
 
     try await supabase.client
       .from("films")
-      .update(["deleted_at": Date().ISO8601Format()])
+      .update(FilmDeletedAtUpdate(deletedAt: Date().ISO8601Format()))
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
+      .execute()
+  }
+
+  func restoreFilm(_ film: Film) async throws {
+    let userId = try await supabase.currentUserId()
+
+    try await supabase.client
+      .from("films")
+      .update(FilmDeletedAtUpdate(deletedAt: nil))
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
+      .execute()
+  }
+
+  func permanentlyDeleteFilm(_ film: Film) async throws {
+    let userId = try await supabase.currentUserId()
+
+    try await supabase.client
+      .from("films")
+      .delete()
       .eq("id", value: film.id.uuidString)
       .eq("user_id", value: userId)
       .execute()
@@ -103,6 +140,46 @@ struct InventoryService {
       .eq("user_id", value: userId)
       .is("deleted_at", value: nil)
       .single()
+      .execute()
+      .value
+  }
+
+  func listFilmUsage(filmId: UUID) async throws -> [FilmUsage] {
+    _ = try await supabase.currentUserId()
+
+    return try await supabase.client
+      .from("film_usage")
+      .select()
+      .eq("film_id", value: filmId.uuidString)
+      .order("created_at", ascending: false)
+      .execute()
+      .value
+  }
+
+  func listFilmTripReservations(filmId: UUID) async throws -> [TripFilmReservation] {
+    _ = try await supabase.currentUserId()
+
+    return try await supabase.client
+      .from("trip_films")
+      .select(
+        """
+        id,
+        trip_id,
+        film_id,
+        quantity,
+        created_at,
+        trips!inner (
+          id,
+          title,
+          description,
+          start_date,
+          end_date,
+          status
+        )
+        """
+      )
+      .eq("film_id", value: filmId.uuidString)
+      .order("created_at", ascending: false)
       .execute()
       .value
   }
@@ -258,13 +335,17 @@ struct InventoryService {
       return rows
         .map { row in
           var displayTrip = row.trip
+          let sortKey = TripDisplay.sortKey(for: displayTrip)
           displayTrip.reservedFilmCount = row.tripFilms?.reduce(0) { total, tripFilm in
             total + tripFilm.quantity
           } ?? 0
-          displayTrip.status = TripDisplay.status(for: displayTrip)
-          return displayTrip
+          displayTrip.status = sortKey.status
+          return (trip: displayTrip, sortKey: sortKey)
         }
-        .sorted(by: TripDisplay.compare)
+        .sorted { lhs, rhs in
+          TripDisplay.compare(lhs.sortKey, rhs.sortKey)
+        }
+        .map { $0.trip }
     } catch {
       throw contextualError("Trips list", error)
     }
@@ -601,6 +682,87 @@ struct InventoryService {
         usageType: "add",
         tripId: nil
       ))
+      .execute()
+  }
+
+  func spoolBulkFilm(
+    _ film: Film,
+    exposuresToSpool: Int,
+    cassettesCreated: Int,
+    note: String
+  ) async throws {
+    let userId = try await supabase.currentUserId()
+    let state: BulkFilmState = try await supabase.client
+      .from("films")
+      .select("count, is_bulk_film, bulk_remaining_exposures, spooled_cassettes")
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
+      .single()
+      .execute()
+      .value
+
+    guard state.isBulkFilm == true else {
+      throw AppError.message("This is not a bulk film.")
+    }
+
+    let remainingExposures = state.bulkRemainingExposures ?? 0
+    guard exposuresToSpool <= remainingExposures else {
+      throw AppError.message("Not enough bulk film remaining.")
+    }
+
+    let newRemainingExposures = remainingExposures - exposuresToSpool
+    let newSpooledCassettes = (state.spooledCassettes ?? 0) + cassettesCreated
+
+    try await supabase.client
+      .from("films")
+      .update(BulkFilmSpoolUpdate(
+        count: newSpooledCassettes,
+        bulkRemainingExposures: newRemainingExposures,
+        spooledCassettes: newSpooledCassettes
+      ))
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
+      .execute()
+
+    try await supabase.client
+      .from("film_usage")
+      .insert(NewFilmUsage(
+        filmId: film.id.uuidString,
+        quantity: cassettesCreated,
+        usageNote: note.isEmpty ? "Spooled from mobile app" : note,
+        usageType: "spool",
+        tripId: nil,
+        exposuresUsed: exposuresToSpool
+      ))
+      .execute()
+  }
+
+  func finishBulkRoll(_ film: Film) async throws {
+    let userId = try await supabase.currentUserId()
+    let state: BulkRollState = try await supabase.client
+      .from("films")
+      .select("is_bulk_film, bulk_quantity, bulk_rolls_used")
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
+      .single()
+      .execute()
+      .value
+
+    guard state.isBulkFilm == true else {
+      throw AppError.message("This is not a bulk film.")
+    }
+
+    let totalRolls = state.bulkQuantity ?? 0
+    let rollsUsed = state.bulkRollsUsed ?? 0
+    guard rollsUsed < totalRolls else {
+      throw AppError.message("All bulk rolls have been used.")
+    }
+
+    try await supabase.client
+      .from("films")
+      .update(BulkRollUpdate(bulkRollsUsed: rollsUsed + 1))
+      .eq("id", value: film.id.uuidString)
+      .eq("user_id", value: userId)
       .execute()
   }
 
