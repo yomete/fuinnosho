@@ -96,6 +96,125 @@ interface GearForTrip {
   model?: string;
 }
 
+interface DescriptionSection {
+  title: string;
+  body: string;
+}
+
+const descriptionLabels = [
+  "Main itinerary anchors",
+  "Reserved film",
+  "Film plan",
+  "Reel concept",
+  "Solo reel photowalk plan",
+];
+
+function parseTripDescription(description: string) {
+  const text = description.trim();
+
+  if (!text) {
+    return { intro: "", sections: [] };
+  }
+
+  const labelPattern = new RegExp(
+    `(?:^|\\s)(${descriptionLabels.join("|")}):\\s*`,
+    "g"
+  );
+  const matches = [...text.matchAll(labelPattern)];
+
+  if (matches.length === 0) {
+    return { intro: text, sections: [] };
+  }
+
+  const intro = text.slice(0, matches[0].index).trim();
+  const sections = matches.map((match, index) => {
+    const nextMatch = matches[index + 1];
+    const start = (match.index || 0) + match[0].length;
+    const end = nextMatch?.index || text.length;
+
+    return {
+      title: match[1],
+      body: text.slice(start, end).trim(),
+    };
+  });
+
+  return { intro, sections };
+}
+
+function getDescriptionItems(section: DescriptionSection) {
+  if (section.title === "Main itinerary anchors") {
+    return section.body
+      .replace(/\.$/, "")
+      .split(/,\s+(?=(?:Chicago|Booth|graduation|kayaking|and Lincoln)\b)/)
+      .map((part) => part.replace(/^and\s+/, "").trim())
+      .filter(Boolean);
+  }
+
+  const items = section.body
+    .replace(/\.$/, "")
+    .split(/;\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return items.length > 1 ? items : [];
+}
+
+function TripDescription({ description }: { description: string }) {
+  const { intro, sections } = parseTripDescription(description);
+
+  if (sections.length === 0) {
+    return (
+      <p className="max-w-3xl break-words text-base leading-8 text-[#c7beb6]">
+        {intro}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      {intro && (
+        <p className="max-w-3xl break-words text-base leading-8 text-[#d5cec7]">
+          {intro}
+        </p>
+      )}
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {sections.map((section) => {
+          const items = getDescriptionItems(section);
+
+          return (
+            <section
+              key={section.title}
+              className="border-l border-[#5c5955]/60 py-1 pl-4"
+            >
+              <h3 className="mb-2 font-sans text-xs font-semibold uppercase tracking-[0.12em] text-[#b7aaa0]">
+                {section.title}
+              </h3>
+              {items.length > 1 ? (
+                <ul className="space-y-2">
+                  {items.map((item) => (
+                    <li
+                      key={item}
+                      className="flex gap-2 text-sm leading-6 text-[#d5cec7]"
+                    >
+                      <span className="mt-[0.65em] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#a57c47]" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="break-words text-sm leading-7 text-[#d5cec7]">
+                  {section.body}
+                </p>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function TripDetails({ trip, onBack }: TripDetailsProps) {
   const router = useRouter();
   const prefix = useDemoPrefix();
@@ -390,11 +509,11 @@ export function TripDetails({ trip, onBack }: TripDetailsProps) {
 
         <div className="grid gap-6">
           <Card className="bg-[#2a2825] border-[#3d3a36] overflow-hidden">
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-[#e8e4e0]">Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-[#8a8078] break-words">{trip.description}</p>
+              <TripDescription description={trip.description} />
             </CardContent>
           </Card>
 
