@@ -108,4 +108,4 @@ Feel free to open an issue for questions or join discussions.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the AGPL-3.0 license.
+By contributing, you agree that your contributions will be licensed under the MIT license.

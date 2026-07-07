@@ -1,7 +1,7 @@
 # Fuinnosho
 
 [![CI](https://github.com/yomete/fuinnosho/actions/workflows/ci.yml/badge.svg)](https://github.com/yomete/fuinnosho/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A film photography inventory management system for analog photographers. Track your film stock, plan trips, and manage gear.
 
@@ -164,7 +164,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute.
 
 ## License
 
-[AGPL-3.0](LICENSE)
+[MIT](LICENSE)
 
 ---
 
