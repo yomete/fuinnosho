@@ -11,10 +11,21 @@ vi.mock("uuid", () => ({
 }));
 
 // Create chainable mock that returns itself for all methods
-function createChainableMock() {
-  const mock: Record<string, ReturnType<typeof vi.fn>> = {};
+const chainMethods = ['from', 'select', 'insert', 'update', 'delete', 'eq', 'neq', 'is', 'isNull', 'order'] as const;
+type ChainMethod = (typeof chainMethods)[number];
+type MockFn = ReturnType<typeof vi.fn>;
+type MockSupabase = {
+  [method in ChainMethod]: MockFn;
+} & {
+  single: MockFn;
+  auth: {
+    getUser: MockFn;
+    signOut: MockFn;
+  };
+};
 
-  const chainMethods = ['from', 'select', 'insert', 'update', 'delete', 'eq', 'neq', 'is', 'isNull', 'order'];
+function createChainableMock() {
+  const mock = {} as MockSupabase;
 
   chainMethods.forEach(method => {
     mock[method] = vi.fn().mockImplementation(() => mock);
@@ -107,7 +118,6 @@ const mockFilm = {
 function resetMocks() {
   vi.clearAllMocks();
   // Reset all chainable methods to return the mock object
-  const chainMethods = ['from', 'select', 'insert', 'update', 'delete', 'eq', 'neq', 'is', 'isNull', 'order'];
   chainMethods.forEach(method => {
     mockSupabase[method].mockImplementation(() => mockSupabase);
   });

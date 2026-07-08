@@ -4,7 +4,7 @@ import type { FilterState, FilterAction } from "./enhanced-filters";
 
 // Mock localStorage for tests
 const localStorageMock = (() => {
-  let store: Record<string, string> = {};
+  let store: Record<string, string | undefined> = {};
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
     setItem: vi.fn((key: string, value: string) => {

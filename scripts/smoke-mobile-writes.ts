@@ -7,7 +7,7 @@
 import { randomUUID } from "crypto";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const envPath = resolve(process.cwd(), ".env.local");
 try {
@@ -107,7 +107,7 @@ async function resolveSmokeAccount(supabaseUrl: string): Promise<SmokeAccount> {
 }
 
 async function cleanupSmokeRows(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   ids: SmokeIds,
   userId: string
 ) {
@@ -127,7 +127,7 @@ async function cleanupSmokeRows(
 }
 
 async function assertSmokeRowsCleaned(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   ids: Required<SmokeIds>
 ) {
   const [film, gear, trip, tripFilms, tripGear, filmUsage] = await Promise.all([

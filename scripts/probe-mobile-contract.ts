@@ -7,7 +7,7 @@
 
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const envPath = resolve(process.cwd(), ".env.local");
 try {
@@ -95,7 +95,7 @@ function maskEmail(email: string) {
 }
 
 async function resolveUserId(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   userId: string | undefined,
   email: string | undefined
 ) {
