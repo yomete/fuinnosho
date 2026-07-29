@@ -77,7 +77,6 @@ FILM_API_SECRET=$(openssl rand -hex 32)
 OPENAI_API_KEY=your-openai-key
 
 # Optional: MCP Server for Claude Desktop
-MCP_MONITORING_API_KEY=your-mcp-key
 MCP_USER_ID=your-user-uuid
 ```
 

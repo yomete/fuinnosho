@@ -452,9 +452,21 @@ describe("tripSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("fails for empty description", () => {
+  it("allows an empty description", () => {
     const result = tripSchema.safeParse({ ...validTrip, description: "" });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+  });
+
+  it("defaults a missing description to an empty string", () => {
+    const result = tripSchema.safeParse({
+      title: validTrip.title,
+      start_date: validTrip.start_date,
+      end_date: validTrip.end_date,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.description).toBe("");
+    }
   });
 
   it("fails for empty start_date", () => {

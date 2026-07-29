@@ -1,8 +1,36 @@
+import { z } from "zod";
 import { formatDimensions, getExposuresPerRoll } from "../films/schema.js";
 import { createFilmToolHandlers } from "./film-tools.js";
 import { createTripToolHandlers } from "./trip-tools.js";
 import { createGearToolHandlers } from "./gear-tools.js";
 export { formatDimensions, getExposuresPerRoll };
+function jsonSchemaPrimitiveToZodSchema(schema) {
+    let zodSchema;
+    if (schema.enum && schema.enum.length > 0) {
+        zodSchema = z.enum(schema.enum);
+    }
+    else if (schema.type === "string") {
+        zodSchema = z.string();
+    }
+    else if (schema.type === "number") {
+        zodSchema = z.number();
+    }
+    else {
+        zodSchema = z.boolean();
+    }
+    zodSchema = zodSchema.describe(schema.description);
+    if (schema.default !== undefined) {
+        return zodSchema.default(schema.default);
+    }
+    return zodSchema;
+}
+export function jsonSchemaObjectToZodRawShape(schema) {
+    const required = new Set(schema.required ?? []);
+    return Object.fromEntries(Object.entries(schema.properties).map(([key, value]) => {
+        const zodSchema = jsonSchemaPrimitiveToZodSchema(value);
+        return [key, required.has(key) ? zodSchema : zodSchema.optional()];
+    }));
+}
 export const TOOL_DEFINITIONS = [
     {
         name: "get_film_inventory",

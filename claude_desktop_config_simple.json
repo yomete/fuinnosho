@@ -2,11 +2,7 @@
   "mcpServers": {
     "fuinnosho-film-inventory": {
       "command": "npx",
-      "args": ["tsx", "/Users/yomi/Documents/batcave/fuinnosho/mcp-server.ts"],
-      "env": {
-        "MCP_MONITORING_API_KEY": "mcp_0c244aeb2e00be07bdbfa55dc2f23fb9bde502e199e9c4f650ec7fc7c56dbe45",
-        "MCP_MONITORING_ENDPOINT": "https://mcp-monitoring.fly.dev/api/v1"
-      }
+      "args": ["tsx", "/Users/yomi/Documents/batcave/fuinnosho/mcp-server.ts"]
     }
   }
 }

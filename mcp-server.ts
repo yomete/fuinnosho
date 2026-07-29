@@ -1,34 +1,9 @@
 #!/usr/bin/env node
 
-// Import MCP Monitoring SDK
-import * as MCPMonitoring from "@mcp-monitoring/sdk";
+// All logging goes to stderr. Nothing may ever write to stdout except the
+// transport — stdout carries the JSON-RPC stream.
 
-// Initialize MCP Monitoring
-console.error(`🔧 MCP Monitoring Config:
-  API Key: ${process.env.MCP_MONITORING_API_KEY ? "SET" : "NOT SET"}
-  Endpoint: ${
-    process.env.MCP_MONITORING_ENDPOINT || "http://localhost:8080/api/v1"
-  }
-  Server ID: fuinnosho-film-inventory-server`);
-
-MCPMonitoring.init({
-  apiKey: process.env.MCP_MONITORING_API_KEY || "",
-  endpoint:
-    process.env.MCP_MONITORING_ENDPOINT || "http://localhost:8080/api/v1",
-  serverId: "fuinnosho-film-inventory-server",
-  enableTracing: true,
-  enableMetrics: true,
-  enableAutoInstrumentation: true,
-  metricsInterval: 10000,
-});
-
-function logMCPEvent(type: string, details: any) {
-  console.error(
-    `🔍 MCP Monitoring ${type}:`,
-    JSON.stringify(details, null, 2)
-  );
-}
-
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -43,16 +18,32 @@ import {
 } from "./src/lib/mcp/tools.js";
 import type { ToolName } from "./src/lib/mcp/tool-types.js";
 
+// Tools that mutate data. These need a resolved user_id; reads do not.
+const WRITE_TOOLS = new Set<ToolName>([
+  "update_film_quantity",
+  "spool_bulk_film",
+  "create_film",
+  "edit_film",
+  "delete_film",
+  "create_trip",
+  "edit_trip",
+  "delete_trip",
+  "reserve_film_for_trip",
+  "remove_film_reservation",
+  "update_film_reservation_quantity",
+  "create_gear",
+  "edit_gear",
+  "delete_gear",
+  "reserve_gear_for_trip",
+  "remove_gear_reservation",
+]);
+
 class FilmInventoryMCPServer {
   private server: Server;
-  private handlers: ReturnType<typeof createToolHandlers>;
+  private handlers: ReturnType<typeof createToolHandlers> | null = null;
+  private userId = "";
 
   constructor() {
-    MCPMonitoring.info("MCP Server starting up", {
-      server_name: "fuinnosho-film-inventory",
-      version: "1.0.0",
-    });
-
     this.server = new Server(
       {
         name: "fuinnosho-film-inventory",
@@ -65,44 +56,43 @@ class FilmInventoryMCPServer {
       }
     );
 
-    let supabase: any = null;
+    this.setupToolHandlers();
+  }
+
+  // Runs to completion before the transport connects, so handlers are always
+  // built with a fully resolved user_id — no request can arrive mid-resolution.
+  private async init() {
+    let supabase: SupabaseClient | null = null;
     let userId = "";
 
     try {
       const client = createMcpSupabaseClient();
       supabase = client.supabase;
       userId = client.userId;
-      console.error(
-        supabase
-          ? "🔑 Supabase client initialized"
-          : "⚠️  Running in test mode"
-      );
+      console.error("🔑 Supabase client initialized");
     } catch {
       console.warn(
         "⚠️  Missing Supabase environment variables - running in TEST MODE"
       );
-      MCPMonitoring.warning("MCP Server starting in test mode", {
-        reason: "Missing Supabase credentials",
-        mode: "test",
-      });
     }
 
-    // If no user ID was configured, try to fetch from DB
     if (supabase && !userId) {
-      this.fetchDefaultUserId(supabase).then((id) => {
-        if (id) {
-          userId = id;
-          // Rebuild handlers with the resolved user ID
-          this.handlers = createToolHandlers(supabase, userId);
-        }
-      });
+      userId = (await this.fetchDefaultUserId(supabase)) || "";
     }
 
-    this.handlers = createToolHandlers(supabase, userId);
-    this.setupToolHandlers();
+    if (supabase && !userId) {
+      console.warn(
+        "⚠️  No user_id resolved - write tools will be rejected. Set MCP_USER_ID."
+      );
+    }
+
+    this.userId = userId;
+    this.handlers = createToolHandlers(supabase as SupabaseClient, userId);
   }
 
-  private async fetchDefaultUserId(supabase: any): Promise<string | null> {
+  private async fetchDefaultUserId(
+    supabase: SupabaseClient
+  ): Promise<string | null> {
     try {
       const { data } = await supabase
         .from("trips")
@@ -111,7 +101,6 @@ class FilmInventoryMCPServer {
         .single();
 
       if (data?.user_id) {
-        console.error(`📋 Found default user_id from trips: ${data.user_id}`);
         return data.user_id;
       }
     } catch (error) {
@@ -129,16 +118,19 @@ class FilmInventoryMCPServer {
       const { name, arguments: args } = request.params;
 
       try {
-        console.error(`🛠️  Executing tool: ${name} with monitoring`);
-
-        logMCPEvent("Tool Start", { tool_name: name, arguments: args });
-        MCPMonitoring.info(`Tool execution started: ${name}`, {
-          tool_name: name,
-          arguments: args,
-        });
-
         if (!this.isToolName(name)) {
           throw new Error(`Unknown tool: ${name}`);
+        }
+
+        if (!this.handlers) {
+          throw new Error("Server is not initialized yet");
+        }
+
+        if (WRITE_TOOLS.has(name) && !this.userId) {
+          throw new Error(
+            `Cannot run "${name}": no user_id is configured, so the write would ` +
+              `be rejected or written to the wrong account. Set MCP_USER_ID.`
+          );
         }
 
         const handler = this.handlers[name];
@@ -146,34 +138,8 @@ class FilmInventoryMCPServer {
           throw new Error(`Unknown tool: ${name}`);
         }
 
-        const result = await MCPMonitoring.wrapToolExecution(
-          name,
-          async () => handler(args || {}),
-          args
-        );
-
-        logMCPEvent("Tool Complete", { tool_name: name, success: true });
-        MCPMonitoring.info(`Tool execution completed: ${name}`, {
-          tool_name: name,
-          success: true,
-        });
-
-        return result;
+        return await handler(args || {});
       } catch (error) {
-        logMCPEvent("Error", {
-          message: `Tool execution failed: ${name}`,
-          tool: name,
-          error: error instanceof Error ? error.message : String(error),
-          args,
-        });
-        MCPMonitoring.error(`Tool execution failed: ${name}`, {
-          tool_name: name,
-          error_message:
-            error instanceof Error ? error.message : String(error),
-          error_stack: error instanceof Error ? error.stack : undefined,
-          arguments: args,
-        });
-
         return {
           content: [
             {
@@ -193,12 +159,10 @@ class FilmInventoryMCPServer {
   }
 
   async run() {
-    console.error("Starting MCP server...");
+    await this.init();
     const transport = new StdioServerTransport();
-    console.error("Transport created, connecting...");
     await this.server.connect(transport);
     console.error("Film Inventory MCP server running on stdio");
-    console.error("Server ready to accept requests");
   }
 }
 

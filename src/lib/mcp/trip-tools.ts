@@ -117,19 +117,31 @@ export function createTripToolHandlers(
       }
     }
 
-    const upcomingTrips =
-      trips?.filter((trip: Trip) => new Date(trip.start_date) >= new Date()) ||
-      [];
-    const pastTrips =
-      trips?.filter((trip: Trip) => new Date(trip.end_date) < new Date()) || [];
+    // Bucket every trip exactly once so the counts always sum to total_trips.
+    const now = new Date();
+    const upcomingTrips: Trip[] = [];
+    const ongoingTrips: Trip[] = [];
+    const pastTrips: Trip[] = [];
+
+    for (const trip of trips || []) {
+      if (new Date(trip.end_date) < now) {
+        pastTrips.push(trip);
+      } else if (new Date(trip.start_date) > now) {
+        upcomingTrips.push(trip);
+      } else {
+        ongoingTrips.push(trip);
+      }
+    }
 
     return jsonResult({
       summary: {
         total_trips: trips?.length || 0,
         upcoming_trips: upcomingTrips.length,
+        ongoing_trips: ongoingTrips.length,
         past_trips: pastTrips.length,
       },
       upcoming_trips: upcomingTrips,
+      ongoing_trips: ongoingTrips,
       past_trips: include_past ? pastTrips : [],
     });
   }
