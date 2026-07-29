@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "d55c84378f42",
+  "session_id": "e3a7d91c-1a2f-4b11-bd8a-a225aaf4970e",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-29T04:12:28.741449Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "claude_desktop_config_example.json",
+    "claude_desktop_config_simple.json",
+    "docs/SETUP.md",
+    "mcp-server.ts",
+    "package.json",
+    "src/lib/mcp/trip-tools.ts",
+    "src/lib/trips/schema.ts",
+    "src/lib/utils.test.ts"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 249,
+    "cache_creation_tokens": 719084,
+    "cache_read_tokens": 13882562,
+    "output_tokens": 67874,
+    "api_call_count": 102
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-29T04:12:28.655834Z",
+    "agent_lines": 0,
+    "human_added": 8,
+    "human_modified": 132,
+    "human_removed": 0,
+    "total_committed": 99,
+    "agent_percentage": 0
+  }
+}
