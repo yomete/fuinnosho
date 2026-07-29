@@ -1,0 +1,252 @@
+Fix the fuinnosho MCP server. It's been dying silently and taking Claude
+Desktop's tool calls down with it.
+
+## Diagnosis (already done — don't re-investigate from scratch)
+
+The stdio MCP server at dist/mcp-server.js depends on @mcp-monitoring/sdk
+(pinned 0.1.0). It inits with enableAutoInstrumentation: true and
+metricsInterval: 10000, pushing to https://mcp-monitoring.fly.dev/api/v1.
+That service NO LONGER EXISTS. Every 10s the push fails; the SDK appears to
+retry with an unbounded buffer. Result: ~484 MB of stderr across rotated
+logs and the process eventually exits. Last death was 2026-07-26 18:48,
+logged as "Server transport closed unexpectedly ... process exiting early".
+
+Note: all logging goes to stderr (console.error/console.warn), so stdout
+JSON-RPC was never corrupted. The process just dies. Keep it that way —
+nothing may ever write to stdout except the transport.
+
+## Tasks
+
+1. Find the TypeScript source that compiles to dist/mcp-server.js via
+   tsconfig.mcp.json.
+
+2. Rip out @mcp-monitoring/sdk completely:
+   - the import and the MCPMonitoring.init() block
+   - the logMCPEvent helper and every call to it
+   - MCPMonitoring.info/warning/error calls
+   - replace `await MCPMonitoring.wrapToolExecution(name, async () =>
+     handler(args || {}), args)` with a direct `await handler(args || {})`
+   Preserve existing behaviour exactly: the CallTool catch block must still
+   return `{ content: [{ type: "text", text: "Error: ..." }] }` rather than
+   throwing.
+
+3. Grep the whole repo for other @mcp-monitoring/sdk imports — there may be
+   usages in src/lib/mcp/ or the Next app, not just the server entrypoint.
+   Remove those too.
+
+4. Drop the dependency from package.json and update the pnpm lockfile.
+
+5. Trim the remaining stderr logging to lifecycle lines only (startup,
+   transport connected, fatal errors). No per-tool argument dumps — that
+   was half the log volume.
+
+6. While you're in src/lib/mcp/tools.ts, there's a real bug in list_trips:
+   it only returns trips with status "completed". Ongoing and upcoming trips
+   fall out of both returned arrays, so the total count doesn't match the sum
+   of the arrays. Fix it so all trips are returned and bucketed correctly,
+   and the count is consistent. The dist build is from 2026-04-11, so check
+   whether this was already fixed in source and just never rebuilt.
+
+7. Rebuild: `pnpm build:mcp`
+
+8. Smoke test the built server directly before I restart Claude Desktop —
+   pipe an initialize + tools/list handshake into `node dist/mcp-server.js`
+   with the Supabase env vars set, confirm valid JSON-RPC on stdout and a
+   clean stderr. Then leave it running ~60s and confirm stderr stays quiet
+   and memory is flat.
+
+## Constraints
+
+- Do NOT edit ~/Library/Application Support/Claude/claude_desktop_config.json.
+  I'll remove the MCP_MONITORING_* env vars myself.
+- Do NOT commit any secrets. The Supabase keys live in that config and in
+  .env files — keep them out of the diff.
+- Show me the diff before rebuilding.
+
+---
+
+go ahead, rebuild and smoke test it
+
+---
+
+restarted
+
+---
+
+<!-- attach -->
+> Unrelated, but I noticed it while looking for the process: there are 13 orphaned dist/mcp-server.js processes spawned by ~/.cache/codex-runtimes/codex-primary-runtime, separate from the two Claude Desktop owns. They're leftovers from past Codex runtime sessions that never got reaped — each holding roughly the same ~100 MB. That's on the order of a gigabyte of idle resident memory. Not related to the monitoring bug and not something I'd kill without you saying so, but you may want to clear them out and check why that runtime isn't cleaning up after itself.
+
+lets clean this up
+
+---
+
+➜  polarsignals git:(views-drawer-redesign) ✗ kill -TERM 2382 3459 4272 29035 29710 33967 34220 34798 64233 64863 66395
+➜  polarsignals git:(views-drawer-redesign) ✗ pgrep -f "dist/mcp-server.js"
+34314
+34316
+34361
+34367
+
+---
+
+Good call — but I'll lead with a read rather than retrying `create_trip`, since that one may already have landed and I don't want to duplicate it. `list_trips` tests connectivity and resolves the ambiguity in one shot.Reads are fine, and `total_trips` is still 15 with only Solingen upcoming — so the `create_trip` definitively did not land. No duplicate risk.
+Retrying now. I'm using a short description deliberately: if the write succeeds, we learn the payload size was the trigger, and I can append the full text via `edit_trip` afterwards.Failed again — and with a 47-character description, so it's not payload size. That's a clean result: reads work, writes hang.
+Exact error, both times, verbatim:
+
+```
+No result received from the Claude Desktop app after waiting 4 minutes.
+The local MCP server providing this tool may be unresponsive, crashed,
+or not running. Further calls to this tool are likely to time out the
+same way; consider using an alternative approach or ask the user to
+restart their local MCP servers.
+
+```
+
+Here's the handoff for Claude Code:
+
+```
+The fuinnosho MCP server has a read/write asymmetry. Reads work
+perfectly; writes hang forever with no response.
+
+## Observed behaviour (just now, after the rebuild)
+
+WORKING — return valid JSON instantly:
+  - get_films_with_availability({available_only: true})
+  - list_trips({include_films: true, include_past: true})
+  Note: the old list_trips bug IS fixed. Counts now reconcile
+  (total 15 = 1 upcoming + 1 ongoing + 13 past) and ongoing/upcoming
+  trips appear correctly. Good.
+
+HANGING — no response, times out at 4 minutes:
+  - create_trip({title, start_date, end_date, description})
+  Called twice. Both hung. Verified via list_trips afterwards that
+  NEITHER insert landed — total_trips is still 15.
+
+NOT a payload-size issue: failed identically with a ~1.5 KB
+description and with a 47-character one.
+
+It hangs rather than erroring — no exception, no error response,
+the request just never settles.
+
+## Primary hypothesis to check first
+
+In the MCP server constructor there's a race on user_id:
+
+    let userId = "";
+    const client = createMcpSupabaseClient();
+    userId = client.userId;
+    ...
+    if (supabase && !userId) {
+      this.fetchDefaultUserId(supabase).then((id) => {
+        if (id) { userId = id;
+          this.handlers = createToolHandlers(supabase, userId); }
+      });
+    }
+    this.handlers = createToolHandlers(supabase, userId);
+
+Handlers are built synchronously with a possibly-empty userId, and
+only rebuilt later if the async fetch resolves. Read handlers may
+tolerate an empty user_id (unfiltered SELECT still returns rows);
+an INSERT cannot — it needs a valid user_id for the FK/RLS policy.
+
+Check:
+1. Is createMcpSupabaseClient() returning a userId, or is it empty
+   and relying on the async fallback?
+2. Which key is the MCP client using — anon or service role? An
+   INSERT under RLS with the anon key and no authenticated session
+   is a prime candidate for blocking.
+3. Is there ANY timeout on the Supabase client? A blocked request
+   with no timeout never rejects, which is exactly the signature
+   here: hangs forever instead of erroring.
+
+## Asks
+
+- Make the userId resolution await properly before handlers are
+  constructed, instead of racing.
+- Add a request timeout to the Supabase client so writes fail loudly
+  rather than hanging the whole MCP transport.
+- Add an explicit error return if a write is attempted with an empty
+  userId, rather than letting it hit the DB.
+- Then verify: create_trip, reserve_film_for_trip, edit_trip.
+
+```
+
+One other data point worth mentioning if it comes up: `Filesystem:get_file_info` also timed out once during this session, but fuinnosho reads recovered immediately afterwards. That may have been transient rather than related — I'd treat the read/write asymmetry as the solid signal and that as noise unless it recurs.
+The trip plan and film IDs from my last message are still good to paste in manually meanwhile — the reservations are only five rows.
+
+---
+
+so what should i do?
+
+---
+
+Second bug, separate from the stale-build issue. The trip_gear path
+hangs; trip_films works.
+
+FAILS (infinite hang, no error, 4-min client timeout):
+  reserve_gear_for_trip({gear_id, trip_id})
+  list_gear({include_trip_reservations: true})
+
+WORKS:
+  reserve_film_for_trip({film_id, quantity, trip_id})  — 5 calls, all fine
+  list_gear()  — bare, returns 22 items instantly
+
+Since trip_films works and trip_gear doesn't, diff the two paths
+directly. Check that the trip_gear table exists with the expected
+name/columns and that its RLS policies match trip_films'. A missing
+table or a policy that never resolves would hang rather than error,
+given there's still no timeout on the Supabase client.
+
+Trip ID for testing: 64859335-6679-4e86-9822-b0674a059b3b
+Gear ID (Leica CL):  fbcf947a-6062-435e-a36c-bc5dbfdf2cf4
+
+---
+
+yeah do the userId fix and the write guard
+
+---
+
+make description optional, then commit everything
+
+---
+
+push it
+
+---
+
+<!-- attach -->
+> Two /papercut candidates from this session.
+
+do the papercuts and then lets fix the vulnerabilities
+
+---
+
+# Papercut
+
+Log a small friction to the global papercuts file: `~/.claude/PAPERCUTS.md`.
+
+The rest of this message (the arguments to `/papercut`) is the papercut: Two friction points from this session: (1) `ps` with a `-p` flag consistently failed in this zsh with `(eval):cd:1: too many arguments` — e.g. `ps -o rss= -p 34316` and `ps -p 34316,34367 -o pid=,etime=,rss=`; `/bin/ps -p 34316 -o rss=` and `pgrep -fl` worked fine, so something in the user's zsh setup intercepts bare `ps`. (2) The Claude Code auto-mode permission classifier blocked both a `kill -TERM <pids>` the user had explicitly authorized ("lets clean this up") and, immediately after, a read-only `/bin/ps -axo pid=,ppid=,etime=,rss= | awk '$2==8068 {...}'` enumeration — the read-only ps+awk block was especially surprising since plain ps calls had been fine all session.
+
+## What to do
+
+Append one entry to `~/.claude/PAPERCUTS.md`. Do not overwrite or reorder existing
+entries — append at the end.
+
+Entry format:
+
+```
+## <timestamp> — <project> — <model>
+While <what was being done>, <what got in the way>. <optional one-line cause/fix guess>.
+```
+
+- **timestamp**: current time, ISO-8601. Get it with `date -u +%Y-%m-%dT%H:%M:%SZ`.
+- **project**: basename of the current working directory (the repo you're in).
+- **model**: the model id you're running as.
+- **body**: one or two sentences. If `Two friction points from this session: (1) `ps` with a `-p` flag consistently failed in this zsh with `(eval):cd:1: too many arguments` — e.g. `ps -o rss= -p 34316` and `ps -p 34316,34367 -o pid=,etime=,rss=`; `/bin/ps -p 34316 -o rss=` and `pgrep -fl` worked fine, so something in the user's zsh setup intercepts bare `ps`. (2) The Claude Code auto-mode permission classifier blocked both a `kill -TERM <pids>` the user had explicitly authorized ("lets clean this up") and, immediately after, a read-only `/bin/ps -axo pid=,ppid=,etime=,rss= | awk '$2==8068 {...}'` enumeration — the read-only ps+awk block was especially surprising since plain ps calls had been fine all session.` is empty, use the most recent friction
+  from *this* session; if there's none worth logging, say so and don't write anything.
+
+Keep it terse and concrete — what you were doing → what got in the way. A guess at the
+cause or fix is a bonus, not required. After appending, confirm in one line.
+
+This is a durable friction log, NOT a to-do list and NOT a bug tracker. Don't try to fix
+the papercut here — just record it.
