@@ -131,6 +131,18 @@ export type ToolArgumentsByName = {
   get_gear_stats: { group_by?: string };
   reserve_gear_for_trip: { trip_id?: string; gear_id?: string };
   remove_gear_reservation: { trip_id?: string; gear_id?: string };
+  get_loaded_films: { include_empty_cameras?: boolean };
+  load_film: {
+    camera_id?: string;
+    film_id?: string;
+    shot_at_iso?: number;
+    notes?: string;
+  };
+  unload_film: {
+    loaded_id?: string;
+    outcome?: string;
+    trip_id?: string;
+  };
 };
 
 export type ToolName = keyof ToolArgumentsByName;
@@ -166,6 +178,12 @@ export interface TripToolHandlers {
   removeFilmReservation: ToolHandler<"remove_film_reservation">;
   updateFilmReservationQuantity: ToolHandler<"update_film_reservation_quantity">;
   getFilmsWithAvailability: ToolHandler<"get_films_with_availability">;
+}
+
+export interface LoadedToolHandlers {
+  getLoadedFilms: ToolHandler<"get_loaded_films">;
+  loadFilm: ToolHandler<"load_film">;
+  unloadFilm: ToolHandler<"unload_film">;
 }
 
 export interface GearToolHandlers {

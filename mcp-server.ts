@@ -36,6 +36,8 @@ const WRITE_TOOLS = new Set<ToolName>([
   "delete_gear",
   "reserve_gear_for_trip",
   "remove_gear_reservation",
+  "load_film",
+  "unload_film",
 ]);
 
 class FilmInventoryMCPServer {

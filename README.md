@@ -41,6 +41,12 @@ and shared reservation workflows.
 - Usage history and statistics
 - Soft-delete with recovery
 
+### Now (Loaded Film)
+- Track which roll is loaded in which camera, with the date it went in
+- Record the EI you're shooting a roll at, prefilled from last time
+- Loaded rolls are held out of trip reservations so a roll is never double-booked
+- Finish a roll as shot (consumes stock, logs usage) or unused (puts it back)
+
 ### Gear Management
 - Catalog cameras, lenses, flashes, accessories, and more
 - Track condition, serial numbers, and purchase info
@@ -133,6 +139,7 @@ ios/
 
 src/
 ├── app/              # Next.js App Router pages
+│   ├── now/          # What's loaded in your cameras
 │   ├── films/        # Film inventory
 │   ├── gear/         # Gear management
 │   ├── trips/        # Trip planning

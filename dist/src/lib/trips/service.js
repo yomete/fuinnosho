@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { tripSchema } from "./schema.js";
-import { deleteTripById, deleteTripFilmReservation, insertTrip, insertTripFilmReservation, listFilmUsageForTrip, listFilmsWithAvailabilityByUser, listPastTripsPendingCompletion, listTripFilmsForConsumption, listTripsByUserWithFilmQuantities, selectTripById, selectTripFilmReservation, selectTripWithFilms, updateTripById, updateTripFilmReservation, } from "./repository.js";
+import { deleteTripById, deleteTripFilmReservation, insertTrip, insertTripFilmReservation, listFilmUsageForTrip, listFilmsWithAvailabilityByUser, listPastTripsPendingCompletion, listTripFilmsForConsumption, listTripsByUserWithFilmQuantities, selectTripById, selectFilmAvailabilityById, selectTripFilmReservation, selectTripWithFilms, updateTripById, updateTripFilmReservation, } from "./repository.js";
 const TRIP_STATUS_PRIORITY = {
     ongoing: 0,
     upcoming: 1,
@@ -116,6 +116,15 @@ export async function deleteTripForUser(supabase, userId, tripId) {
 }
 export async function addFilmToTripForUser(supabase, userId, tripId, filmId, quantity) {
     await ensureTripOwned(supabase, tripId, userId);
+    // available_count nets out other trips' reservations and any roll currently
+    // loaded in a camera, so a roll can never be double-booked.
+    const { data: availability } = await selectFilmAvailabilityById(supabase, filmId, userId);
+    if (!availability) {
+        throw new Error("Film not found");
+    }
+    if ((availability.available_count ?? 0) < quantity) {
+        throw new Error(`Not enough available stock. Available: ${availability.available_count ?? 0}, Requested: ${quantity}`);
+    }
     const { data: existingReservation } = await selectTripFilmReservation(supabase, tripId, filmId);
     if (existingReservation) {
         const { error } = await updateTripFilmReservation(supabase, tripId, filmId, existingReservation.quantity + quantity);

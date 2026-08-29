@@ -35,6 +35,20 @@ This MCP (Model Context Protocol) server provides Claude with real-time access t
    - Group by type, brand, format, or ISO
    - Value and quantity summaries
 
+7. **`get_loaded_films`** - See which roll is in which camera right now
+   - Loaded rolls with camera, film, box speed, and shooting EI
+   - Cameras that are currently empty
+
+8. **`load_film`** - Load a roll into a camera
+   - Holds the roll: it can't be reserved for a trip or loaded elsewhere
+   - Optional shooting EI (e.g. ISO 400 film shot at 800) and note
+   - One roll per camera
+
+9. **`unload_film`** - Finish a loaded roll
+   - `outcome: "shot"` consumes a roll and logs it to usage history
+   - `outcome: "unused"` releases the hold and leaves the count alone
+   - Optionally attributes a shot roll to a trip
+
 ## Setup
 
 ### 1. Install Dependencies
@@ -94,6 +108,11 @@ Once connected, you can ask Claude things like:
 - "I just used 2 rolls of Portra 400 for a wedding shoot"
 - "What's my total film inventory worth?"
 - "Show me usage history for my Tri-X"
+
+### Loaded Film
+- "What's in my cameras right now?"
+- "Load a roll of Portra 400 into the Nikon F3, shooting it at 800"
+- "I finished the roll in the F3"
 
 ### Trip Planning
 - "What films should I bring for a street photography trip?"

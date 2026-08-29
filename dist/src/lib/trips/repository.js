@@ -103,3 +103,11 @@ export async function listTripFilmsForConsumption(supabase, tripId) {
 export async function listFilmUsageForTrip(supabase, tripId) {
     return supabase.from("film_usage").select("film_id").eq("trip_id", tripId);
 }
+export async function selectFilmAvailabilityById(supabase, filmId, userId) {
+    return supabase
+        .from("films_with_availability")
+        .select("id, name, brand, available_count")
+        .eq("id", filmId)
+        .eq("user_id", userId)
+        .maybeSingle();
+}

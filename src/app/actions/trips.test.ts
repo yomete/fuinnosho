@@ -514,6 +514,10 @@ describe('Trip Actions', () => {
 
   describe('addFilmToTrip', () => {
     it('should add a new film to trip', async () => {
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 5 },
+        error: null,
+      })
       ;(mockSupabase.single as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
         .mockResolvedValueOnce({ data: null, error: null })
@@ -531,13 +535,19 @@ describe('Trip Actions', () => {
         film_id: 'film-456',
         quantity: 2,
       }
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 5 },
+        error: null,
+      })
       ;(mockSupabase.single as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
         .mockResolvedValueOnce({ data: existingTripFilm, error: null })
       let eqCount = 0
+      // 2 eq calls for the trip ownership check, 2 for the availability check,
+      // 2 for the existing reservation lookup, then the update chain.
       ;(mockSupabase.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++
-        if (eqCount >= 6) {
+        if (eqCount >= 8) {
           return Promise.resolve({ error: null })
         }
         return mockSupabase
@@ -550,6 +560,10 @@ describe('Trip Actions', () => {
     })
 
     it('should use default quantity of 1', async () => {
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 5 },
+        error: null,
+      })
       ;(mockSupabase.single as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
         .mockResolvedValueOnce({ data: null, error: null })
@@ -561,6 +575,10 @@ describe('Trip Actions', () => {
     })
 
     it('should handle errors when adding film', async () => {
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 5 },
+        error: null,
+      })
       ;(mockSupabase.single as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ data: { id: 'trip-123' }, error: null })
         .mockResolvedValueOnce({ data: null, error: null })
@@ -572,6 +590,54 @@ describe('Trip Actions', () => {
 
       expect(result.success).toBe(false)
       expect(result.error).toBeDefined()
+    })
+
+    it('should reject reserving more rolls than are available', async () => {
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 2 },
+        error: null,
+      })
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
+
+      const result = await addFilmToTrip('trip-123', 'film-456', 3)
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Available: 2')
+      expect(mockSupabase.insert).not.toHaveBeenCalled()
+    })
+
+    it('should reject a film that is fully held by a loaded roll', async () => {
+      // available_count nets out rolls loaded in cameras, so a held roll
+      // reads as zero available here.
+      ;(mockSupabase.maybeSingle as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'film-456', available_count: 0 },
+        error: null,
+      })
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
+
+      const result = await addFilmToTrip('trip-123', 'film-456', 1)
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Available: 0')
+      expect(mockSupabase.insert).not.toHaveBeenCalled()
+    })
+
+    it('should reject a film that does not exist', async () => {
+      ;(mockSupabase.single as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        data: { id: 'trip-123' },
+        error: null,
+      })
+
+      const result = await addFilmToTrip('trip-123', 'film-456', 1)
+
+      expect(result.success).toBe(false)
+      expect(result.error).toContain('Film not found')
     })
   })
 

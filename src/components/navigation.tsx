@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Film, MapPin, Camera } from "lucide-react";
+import { Film, MapPin, Camera, Aperture } from "lucide-react";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -11,6 +11,17 @@ export function Navigation() {
   const prefix = isDemo ? "/demo" : "";
 
   const links = [
+    // The Now tab isn't part of the demo dataset yet.
+    ...(isDemo
+      ? []
+      : [
+          {
+            href: "/now",
+            label: "Now",
+            icon: Aperture,
+            active: pathname.startsWith("/now"),
+          },
+        ]),
     {
       href: `${prefix}/films`,
       label: "Films",
