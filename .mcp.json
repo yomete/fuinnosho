@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fuinnosho-film-inventory": {
+      "command": "npx",
+      "args": ["tsx", "--env-file=.env.local", "mcp-server.ts"]
+    }
+  }
+}
