@@ -7,6 +7,7 @@ import type { Gear, TripGear } from "@/lib/gear/types";
 import { createFilmToolHandlers } from "@/lib/mcp/film-tools";
 import { createTripToolHandlers } from "@/lib/mcp/trip-tools";
 import { createGearToolHandlers } from "@/lib/mcp/gear-tools";
+import { createLoadedToolHandlers } from "@/lib/mcp/loaded-tools";
 import type {
   MCPToolResult,
   ToolHandlersByName,
@@ -624,6 +625,72 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ["trip_id", "gear_id"],
     },
   },
+  {
+    name: "get_loaded_films",
+    description:
+      "Show which roll of film is currently loaded in which camera, plus which cameras are empty. A loaded roll is held out of trip reservations until it is unloaded.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        include_empty_cameras: {
+          type: "boolean",
+          description: "Also list cameras with no roll in them",
+          default: true,
+        },
+      },
+    },
+  },
+  {
+    name: "load_film",
+    description:
+      "Load a roll of film into a camera. The roll stays in inventory but is held: it cannot be reserved for a trip or loaded into another camera until it is unloaded. One roll per camera.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        camera_id: {
+          type: "string",
+          description: "Gear ID of the camera (must be of type 'camera')",
+        },
+        film_id: { type: "string", description: "Film ID to load" },
+        shot_at_iso: {
+          type: "number",
+          description:
+            "Exposure index the roll is being shot at, e.g. 800 for ISO 400 film pushed a stop. Defaults to box speed.",
+        },
+        notes: {
+          type: "string",
+          description: "Optional note about this loaded roll",
+        },
+      },
+      required: ["camera_id", "film_id"],
+    },
+  },
+  {
+    name: "unload_film",
+    description:
+      "Finish a loaded roll. outcome 'shot' consumes one roll from inventory and logs it to usage history; outcome 'unused' releases the hold and leaves the count untouched.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        loaded_id: {
+          type: "string",
+          description: "Loaded roll ID, from get_loaded_films",
+        },
+        outcome: {
+          type: "string",
+          description:
+            "'shot' if the roll was exposed, 'unused' if it came out of the camera unshot",
+          enum: ["shot", "unused"],
+        },
+        trip_id: {
+          type: "string",
+          description:
+            "Optional trip to attribute the shot roll to, so it appears in that trip's usage history",
+        },
+      },
+      required: ["loaded_id", "outcome"],
+    },
+  },
 ];
 
 export function createToolHandlers(
@@ -633,6 +700,7 @@ export function createToolHandlers(
   const filmHandlers = createFilmToolHandlers(supabase, userId);
   const tripHandlers = createTripToolHandlers(supabase, userId);
   const gearHandlers = createGearToolHandlers(supabase, userId);
+  const loadedHandlers = createLoadedToolHandlers(supabase, userId);
 
   return {
     get_film_inventory: filmHandlers.getFilmInventory,
@@ -661,5 +729,8 @@ export function createToolHandlers(
     get_gear_stats: gearHandlers.getGearStats,
     reserve_gear_for_trip: gearHandlers.reserveGearForTrip,
     remove_gear_reservation: gearHandlers.removeGearReservation,
+    get_loaded_films: loadedHandlers.getLoadedFilms,
+    load_film: loadedHandlers.loadFilm,
+    unload_film: loadedHandlers.unloadFilm,
   };
 }
