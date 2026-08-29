@@ -46,6 +46,7 @@ and shared reservation workflows.
 - Record the EI you're shooting a roll at, prefilled from last time
 - Loaded rolls are held out of trip reservations so a roll is never double-booked
 - Finish a roll as shot (consumes stock, logs usage) or unused (puts it back)
+- Available on the web app and the iOS companion app
 
 ### Gear Management
 - Catalog cameras, lenses, flashes, accessories, and more

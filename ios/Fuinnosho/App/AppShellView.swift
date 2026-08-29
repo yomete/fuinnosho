@@ -6,6 +6,16 @@ struct AppShellView: View {
   var body: some View {
     TabView {
       NavigationStack {
+        NowListView()
+          .toolbar {
+            signOutToolbar
+          }
+      }
+      .tabItem {
+        Label("Now", systemImage: "camera.aperture")
+      }
+
+      NavigationStack {
         FilmsListView()
           .toolbar {
             signOutToolbar

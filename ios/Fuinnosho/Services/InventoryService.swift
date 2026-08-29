@@ -447,7 +447,30 @@ struct InventoryService {
   }
 
   func reserveFilmForTrip(tripId: UUID, filmId: UUID, quantity: Int) async throws {
-    _ = try await supabase.currentUserId()
+    let userId = try await supabase.currentUserId()
+
+    // available_count nets out other trips' reservations and any roll loaded
+    // in a camera, so a roll can never be double-booked.
+    let availability: [FilmAvailability] = try await supabase.client
+      .from("films_with_availability")
+      .select("id, available_count")
+      .eq("id", value: filmId.uuidString)
+      .eq("user_id", value: userId)
+      .limit(1)
+      .execute()
+      .value
+
+    guard let film = availability.first else {
+      throw AppError.message("Film not found.")
+    }
+
+    let availableCount = film.availableCount ?? 0
+
+    guard availableCount >= quantity else {
+      throw AppError.message(
+        "Not enough available stock. Available: \(availableCount), Requested: \(quantity)"
+      )
+    }
 
     let existing: [TripFilmReservation] = try await supabase.client
       .from("trip_films")
@@ -764,6 +787,188 @@ struct InventoryService {
       .eq("id", value: film.id.uuidString)
       .eq("user_id", value: userId)
       .execute()
+  }
+
+
+  // MARK: - Loaded film ("Now")
+
+  private static let loadedFilmSelect = """
+  *,
+  camera:gear!loaded_films_camera_id_fkey (
+    id, name, brand, model
+  ),
+  film:films!loaded_films_film_id_fkey (
+    id, name, brand, iso, format, type, expiration_date, is_bulk_film
+  )
+  """
+
+  func listLoadedFilms() async throws -> [LoadedFilm] {
+    do {
+      let userId = try await supabase.currentUserId()
+
+      return try await supabase.client
+        .from("loaded_films")
+        .select(Self.loadedFilmSelect)
+        .eq("user_id", value: userId)
+        .is("unloaded_at", value: nil)
+        .order("loaded_at", ascending: false)
+        .execute()
+        .value
+    } catch {
+      throw contextualError("Loaded film list", error)
+    }
+  }
+
+  /// Cameras paired with whatever roll is inside them.
+  func listCameraLoadStates() async throws -> [CameraLoadState] {
+    let gear = try await listGear()
+    let loaded = try await listLoadedFilms()
+
+    return LoadedFilmDisplay.cameraLoadStates(cameras: gear, loaded: loaded)
+  }
+
+  func listFilmsAvailableToLoad() async throws -> [Film] {
+    LoadedFilmDisplay.filmsAvailableToLoad(try await listFilms())
+  }
+
+  /// The EI each stock was last loaded at, for prefilling the next load.
+  func loadedFilmISOPrefills() async throws -> [UUID: Int] {
+    do {
+      let userId = try await supabase.currentUserId()
+
+      let history: [LoadedFilmISOHistory] = try await supabase.client
+        .from("loaded_films")
+        .select("film_id, shot_at_iso, loaded_at")
+        .eq("user_id", value: userId)
+        .not("shot_at_iso", operator: .is, value: "null")
+        .order("loaded_at", ascending: false)
+        .execute()
+        .value
+
+      return LoadedFilmDisplay.isoPrefills(from: history)
+    } catch {
+      throw contextualError("Shooting ISO history", error)
+    }
+  }
+
+  func loadFilm(
+    cameraId: UUID,
+    filmId: UUID,
+    shotAtISO: Int?,
+    notes: String
+  ) async throws {
+    let userId = try await supabase.currentUserId()
+
+    let camera: Gear = try await supabase.client
+      .from("gear")
+      .select()
+      .eq("id", value: cameraId.uuidString)
+      .eq("user_id", value: userId)
+      .single()
+      .execute()
+      .value
+
+    guard camera.type == .camera else {
+      throw AppError.message("Film can only be loaded into a camera.")
+    }
+
+    let existing: [LoadedFilm] = try await supabase.client
+      .from("loaded_films")
+      .select()
+      .eq("camera_id", value: cameraId.uuidString)
+      .eq("user_id", value: userId)
+      .is("unloaded_at", value: nil)
+      .limit(1)
+      .execute()
+      .value
+
+    if existing.first != nil {
+      throw AppError.message(
+        "\(camera.brand) \(camera.name) already has a roll loaded. Finish that one first."
+      )
+    }
+
+    let available = try await listFilmsAvailableToLoad()
+
+    guard available.contains(where: { $0.id == filmId }) else {
+      throw AppError.message(
+        "That film has no rolls available — it may be reserved for a trip or already loaded in another camera."
+      )
+    }
+
+    let trimmedNotes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    try await supabase.client
+      .from("loaded_films")
+      .insert(NewLoadedFilm(
+        cameraId: cameraId.uuidString,
+        filmId: filmId.uuidString,
+        userId: userId,
+        shotAtISO: shotAtISO,
+        notes: trimmedNotes.isEmpty ? nil : trimmedNotes
+      ))
+      .execute()
+  }
+
+  /// Finish a loaded roll. `shot` consumes stock and logs usage; `unused`
+  /// releases the hold and leaves the count alone.
+  ///
+  /// The hold is released before the stock is consumed so a failed stock
+  /// update can be rolled back — the roll is never both released and
+  /// unconsumed.
+  func unloadFilm(
+    _ entry: LoadedFilm,
+    outcome: UnloadOutcome,
+    tripId: UUID?
+  ) async throws {
+    let userId = try await supabase.currentUserId()
+
+    let active: [LoadedFilm] = try await supabase.client
+      .from("loaded_films")
+      .select()
+      .eq("id", value: entry.id.uuidString)
+      .eq("user_id", value: userId)
+      .is("unloaded_at", value: nil)
+      .limit(1)
+      .execute()
+      .value
+
+    guard active.first != nil else {
+      throw AppError.message("That roll has already been unloaded.")
+    }
+
+    // The `unloaded_at is null` filter stays on the write too, so a roll
+    // unloaded elsewhere in between is not unloaded twice.
+    try await supabase.client
+      .from("loaded_films")
+      .update(LoadedFilmUnloadUpdate(
+        unloadedAt: LoadedFilmDisplay.isoTimestamp(),
+        outcome: outcome.rawValue
+      ))
+      .eq("id", value: entry.id.uuidString)
+      .eq("user_id", value: userId)
+      .is("unloaded_at", value: nil)
+      .execute()
+
+    guard outcome == .shot else { return }
+
+    do {
+      try await reduceFilmCount(
+        filmId: entry.filmId,
+        quantity: 1,
+        usageNote: LoadedFilmDisplay.usageNote(for: entry),
+        tripId: tripId
+      )
+    } catch {
+      try? await supabase.client
+        .from("loaded_films")
+        .update(LoadedFilmUnloadUpdate(unloadedAt: nil, outcome: nil))
+        .eq("id", value: entry.id.uuidString)
+        .eq("user_id", value: userId)
+        .execute()
+
+      throw contextualError("Finishing the roll", error)
+    }
   }
 
   private func contextualError(_ context: String, _ error: Error) -> Error {
