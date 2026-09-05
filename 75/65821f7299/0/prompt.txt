@@ -1,0 +1,77 @@
+fuinnosho MCP Server — Bug Report & Problem Statement
+Repo context: Next.js/TypeScript app on Vercel, Supabase backend, local MCP server (rebuilt via `pnpm build:mcp`, consumed by Claude Desktop/Claude.ai).
+Goal: Make every MCP tool either return within a bounded time or fail loudly with a useful error. No tool should hang indefinitely, and no mutation should report success with malformed output.
+Bug 1 — `list_gear` hangs when `include_trip_reservations: true` (HIGH)
+Repro:
+
+1. Call `list_gear` with `{ include_trip_reservations: true }`.
+2. The call never returns — no response, no error, no timeout. The MCP client waits forever.
+
+Working case: `list_gear` with the flag omitted or `false` returns normally (23 items, <2s).
+Suspected cause: The gear↔trip reservation join path (`trip_gear` join to `trips`/`gear`) issues a Supabase query with no timeout / possibly an unbounded or circular join. Note the analogous film path (`get_trip_details`, `get_films_with_availability`) works fine, so compare the film reservation query construction against the gear one.
+Fix expectations:
+
+* Add an explicit timeout (e.g. `AbortSignal.timeout(10_000)` or Supabase client-level timeout) on this query path — and audit all other MCP tool handlers for the same missing timeout.
+* Fix the underlying query so the join actually completes.
+* On timeout, return a structured MCP error (`isError: true` with a message naming the tool and the timeout), never a silent hang.
+
+Bug 2 — `reserve_gear_for_trip` hangs (HIGH)
+Repro: Call `reserve_gear_for_trip` with a valid `gear_id` + `trip_id`. Hangs indefinitely, same signature as Bug 1.
+Impact: Gear reservations currently can only be done through the web UI. The web UI path works, so the DB schema/data is fine — the bug is in the MCP handler's query.
+Suspected cause: Same trip↔gear join path as Bug 1 (likely a shared helper). Fixing Bug 1 probably fixes this; verify with a real reservation round-trip (reserve → confirm visible in web UI → remove via `remove_gear_reservation`, which should also be tested for the same hang).
+Bug 3 — `list_trips` drops trips with status `ongoing` (MEDIUM)
+Repro:
+
+1. Have a trip whose date range spans today (status resolves to `ongoing`).
+2. Call `list_trips` (any combination of `include_past` true/false).
+3. The ongoing trip is absent. Trips with status `upcoming` and `past` are returned correctly.
+
+Suspected cause: Status filter logic treats the list as binary upcoming/past — likely a `WHERE` clause like `start_date > now OR end_date < now` (or an `if include_past ... else only upcoming`) that excludes rows where `start_date <= today <= end_date`.
+Fix expectations:
+
+* `list_trips` default returns `upcoming` AND `ongoing`; `include_past: true` adds `past`.
+* Add a test with a trip spanning the current date.
+* (Current workaround being used: raw `web_fetch` against `https://fuinnosho.vercel.app/api/inventory/...` — should become unnecessary.)
+
+Bug 4 — `remove_film_reservation` success message has empty interpolations (LOW)
+Repro: Call `remove_film_reservation` with valid ids. Response:
+
+```json
+{
+  "success": true,
+  "message": "Removed 1 roll(s) of   from trip \"\"",
+  "removed_reservation": { "quantity": 1, "film": " ", "trip": "" }
+}
+
+```
+
+The deletion itself works (verified against inventory), but `film` and `trip` names are blank.
+Suspected cause: The handler deletes the reservation row first, then tries to read film/trip names from the deleted row (or from a join that returned nothing), instead of fetching the names before deletion or using the delete's `returning` data joined to `films`/`trips`.
+Fix expectations: Fetch film name + trip title before (or atomically with) the delete; message and `removed_reservation` fields populated. Audit sibling mutations (`reserve_film_for_trip`, `update_film_reservation_quantity`, `edit_trip`) for the same pattern.
+Bug 5 (operational, document rather than code) — stale MCP process after rebuild
+After `pnpm build:mcp`, Claude Desktop keeps the old MCP server process alive; writes can silently no-op until Claude Desktop is fully quit (⌘Q) and reopened. If feasible, add a `version`/`build_hash` field to a lightweight `ping`/server-info response so a stale binary is detectable; at minimum document the restart requirement in the README.
+Acceptance criteria
+
+1. `list_gear({include_trip_reservations: true})` returns all 23 gear items with their trip reservations in <10s.
+2. `reserve_gear_for_trip` + `remove_gear_reservation` complete a round-trip verifiable in the web UI.
+3. `list_trips` returns a trip whose dates span today.
+4. `remove_film_reservation` message names the film and trip.
+5. Every MCP tool handler has a bounded execution time — grep for Supabase calls without timeout handling and fix uniformly.
+6. No regressions in the currently-working tools (`get_trip_details`, `get_films_with_availability`, `edit_trip`, `reserve_film_for_trip`, `list_gear` without the flag).
+
+Environment notes for the agent
+
+* Supabase service role key was rotated recently — read config from env, don't assume any key found in old transcripts/fixtures is valid.
+* Test data caution: this is a live personal database. Do NOT create/delete real trips or reservations destructively; use a throwaway test trip (create → test → delete it) and leave existing rows untouched. The SF trip (`fda3eff7-b456-43ad-8230-ce5da8b972eb`) and Dubrovnik trip (`64859335-6679-4e86-9822-b0674a059b3b`) must come out of testing exactly as they went in.
+
+---
+
+so what next
+
+---
+
+ping
+
+---
+
+commit it
