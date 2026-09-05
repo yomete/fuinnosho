@@ -14,6 +14,8 @@ import {
 import { createMcpSupabaseClient } from "./src/lib/mcp/supabase.js";
 import {
   createToolHandlers,
+  MCP_SERVER_VERSION,
+  runTool,
   TOOL_DEFINITIONS,
 } from "./src/lib/mcp/tools.js";
 import type { ToolName } from "./src/lib/mcp/tool-types.js";
@@ -42,6 +44,7 @@ const WRITE_TOOLS = new Set<ToolName>([
 
 class FilmInventoryMCPServer {
   private server: Server;
+  private supabase: SupabaseClient | null = null;
   private handlers: ReturnType<typeof createToolHandlers> | null = null;
   private userId = "";
 
@@ -49,7 +52,7 @@ class FilmInventoryMCPServer {
     this.server = new Server(
       {
         name: "fuinnosho-film-inventory",
-        version: "1.0.0",
+        version: MCP_SERVER_VERSION,
       },
       {
         capabilities: {
@@ -61,9 +64,7 @@ class FilmInventoryMCPServer {
     this.setupToolHandlers();
   }
 
-  // Runs to completion before the transport connects, so handlers are always
-  // built with a fully resolved user_id — no request can arrive mid-resolution.
-  private async init() {
+  private init() {
     let supabase: SupabaseClient | null = null;
     let userId = "";
 
@@ -78,37 +79,36 @@ class FilmInventoryMCPServer {
       );
     }
 
-    if (supabase && !userId) {
-      userId = (await this.fetchDefaultUserId(supabase)) || "";
-    }
-
-    if (supabase && !userId) {
-      console.warn(
-        "⚠️  No user_id resolved - write tools will be rejected. Set MCP_USER_ID."
-      );
-    }
-
+    this.supabase = supabase;
     this.userId = userId;
     this.handlers = createToolHandlers(supabase as SupabaseClient, userId);
   }
 
-  private async fetchDefaultUserId(
-    supabase: SupabaseClient
-  ): Promise<string | null> {
-    try {
-      const { data } = await supabase
-        .from("trips")
-        .select("user_id")
-        .limit(1)
-        .single();
+  private async fetchDefaultUserId(supabase: SupabaseClient): Promise<string> {
+    const { data, error } = await supabase
+      .from("trips")
+      .select("user_id")
+      .limit(1)
+      .single();
 
-      if (data?.user_id) {
-        return data.user_id;
-      }
-    } catch (error) {
-      console.error("Could not fetch default user_id:", error);
+    if (error) {
+      throw new Error(`Could not fetch default user_id: ${error.message}`);
     }
-    return null;
+    if (!data?.user_id) {
+      throw new Error("Could not fetch default user_id: no trips found");
+    }
+    return data.user_id;
+  }
+
+  // Without a user_id every read runs unscoped and every write is refused, so
+  // resolve it before the first database tool call.
+  private async ensureUserId() {
+    if (this.userId || !this.supabase) {
+      return;
+    }
+    this.userId = await this.fetchDefaultUserId(this.supabase);
+    this.handlers = createToolHandlers(this.supabase, this.userId);
+    console.error("🔑 Resolved user_id on first tool call");
   }
 
   private setupToolHandlers() {
@@ -128,6 +128,10 @@ class FilmInventoryMCPServer {
           throw new Error("Server is not initialized yet");
         }
 
+        if (name !== "ping") {
+          await this.ensureUserId();
+        }
+
         if (WRITE_TOOLS.has(name) && !this.userId) {
           throw new Error(
             `Cannot run "${name}": no user_id is configured, so the write would ` +
@@ -135,12 +139,7 @@ class FilmInventoryMCPServer {
           );
         }
 
-        const handler = this.handlers[name];
-        if (!handler) {
-          throw new Error(`Unknown tool: ${name}`);
-        }
-
-        return await handler(args || {});
+        return await runTool(this.handlers, name, args);
       } catch (error) {
         return {
           content: [
@@ -151,6 +150,7 @@ class FilmInventoryMCPServer {
               }`,
             },
           ],
+          isError: true,
         };
       }
     });
@@ -161,7 +161,7 @@ class FilmInventoryMCPServer {
   }
 
   async run() {
-    await this.init();
+    this.init();
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error("Film Inventory MCP server running on stdio");

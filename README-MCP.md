@@ -69,12 +69,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ### 3. Build the Server
 
 ```bash
-# Build TypeScript to JavaScript
-npm run build
+# Build TypeScript to JavaScript into dist/
+pnpm build:mcp
 
-# Or run in development mode
-npm run dev
+# Or run the TypeScript source directly
+npx tsx --env-file=.env.local mcp-server.ts
 ```
+
+Restart the MCP client after each build to load the new code.
 
 ### 4. Configure Claude Desktop
 
@@ -136,7 +138,14 @@ This MCP server integrates seamlessly with your existing Fuinnosho codebase:
 - Read-only operations for inventory queries
 - Write operations only for usage tracking (same as your app)
 
+## Timeouts
+
+Each Supabase request aborts after 10 seconds (`MCP_QUERY_TIMEOUT_MS`). A tool with several requests can take longer. An aborted request does not prove that a database write failed; check the result before you retry a write.
+
 ## Troubleshooting
+
+### Tools Return Old Behaviour After a Rebuild
+Quit the MCP client fully and open it again. A window close may leave the server process active.
 
 ### Server Won't Start
 - Check environment variables are set

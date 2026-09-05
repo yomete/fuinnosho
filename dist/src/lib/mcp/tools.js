@@ -32,7 +32,45 @@ export function jsonSchemaObjectToZodRawShape(schema) {
         return [key, required.has(key) ? zodSchema : zodSchema.optional()];
     }));
 }
+export const MCP_SERVER_VERSION = "1.1.0";
+function errorResult(message) {
+    return {
+        content: [{ type: "text", text: `Error: ${message}` }],
+        isError: true,
+    };
+}
+export async function runTool(handlers, name, args) {
+    if (!Object.prototype.hasOwnProperty.call(handlers, name)) {
+        return errorResult(`Unknown tool: ${name}`);
+    }
+    const handler = handlers[name];
+    try {
+        return await handler(args || {});
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return errorResult(`Tool "${name}" failed: ${message}`);
+    }
+}
+export async function ping() {
+    return {
+        content: [
+            {
+                type: "text",
+                text: JSON.stringify({ ok: true, server_version: MCP_SERVER_VERSION }),
+            },
+        ],
+    };
+}
 export const TOOL_DEFINITIONS = [
+    {
+        name: "ping",
+        description: "Check that the server responds. Returns the server version.",
+        inputSchema: {
+            type: "object",
+            properties: {},
+        },
+    },
     {
         name: "get_film_inventory",
         description: "Get complete film inventory with current stock levels",
@@ -646,6 +684,7 @@ export function createToolHandlers(supabase, userId) {
     const gearHandlers = createGearToolHandlers(supabase, userId);
     const loadedHandlers = createLoadedToolHandlers(supabase, userId);
     return {
+        ping,
         get_film_inventory: filmHandlers.getFilmInventory,
         filter_films: filmHandlers.filterFilms,
         update_film_quantity: filmHandlers.updateFilmQuantity,

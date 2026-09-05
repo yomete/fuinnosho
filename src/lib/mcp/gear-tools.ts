@@ -98,19 +98,40 @@ export function createGearToolHandlers(
             .order("name", { ascending: true })
         ).data || [];
 
-    if (include_trip_reservations && gear) {
-      for (const item of gear) {
-        const { data: reservations } = await supabase
-          .from("trip_gear")
-          .select(
-            `
-            trips (id, title, start_date, end_date)
+    if (include_trip_reservations && gear && gear.length > 0) {
+      // One query for every gear item instead of one round trip per item.
+      const { data: reservations, error: reservationsError } = await supabase
+        .from("trip_gear")
+        .select(
           `
-          )
-          .eq("gear_id", item.id);
+          gear_id,
+          trips (id, title, start_date, end_date)
+        `
+        )
+        .in(
+          "gear_id",
+          gear.map((item: Gear) => item.id)
+        );
 
+      if (reservationsError) {
+        throw new Error(
+          `Failed to fetch gear reservations: ${reservationsError.message}`
+        );
+      }
+
+      const reservationsByGear = new Map<string, unknown[]>();
+      for (const row of (reservations || []) as Array<{
+        gear_id: string;
+        trips: unknown;
+      }>) {
+        const list = reservationsByGear.get(row.gear_id) || [];
+        list.push({ trips: row.trips });
+        reservationsByGear.set(row.gear_id, list);
+      }
+
+      for (const item of gear) {
         (item as Gear & { trip_reservations?: unknown[] }).trip_reservations =
-          reservations || [];
+          reservationsByGear.get(item.id) || [];
       }
     }
 
@@ -315,8 +336,8 @@ export function createGearToolHandlers(
     }
 
     type GearReservationRow = {
-      trips: Array<{ title: string }>;
-      gear: Array<{ name: string; brand: string; type: string }>;
+      trips: { title: string } | null;
+      gear: { name: string; brand: string; type: string } | null;
     };
 
     const { data: reservation, error: fetchError } = await supabase
@@ -336,10 +357,10 @@ export function createGearToolHandlers(
     }
 
     const reservationData = reservation as unknown as GearReservationRow;
-    const tripTitle = reservationData.trips[0]?.title || "";
-    const gearName = reservationData.gear[0]?.name || "";
-    const gearBrand = reservationData.gear[0]?.brand || "";
-    const gearType = reservationData.gear[0]?.type || "";
+    const tripTitle = reservationData.trips?.title || "";
+    const gearName = reservationData.gear?.name || "";
+    const gearBrand = reservationData.gear?.brand || "";
+    const gearType = reservationData.gear?.type || "";
 
     if (userId) {
       await removeGearReservationForUser(supabase, userId, trip_id, gear_id);

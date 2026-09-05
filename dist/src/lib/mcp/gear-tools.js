@@ -54,16 +54,27 @@ export function createGearToolHandlers(supabase, userId) {
                 .order("type", { ascending: true })
                 .order("brand", { ascending: true })
                 .order("name", { ascending: true })).data || [];
-        if (include_trip_reservations && gear) {
+        if (include_trip_reservations && gear && gear.length > 0) {
+            // One query for every gear item instead of one round trip per item.
+            const { data: reservations, error: reservationsError } = await supabase
+                .from("trip_gear")
+                .select(`
+          gear_id,
+          trips (id, title, start_date, end_date)
+        `)
+                .in("gear_id", gear.map((item) => item.id));
+            if (reservationsError) {
+                throw new Error(`Failed to fetch gear reservations: ${reservationsError.message}`);
+            }
+            const reservationsByGear = new Map();
+            for (const row of (reservations || [])) {
+                const list = reservationsByGear.get(row.gear_id) || [];
+                list.push({ trips: row.trips });
+                reservationsByGear.set(row.gear_id, list);
+            }
             for (const item of gear) {
-                const { data: reservations } = await supabase
-                    .from("trip_gear")
-                    .select(`
-            trips (id, title, start_date, end_date)
-          `)
-                    .eq("gear_id", item.id);
                 item.trip_reservations =
-                    reservations || [];
+                    reservationsByGear.get(item.id) || [];
             }
         }
         const totalValue = gear?.reduce((sum, item) => sum + (item.purchase_price || 0), 0) || 0;
@@ -222,10 +233,10 @@ export function createGearToolHandlers(supabase, userId) {
             throw new Error("Gear reservation not found for this trip");
         }
         const reservationData = reservation;
-        const tripTitle = reservationData.trips[0]?.title || "";
-        const gearName = reservationData.gear[0]?.name || "";
-        const gearBrand = reservationData.gear[0]?.brand || "";
-        const gearType = reservationData.gear[0]?.type || "";
+        const tripTitle = reservationData.trips?.title || "";
+        const gearName = reservationData.gear?.name || "";
+        const gearBrand = reservationData.gear?.brand || "";
+        const gearType = reservationData.gear?.type || "";
         if (userId) {
             await removeGearReservationForUser(supabase, userId, trip_id, gear_id);
         }

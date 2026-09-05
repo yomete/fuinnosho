@@ -11,6 +11,7 @@ import { createLoadedToolHandlers } from "@/lib/mcp/loaded-tools";
 import type {
   MCPToolResult,
   ToolHandlersByName,
+  ToolName,
 } from "@/lib/mcp/tool-types";
 
 export type { Film, FilmUsage, Gear, Trip, TripFilm, TripGear };
@@ -71,7 +72,55 @@ export function jsonSchemaObjectToZodRawShape(schema: JSONSchemaObject) {
   );
 }
 
+export const MCP_SERVER_VERSION = "1.1.0";
+
+function errorResult(message: string): MCPToolResult {
+  return {
+    content: [{ type: "text" as const, text: `Error: ${message}` }],
+    isError: true,
+  };
+}
+
+export async function runTool(
+  handlers: ToolHandlersByName,
+  name: string,
+  args: unknown
+): Promise<MCPToolResult> {
+  if (!Object.prototype.hasOwnProperty.call(handlers, name)) {
+    return errorResult(`Unknown tool: ${name}`);
+  }
+  const handler = handlers[name as ToolName] as (
+    args: unknown
+  ) => Promise<MCPToolResult>;
+
+  try {
+    return await handler(args || {});
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return errorResult(`Tool "${name}" failed: ${message}`);
+  }
+}
+
+export async function ping(): Promise<MCPToolResult> {
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({ ok: true, server_version: MCP_SERVER_VERSION }),
+      },
+    ],
+  };
+}
+
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
+  {
+    name: "ping",
+    description: "Check that the server responds. Returns the server version.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
   {
     name: "get_film_inventory",
     description: "Get complete film inventory with current stock levels",
@@ -703,6 +752,7 @@ export function createToolHandlers(
   const loadedHandlers = createLoadedToolHandlers(supabase, userId);
 
   return {
+    ping,
     get_film_inventory: filmHandlers.getFilmInventory,
     filter_films: filmHandlers.filterFilms,
     update_film_quantity: filmHandlers.updateFilmQuantity,

@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { addFilmToTripForUser, createTripForUser, deleteTripForUser, getFilmsWithAvailabilityForUser, getTripByIdForUser, getTripsForUser, removeFilmFromTripForUser, updateFilmQuantityInTripForUser, } from "../trips/service.js";
 function jsonResult(data) {
     return {
@@ -63,15 +64,15 @@ export function createTripToolHandlers(supabase, userId) {
             }
         }
         // Bucket every trip exactly once so the counts always sum to total_trips.
-        const now = new Date();
+        const today = format(new Date(), "yyyy-MM-dd");
         const upcomingTrips = [];
         const ongoingTrips = [];
         const pastTrips = [];
         for (const trip of trips || []) {
-            if (new Date(trip.end_date) < now) {
+            if (trip.end_date < today) {
                 pastTrips.push(trip);
             }
-            else if (new Date(trip.start_date) > now) {
+            else if (trip.start_date > today) {
                 upcomingTrips.push(trip);
             }
             else {
@@ -304,9 +305,9 @@ export function createTripToolHandlers(supabase, userId) {
             throw new Error("Film reservation not found for this trip");
         }
         const reservationData = reservation;
-        const tripTitle = reservationData.trips[0]?.title || "";
-        const filmName = reservationData.films[0]?.name || "";
-        const filmBrand = reservationData.films[0]?.brand || "";
+        const tripTitle = reservationData.trips?.title || "";
+        const filmName = reservationData.films?.name || "";
+        const filmBrand = reservationData.films?.brand || "";
         if (userId) {
             await removeFilmFromTripForUser(supabase, userId, trip_id, film_id);
         }
@@ -352,9 +353,9 @@ export function createTripToolHandlers(supabase, userId) {
             throw new Error("Film reservation not found for this trip");
         }
         const reservationData = existingReservation;
-        const tripTitle = reservationData.trips[0]?.title || "";
-        const filmName = reservationData.films[0]?.name || "";
-        const filmBrand = reservationData.films[0]?.brand || "";
+        const tripTitle = reservationData.trips?.title || "";
+        const filmName = reservationData.films?.name || "";
+        const filmBrand = reservationData.films?.brand || "";
         if (userId) {
             await updateFilmQuantityInTripForUser(supabase, userId, trip_id, film_id, quantity);
         }

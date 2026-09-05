@@ -1,5 +1,18 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
+// Every PostgREST request aborts after this long, so no tool can wait on
+// Supabase forever. Override with MCP_QUERY_TIMEOUT_MS.
+export const QUERY_TIMEOUT_MS = Number(process.env.MCP_QUERY_TIMEOUT_MS) || 10_000;
+
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit) {
+  return fetch(input, {
+    ...init,
+    signal: init?.signal
+      ? AbortSignal.any([init.signal, AbortSignal.timeout(QUERY_TIMEOUT_MS)])
+      : AbortSignal.timeout(QUERY_TIMEOUT_MS),
+  });
+}
+
 export function createMcpSupabaseClient(): {
   supabase: SupabaseClient;
   userId: string;
@@ -23,6 +36,7 @@ export function createMcpSupabaseClient(): {
         persistSession: false,
         detectSessionInUrl: false,
       },
+      global: { fetch: fetchWithTimeout },
     }
   );
 

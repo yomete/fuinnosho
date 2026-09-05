@@ -1,8 +1,10 @@
 export type MCPToolResult = {
   content: Array<{ type: "text"; text: string }>;
+  isError?: boolean;
 };
 
 export type ToolArgumentsByName = {
+  ping: Record<string, never>;
   get_film_inventory: { include_availability?: boolean };
   filter_films: {
     type?: string;

@@ -5,7 +5,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, } from "@modelcontextprotocol/sdk/types.js";
 import { createMcpSupabaseClient } from "./src/lib/mcp/supabase.js";
-import { createToolHandlers, TOOL_DEFINITIONS, } from "./src/lib/mcp/tools.js";
+import { createToolHandlers, MCP_SERVER_VERSION, runTool, TOOL_DEFINITIONS, } from "./src/lib/mcp/tools.js";
 // Tools that mutate data. These need a resolved user_id; reads do not.
 const WRITE_TOOLS = new Set([
     "update_film_quantity",
@@ -29,11 +29,12 @@ const WRITE_TOOLS = new Set([
 ]);
 class FilmInventoryMCPServer {
     constructor() {
+        this.supabase = null;
         this.handlers = null;
         this.userId = "";
         this.server = new Server({
             name: "fuinnosho-film-inventory",
-            version: "1.0.0",
+            version: MCP_SERVER_VERSION,
         }, {
             capabilities: {
                 tools: {},
@@ -41,9 +42,7 @@ class FilmInventoryMCPServer {
         });
         this.setupToolHandlers();
     }
-    // Runs to completion before the transport connects, so handlers are always
-    // built with a fully resolved user_id — no request can arrive mid-resolution.
-    async init() {
+    init() {
         let supabase = null;
         let userId = "";
         try {
@@ -55,30 +54,33 @@ class FilmInventoryMCPServer {
         catch {
             console.warn("⚠️  Missing Supabase environment variables - running in TEST MODE");
         }
-        if (supabase && !userId) {
-            userId = (await this.fetchDefaultUserId(supabase)) || "";
-        }
-        if (supabase && !userId) {
-            console.warn("⚠️  No user_id resolved - write tools will be rejected. Set MCP_USER_ID.");
-        }
+        this.supabase = supabase;
         this.userId = userId;
         this.handlers = createToolHandlers(supabase, userId);
     }
     async fetchDefaultUserId(supabase) {
-        try {
-            const { data } = await supabase
-                .from("trips")
-                .select("user_id")
-                .limit(1)
-                .single();
-            if (data?.user_id) {
-                return data.user_id;
-            }
+        const { data, error } = await supabase
+            .from("trips")
+            .select("user_id")
+            .limit(1)
+            .single();
+        if (error) {
+            throw new Error(`Could not fetch default user_id: ${error.message}`);
         }
-        catch (error) {
-            console.error("Could not fetch default user_id:", error);
+        if (!data?.user_id) {
+            throw new Error("Could not fetch default user_id: no trips found");
         }
-        return null;
+        return data.user_id;
+    }
+    // Without a user_id every read runs unscoped and every write is refused, so
+    // resolve it before the first database tool call.
+    async ensureUserId() {
+        if (this.userId || !this.supabase) {
+            return;
+        }
+        this.userId = await this.fetchDefaultUserId(this.supabase);
+        this.handlers = createToolHandlers(this.supabase, this.userId);
+        console.error("🔑 Resolved user_id on first tool call");
     }
     setupToolHandlers() {
         this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
@@ -93,15 +95,14 @@ class FilmInventoryMCPServer {
                 if (!this.handlers) {
                     throw new Error("Server is not initialized yet");
                 }
+                if (name !== "ping") {
+                    await this.ensureUserId();
+                }
                 if (WRITE_TOOLS.has(name) && !this.userId) {
                     throw new Error(`Cannot run "${name}": no user_id is configured, so the write would ` +
                         `be rejected or written to the wrong account. Set MCP_USER_ID.`);
                 }
-                const handler = this.handlers[name];
-                if (!handler) {
-                    throw new Error(`Unknown tool: ${name}`);
-                }
-                return await handler(args || {});
+                return await runTool(this.handlers, name, args);
             }
             catch (error) {
                 return {
@@ -111,6 +112,7 @@ class FilmInventoryMCPServer {
                             text: `Error: ${error instanceof Error ? error.message : String(error)}`,
                         },
                     ],
+                    isError: true,
                 };
             }
         });
@@ -119,7 +121,7 @@ class FilmInventoryMCPServer {
         return TOOL_DEFINITIONS.some((tool) => tool.name === name);
     }
     async run() {
-        await this.init();
+        this.init();
         const transport = new StdioServerTransport();
         await this.server.connect(transport);
         console.error("Film Inventory MCP server running on stdio");
